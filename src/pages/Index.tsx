@@ -1,16 +1,113 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useRef, useMemo } from "react";
+import HeroSection from "@/components/HeroSection";
+import SearchBar from "@/components/SearchBar";
+import CategoryFilters from "@/components/CategoryFilters";
+import ProductSection from "@/components/ProductSection";
+import FloatingCart from "@/components/FloatingCart";
+import Features from "@/components/Features";
+import CTASection from "@/components/CTASection";
+import Footer from "@/components/Footer";
+import { products } from "@/data/products";
+import { useCart } from "@/hooks/useCart";
+import { Zap } from "lucide-react";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const productsRef = useRef<HTMLDivElement>(null);
+  const { items, addItem, removeItem, getQuantity, totalItems, totalPrice } = useCart();
+
+  const scrollToProducts = () => {
+    productsRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const filtered = useMemo(() => {
+    let list = products;
+    if (category !== "all") {
+      list = list.filter((p) => p.category === category);
+    }
+    if (search.length >= 2) {
+      list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+    }
+    return list;
+  }, [category, search]);
+
+  const isFiltering = search.length >= 2 || category !== "all";
+
+  const maisComprados = useMemo(() => filtered.filter((p) => p.section.includes("mais-comprados")), [filtered]);
+  const promocoes = useMemo(() => filtered.filter((p) => p.section.includes("promocoes")), [filtered]);
+  const recomendados = useMemo(() => filtered.filter((p) => p.section.includes("recomendados")), [filtered]);
+  const frequentes = useMemo(() => filtered.filter((p) => p.section.includes("frequentes")), [filtered]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <Zap className="h-6 w-6 text-primary" />
+            <span className="font-display font-bold text-lg text-foreground hidden sm:inline">
+              Mercado Flash
+            </span>
+          </div>
+          <div className="flex-1">
+            <SearchBar value={search} onChange={setSearch} />
+          </div>
+        </div>
+        <div className="container mx-auto px-4 pb-3">
+          <CategoryFilters active={category} onChange={setCategory} />
+        </div>
+      </header>
+
+      {/* Hero - only show when not filtering */}
+      {!isFiltering && <HeroSection onStart={scrollToProducts} />}
+
+      {/* Products Feed */}
+      <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-28">
+        {isFiltering ? (
+          <ProductSection
+            title={`Resultados${search ? ` para "${search}"` : ""}`}
+            emoji="🔍"
+            products={filtered}
+            getQuantity={getQuantity}
+            onAdd={addItem}
+            onRemove={removeItem}
+          />
+        ) : (
+          <>
+            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
+          </>
+        )}
+        {filtered.length === 0 && (
+          <div className="text-center py-20 space-y-3">
+            <p className="text-4xl">😕</p>
+            <p className="text-lg font-semibold text-foreground">Nenhum produto encontrado</p>
+            <p className="text-muted-foreground">Tente outra busca ou categoria</p>
+          </div>
+        )}
+      </div>
+
+      {!isFiltering && (
+        <>
+          <Features />
+          <CTASection onStart={scrollToProducts} />
+        </>
+      )}
+
+      <Footer />
+
+      <FloatingCart
+        items={items}
+        totalItems={totalItems}
+        totalPrice={totalPrice}
+        onRemove={removeItem}
+        onAdd={addItem}
+      />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
