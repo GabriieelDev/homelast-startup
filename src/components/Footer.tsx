@@ -1,4 +1,5 @@
 import { Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => (
   <footer className="bg-foreground text-background py-12">
@@ -10,15 +11,15 @@ const Footer = () => (
             <span className="font-display font-bold text-xl">Mercado Flash</span>
           </div>
           <p className="text-sm opacity-60">
-            Seu supermercado digital. Rápido, prático e inteligente.
+            Seu supermercado digital. Rápido, prático e confiável.
           </p>
         </div>
         <div className="space-y-3">
           <h4 className="font-semibold">Links</h4>
           <ul className="space-y-2 text-sm opacity-60">
-            <li><a href="#" className="hover:opacity-100 transition-opacity">Sobre nós</a></li>
-            <li><a href="#" className="hover:opacity-100 transition-opacity">Termos de uso</a></li>
-            <li><a href="#" className="hover:opacity-100 transition-opacity">Política de privacidade</a></li>
+            <li><Link to="/sobre" className="hover:opacity-100 transition-opacity">Sobre nós</Link></li>
+            <li><Link to="/termos" className="hover:opacity-100 transition-opacity">Termos de uso</Link></li>
+            <li><Link to="/privacidade" className="hover:opacity-100 transition-opacity">Política de privacidade</Link></li>
           </ul>
         </div>
         <div className="space-y-3">
