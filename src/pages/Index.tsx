@@ -60,6 +60,7 @@ const Index = () => {
             <SearchBar value={search} onChange={setSearch} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
             <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Endereços</span>
