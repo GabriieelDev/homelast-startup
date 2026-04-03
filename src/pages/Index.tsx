@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilters from "@/components/CategoryFilters";
@@ -9,9 +10,13 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
-import { Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Zap, User, MapPin, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
@@ -52,6 +57,25 @@ const Index = () => {
           </div>
           <div className="flex-1">
             <SearchBar value={search} onChange={setSearch} />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {user ? (
+              <>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Endereços</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={signOut}>
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/auth")}>
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Entrar</span>
+              </Button>
+            )}
           </div>
         </div>
         <div className="container mx-auto px-4 pb-3">
