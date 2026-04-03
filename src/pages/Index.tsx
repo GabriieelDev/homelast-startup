@@ -11,8 +11,9 @@ import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, User, MapPin, LogOut } from "lucide-react";
+import { Zap, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import HeaderCart from "@/components/HeaderCart";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ const Index = () => {
             <SearchBar value={search} onChange={setSearch} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
             <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Endereços</span>
