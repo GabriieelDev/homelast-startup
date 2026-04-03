@@ -58,6 +58,25 @@ const Index = () => {
           <div className="flex-1">
             <SearchBar value={search} onChange={setSearch} />
           </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {user ? (
+              <>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Endereços</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={signOut}>
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/auth")}>
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Entrar</span>
+              </Button>
+            )}
+          </div>
         </div>
         <div className="container mx-auto px-4 pb-3">
           <CategoryFilters active={category} onChange={setCategory} />
