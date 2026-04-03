@@ -15,6 +15,8 @@ import { Zap, User, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
