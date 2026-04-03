@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilters from "@/components/CategoryFilters";
@@ -9,7 +10,9 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
-import { Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Zap, User, MapPin, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [search, setSearch] = useState("");
