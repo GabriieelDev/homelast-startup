@@ -27,6 +27,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
   const { user } = useAuth();
   const navigate = useNavigate();
   const [defaultAddress, setDefaultAddress] = useState<string | null>(null);
+  const [hasAddress, setHasAddress] = useState(false);
   const [frete] = useState(() => Number(calcFrete().toFixed(2)));
 
   useEffect(() => {
@@ -38,7 +39,12 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
       .eq("is_default", true)
       .maybeSingle()
       .then(({ data }) => {
-        if (data) setDefaultAddress(`${data.street}, ${data.number} - ${data.neighborhood}`);
+        if (data) {
+          setDefaultAddress(`${data.street}, ${data.number} - ${data.neighborhood}`);
+          setHasAddress(true);
+        } else {
+          setHasAddress(false);
+        }
       });
   }, [user]);
 
@@ -46,6 +52,15 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
 
   const deliveryMin = 25 + Math.floor(Math.random() * 10);
   const deliveryMax = deliveryMin + 15;
+
+  const handleCheckout = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!hasAddress) {
+      navigate("/enderecos", { state: { fromCheckout: true, items, totalPrice, frete } });
+    } else {
+      navigate("/checkout", { state: { items, totalPrice, frete } });
+    }
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up">
@@ -65,7 +80,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
               {defaultAddress ? (
                 <span className="text-foreground truncate">{defaultAddress}</span>
               ) : (
-                <button onClick={() => navigate(user ? "/enderecos" : "/auth")} className="text-primary hover:underline">
+                <button onClick={() => navigate("/enderecos")} className="text-primary hover:underline">
                   Adicionar endereço
                 </button>
               )}
@@ -141,7 +156,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="accent" size="sm" className="rounded-full" onClick={(e) => { e.stopPropagation(); }}>
+            <Button variant="accent" size="sm" className="rounded-full" onClick={handleCheckout}>
               Finalizar pedido
             </Button>
             <ChevronUp className={`h-5 w-5 transition-transform ${expanded ? "rotate-180" : ""}`} />
