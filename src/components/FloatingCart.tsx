@@ -1,7 +1,10 @@
-import { ShoppingCart, Clock, ChevronUp, X, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, Clock, ChevronUp, X, Trash2, MapPin, Truck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FloatingCartProps {
   items: CartItem[];
@@ -11,10 +14,38 @@ interface FloatingCartProps {
   onAdd: (product: CartItem["product"]) => void;
 }
 
+const FRETE_MIN = 5;
+const FRETE_MAX = 15;
+
+const calcFrete = () => {
+  const base = Math.random() * 10 + 5;
+  return Math.min(Math.max(base, FRETE_MIN), FRETE_MAX);
+};
+
 const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: FloatingCartProps) => {
   const [expanded, setExpanded] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [defaultAddress, setDefaultAddress] = useState<string | null>(null);
+  const [frete] = useState(() => Number(calcFrete().toFixed(2)));
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("addresses")
+      .select("street, number, neighborhood")
+      .eq("user_id", user.id)
+      .eq("is_default", true)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setDefaultAddress(`${data.street}, ${data.number} - ${data.neighborhood}`);
+      });
+  }, [user]);
 
   if (totalItems === 0) return null;
+
+  const deliveryMin = 25 + Math.floor(Math.random() * 10);
+  const deliveryMax = deliveryMin + 15;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up">
@@ -26,6 +57,24 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {/* Address */}
+          <div className="px-4 pt-3">
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-primary shrink-0" />
+              {defaultAddress ? (
+                <span className="text-foreground truncate">{defaultAddress}</span>
+              ) : (
+                <button onClick={() => navigate(user ? "/enderecos" : "/auth")} className="text-primary hover:underline">
+                  Adicionar endereço
+                </button>
+              )}
+              {defaultAddress && (
+                <button onClick={() => navigate("/enderecos")} className="text-primary hover:underline text-xs shrink-0">Trocar</button>
+              )}
+            </div>
+          </div>
+
           <div className="p-4 space-y-3">
             {items.map((item) => (
               <div key={item.product.id} className="flex items-center gap-3">
@@ -53,6 +102,22 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
               </div>
             ))}
           </div>
+
+          {/* Delivery info */}
+          <div className="px-4 pb-4 space-y-2 border-t border-border pt-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-foreground">R$ {totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1"><Truck className="h-3.5 w-3.5" /> Frete</span>
+              <span className="text-foreground">R$ {frete.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between font-bold text-foreground">
+              <span>Total</span>
+              <span>R$ {(totalPrice + frete).toFixed(2)}</span>
+            </div>
+          </div>
         </div>
       )}
       <div
@@ -68,10 +133,10 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
               </span>
             </div>
             <div>
-              <p className="font-bold text-sm">R$ {totalPrice.toFixed(2)}</p>
+              <p className="font-bold text-sm">R$ {(totalPrice + frete).toFixed(2)}</p>
               <div className="flex items-center gap-1 text-xs opacity-80">
                 <Clock className="h-3 w-3" />
-                Entrega em ~28 min
+                Entrega em {deliveryMin}–{deliveryMax} min
               </div>
             </div>
           </div>
