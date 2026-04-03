@@ -4,10 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import Addresses from "./pages/Addresses.tsx";
+import Checkout from "./pages/Checkout.tsx";
+import OrderConfirmation from "./pages/OrderConfirmation.tsx";
+import OrderTracking from "./pages/OrderTracking.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
 import TermosDeUso from "./pages/TermosDeUso.tsx";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade.tsx";
@@ -23,14 +27,16 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/enderecos" element={<Addresses />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/enderecos" element={<ProtectedRoute><Addresses /></ProtectedRoute>} />
+            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/confirmacao" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+            <Route path="/rastreamento" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
             <Route path="/sobre" element={<SobreNos />} />
             <Route path="/termos" element={<TermosDeUso />} />
             <Route path="/privacidade" element={<PoliticaPrivacidade />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
