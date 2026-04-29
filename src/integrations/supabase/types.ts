@@ -56,6 +56,89 @@ export type Database = {
         }
         Relationships: []
       }
+      order_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          order_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: Json | null
+          created_at: string
+          estimated_time: string | null
+          id: string
+          items: Json
+          order_number: number
+          payment_method: string
+          shipping: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: Json | null
+          created_at?: string
+          estimated_time?: string | null
+          id?: string
+          items: Json
+          order_number: number
+          payment_method: string
+          shipping: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: Json | null
+          created_at?: string
+          estimated_time?: string | null
+          id?: string
+          items?: Json
+          order_number?: number
+          payment_method?: string
+          shipping?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -119,6 +202,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "cliente"
+      order_status: "recebido" | "preparo" | "caminho" | "entregue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -247,6 +331,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cliente"],
+      order_status: ["recebido", "preparo", "caminho", "entregue"],
     },
   },
 } as const

@@ -1,0 +1,102 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Zap, Package, Clock, CheckCircle, Truck, ChefHat } from "lucide-react";
+
+const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
+  recebido: { label: "Pedido recebido", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30", icon: Package },
+  preparo: { label: "Em preparo", color: "bg-orange-500/10 text-orange-600 border-orange-500/30", icon: ChefHat },
+  caminho: { label: "A caminho", color: "bg-blue-500/10 text-blue-600 border-blue-500/30", icon: Truck },
+  entregue: { label: "Entregue", color: "bg-primary/10 text-primary border-primary/30", icon: CheckCircle },
+};
+
+interface Order {
+  id: string;
+  order_number: number;
+  total: number;
+  status: keyof typeof STATUS_META;
+  created_at: string;
+  estimated_time: string | null;
+}
+
+const Orders = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("id, order_number, total, status, created_at, estimated_time")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      setOrders((data as Order[]) ?? []);
+      setLoading(false);
+    };
+    load();
+
+    const channel = supabase
+      .channel("orders-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 py-3 flex items-center gap-3">
+          <button onClick={() => navigate("/")} className="text-foreground"><ArrowLeft className="h-5 w-5" /></button>
+          <Zap className="h-5 w-5 text-primary" />
+          <span className="font-display font-bold text-lg text-foreground">Meus pedidos</span>
+        </div>
+      </header>
+
+      <div className="container mx-auto max-w-2xl px-4 py-6 space-y-3">
+        {loading ? (
+          <p className="text-center text-muted-foreground py-12">Carregando...</p>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-20 space-y-3">
+            <p className="text-4xl">📦</p>
+            <p className="text-lg font-semibold text-foreground">Nenhum pedido ainda</p>
+            <p className="text-muted-foreground">Que tal fazer seu primeiro pedido?</p>
+            <Button onClick={() => navigate("/")} className="mt-2">Ver produtos</Button>
+          </div>
+        ) : (
+          orders.map((o) => {
+            const meta = STATUS_META[o.status] ?? STATUS_META.recebido;
+            const Icon = meta.icon;
+            return (
+              <div key={o.id} className="bg-card border border-border rounded-xl p-4 space-y-3 transition-all hover:shadow-md">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${meta.color}`}>
+                    <Icon className="h-3.5 w-3.5" /> {meta.label}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/rastreamento", { state: { orderId: o.id } })}>
+                    Ver detalhes
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Orders;

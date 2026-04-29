@@ -12,6 +12,7 @@ import Addresses from "./pages/Addresses.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import OrderConfirmation from "./pages/OrderConfirmation.tsx";
 import OrderTracking from "./pages/OrderTracking.tsx";
+import Orders from "./pages/Orders.tsx";
 import Admin from "./pages/Admin.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
 import TermosDeUso from "./pages/TermosDeUso.tsx";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/confirmacao" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
             <Route path="/rastreamento" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
+            <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/sobre" element={<SobreNos />} />
             <Route path="/termos" element={<TermosDeUso />} />

@@ -47,15 +47,39 @@ const Checkout = () => {
   const { items, totalPrice, frete } = state;
   const total = totalPrice + frete;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!user) return;
     setLoading(true);
     const orderNumber = Math.floor(100000 + Math.random() * 900000);
-    setTimeout(() => {
-      navigate("/confirmacao", {
-        state: { orderNumber, total, address, estimatedTime: "30–50 min" },
-        replace: true,
-      });
-    }, 1500);
+    const estimatedTime = "30–50 min";
+    const itemsPayload = items.map((i) => ({
+      id: i.product.id,
+      name: i.product.name,
+      price: i.product.price,
+      quantity: i.quantity,
+      image: i.product.image,
+    }));
+    const { data, error } = await supabase
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        order_number: orderNumber,
+        items: itemsPayload,
+        subtotal: totalPrice,
+        shipping: frete,
+        total,
+        payment_method: selectedPayment,
+        address,
+        estimated_time: estimatedTime,
+      })
+      .select("id")
+      .single();
+    setLoading(false);
+    if (error || !data) return;
+    navigate("/confirmacao", {
+      state: { orderId: data.id, orderNumber, total, address, estimatedTime },
+      replace: true,
+    });
   };
 
   return (
