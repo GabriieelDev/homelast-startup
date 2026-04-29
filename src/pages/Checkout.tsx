@@ -3,8 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2 } from "lucide-react";
 import { CartItem } from "@/hooks/useCart";
+import { useCoupon } from "@/hooks/useCoupon";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
