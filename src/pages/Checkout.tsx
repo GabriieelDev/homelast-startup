@@ -3,8 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2 } from "lucide-react";
 import { CartItem } from "@/hooks/useCart";
+import { useCoupon } from "@/hooks/useCoupon";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
@@ -20,6 +22,8 @@ const Checkout = () => {
   const [address, setAddress] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const [loading, setLoading] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const { coupon, error: couponError, loading: couponLoading, apply: applyCoupon, clear: clearCoupon } = useCoupon();
 
   const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
   const state = rawState
@@ -45,7 +49,13 @@ const Checkout = () => {
   if (!state) return null;
 
   const { items, totalPrice, frete } = state;
-  const total = totalPrice + frete;
+  const effectiveShipping = coupon?.freeShipping ? 0 : frete;
+  const discount = coupon ? coupon.discountAmount : 0;
+  const total = Math.max(0, totalPrice + effectiveShipping - (coupon?.freeShipping ? 0 : discount));
+
+  const handleApplyCoupon = async () => {
+    await applyCoupon(couponInput, { subtotal: totalPrice, shipping: frete });
+  };
 
   const handleConfirm = async () => {
     if (!user) return;
@@ -66,7 +76,9 @@ const Checkout = () => {
         order_number: orderNumber,
         items: itemsPayload,
         subtotal: totalPrice,
-        shipping: frete,
+        shipping: effectiveShipping,
+        discount,
+        coupon_code: coupon?.code ?? null,
         total,
         payment_method: selectedPayment,
         address,
@@ -138,13 +150,62 @@ const Checkout = () => {
               <span className="text-muted-foreground flex items-center gap-1">
                 <Truck className="h-3.5 w-3.5" /> Frete
               </span>
-              <span className="text-foreground">R$ {frete.toFixed(2)}</span>
+              <span className={coupon?.freeShipping ? "text-primary line-through" : "text-foreground"}>
+                R$ {frete.toFixed(2)}
+              </span>
             </div>
+            {coupon && (
+              <div className="flex justify-between text-sm">
+                <span className="text-primary flex items-center gap-1">
+                  <Tag className="h-3.5 w-3.5" /> Cupom {coupon.code}
+                </span>
+                <span className="text-primary font-semibold">- R$ {(coupon.freeShipping ? frete : discount).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-foreground text-lg pt-1">
               <span>Total</span>
               <span>R$ {total.toFixed(2)}</span>
             </div>
           </div>
+        </div>
+
+        {/* Coupon */}
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <Tag className="h-4 w-4 text-primary" /> Cupom de desconto
+          </h3>
+          {coupon ? (
+            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{coupon.code}</p>
+                  <p className="text-xs text-muted-foreground">Cupom aplicado com sucesso</p>
+                </div>
+              </div>
+              <button onClick={() => { clearCoupon(); setCouponInput(""); }} className="text-muted-foreground hover:text-destructive">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <Input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  placeholder="Digite seu cupom"
+                  className="uppercase"
+                />
+                <Button onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()} variant="outline">
+                  {couponLoading ? "..." : "Aplicar"}
+                </Button>
+              </div>
+              {couponError && <p className="text-xs text-destructive">{couponError}</p>}
+              <p className="text-xs text-muted-foreground">
+                Experimente: <span className="font-mono">BEMVINDO10</span>, <span className="font-mono">FRETEGRATIS</span>
+              </p>
+            </>
+          )}
         </div>
 
         {/* Payment Methods */}

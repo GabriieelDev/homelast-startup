@@ -56,6 +56,75 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          min_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          min_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          min_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      couriers: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_reviews: {
         Row: {
           comment: string | null
@@ -94,12 +163,16 @@ export type Database = {
       orders: {
         Row: {
           address: Json | null
+          coupon_code: string | null
+          courier_id: string | null
           created_at: string
+          discount: number | null
           estimated_time: string | null
           id: string
           items: Json
           order_number: number
           payment_method: string
+          pickup_address: Json | null
           shipping: number
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
@@ -109,12 +182,16 @@ export type Database = {
         }
         Insert: {
           address?: Json | null
+          coupon_code?: string | null
+          courier_id?: string | null
           created_at?: string
+          discount?: number | null
           estimated_time?: string | null
           id?: string
           items: Json
           order_number: number
           payment_method: string
+          pickup_address?: Json | null
           shipping: number
           status?: Database["public"]["Enums"]["order_status"]
           subtotal: number
@@ -124,12 +201,16 @@ export type Database = {
         }
         Update: {
           address?: Json | null
+          coupon_code?: string | null
+          courier_id?: string | null
           created_at?: string
+          discount?: number | null
           estimated_time?: string | null
           id?: string
           items?: Json
           order_number?: number
           payment_method?: string
+          pickup_address?: Json | null
           shipping?: number
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
@@ -201,7 +282,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "cliente"
+      app_role: "admin" | "cliente" | "entregador"
       order_status: "recebido" | "preparo" | "caminho" | "entregue"
     }
     CompositeTypes: {
@@ -330,7 +411,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "cliente"],
+      app_role: ["admin", "cliente", "entregador"],
       order_status: ["recebido", "preparo", "caminho", "entregue"],
     },
   },
