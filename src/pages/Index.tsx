@@ -11,15 +11,16 @@ import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut, Shield, Package } from "lucide-react";
+import { Zap, MapPin, LogOut, Shield, Package, Bike } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isCourier, loading: roleLoading } = useUserRole();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
