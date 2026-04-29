@@ -14,6 +14,8 @@ import OrderConfirmation from "./pages/OrderConfirmation.tsx";
 import OrderTracking from "./pages/OrderTracking.tsx";
 import Orders from "./pages/Orders.tsx";
 import Admin from "./pages/Admin.tsx";
+import Courier from "./pages/Courier.tsx";
+import CourierLogin from "./pages/CourierLogin.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
 import TermosDeUso from "./pages/TermosDeUso.tsx";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade.tsx";
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/rastreamento" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
             <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route path="/entregador/login" element={<CourierLogin />} />
+            <Route path="/entregador" element={<ProtectedRoute><Courier /></ProtectedRoute>} />
             <Route path="/sobre" element={<SobreNos />} />
             <Route path="/termos" element={<TermosDeUso />} />
             <Route path="/privacidade" element={<PoliticaPrivacidade />} />
