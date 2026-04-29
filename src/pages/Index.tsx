@@ -11,13 +11,15 @@ import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut } from "lucide-react";
+import { Zap, MapPin, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ const Index = () => {
           <div className="flex items-center gap-2 shrink-0">
             <Zap className="h-6 w-6 text-primary" />
             <span className="font-display font-bold text-lg text-foreground hidden sm:inline">
-              Mercado Flash
+              ServBem Supermercado
             </span>
           </div>
           <div className="flex-1">
@@ -61,6 +63,12 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
+            {isAdmin && (
+              <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/admin")}>
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </Button>
+            )}
             <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Endereços</span>

@@ -93,7 +93,7 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
                   <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => setOpen(false)}>
                     Continuar comprando
                   </Button>
-                  <Button size="sm" className="flex-1 text-xs" onClick={() => { setOpen(false); navigate("/checkout", { state: { items, totalPrice } }); }}>
+                <Button size="sm" className="flex-1 text-xs" onClick={() => { setOpen(false); navigate("/checkout", { state: { items, totalPrice, frete: Number((Math.random() * 10 + 5).toFixed(2)) } }); }}>
                     Finalizar pedido
                   </Button>
                 </div>
