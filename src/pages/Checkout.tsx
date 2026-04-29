@@ -22,6 +22,8 @@ const Checkout = () => {
   const [address, setAddress] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const [loading, setLoading] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const { coupon, error: couponError, loading: couponLoading, apply: applyCoupon, clear: clearCoupon } = useCoupon();
 
   const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
   const state = rawState
@@ -47,7 +49,50 @@ const Checkout = () => {
   if (!state) return null;
 
   const { items, totalPrice, frete } = state;
-  const total = totalPrice + frete;
+  const effectiveShipping = coupon?.freeShipping ? 0 : frete;
+  const discount = coupon ? coupon.discountAmount : 0;
+  const total = Math.max(0, totalPrice + effectiveShipping - (coupon?.freeShipping ? 0 : discount));
+
+  const handleApplyCoupon = async () => {
+    await applyCoupon(couponInput, { subtotal: totalPrice, shipping: frete });
+  };
+
+  const handleConfirm = async () => {
+    if (!user) return;
+    setLoading(true);
+    const orderNumber = Math.floor(100000 + Math.random() * 900000);
+    const estimatedTime = "30–50 min";
+    const itemsPayload = items.map((i) => ({
+      id: i.product.id,
+      name: i.product.name,
+      price: i.product.price,
+      quantity: i.quantity,
+      image: i.product.image,
+    }));
+    const { data, error } = await supabase
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        order_number: orderNumber,
+        items: itemsPayload,
+        subtotal: totalPrice,
+        shipping: effectiveShipping,
+        discount,
+        coupon_code: coupon?.code ?? null,
+        total,
+        payment_method: selectedPayment,
+        address,
+        estimated_time: estimatedTime,
+      })
+      .select("id")
+      .single();
+    setLoading(false);
+    if (error || !data) return;
+    navigate("/confirmacao", {
+      state: { orderId: data.id, orderNumber, total, address, estimatedTime },
+      replace: true,
+    });
+  };
 
   const handleConfirm = async () => {
     if (!user) return;
