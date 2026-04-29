@@ -30,6 +30,12 @@ const Index = () => {
     productsRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  useEffect(() => {
+    if (!roleLoading && isCourier && !isAdmin) {
+      navigate("/entregador", { replace: true });
+    }
+  }, [roleLoading, isCourier, isAdmin, navigate]);
+
   const filtered = useMemo(() => {
     let list = products;
     if (category !== "all") {
