@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-export type AppRole = "admin" | "cliente";
+export type AppRole = "admin" | "cliente" | "entregador";
 
 export const useUserRole = () => {
   const { user } = useAuth();
-  const [role, setRole] = useState<AppRole | null>(null);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
-      setRole(null);
+      setRoles([]);
       setLoading(false);
       return;
     }
@@ -22,15 +22,17 @@ export const useUserRole = () => {
       .eq("user_id", user.id)
       .then(({ data }) => {
         if (data && data.length > 0) {
-          // prefer admin if multiple
-          const isAdmin = data.some((r) => r.role === "admin");
-          setRole(isAdmin ? "admin" : (data[0].role as AppRole));
+          setRoles(data.map((r) => r.role as AppRole));
         } else {
-          setRole("cliente");
+          setRoles(["cliente"]);
         }
         setLoading(false);
       });
   }, [user]);
 
-  return { role, isAdmin: role === "admin", loading };
+  const isAdmin = roles.includes("admin");
+  const isCourier = roles.includes("entregador");
+  const primaryRole: AppRole = isAdmin ? "admin" : isCourier ? "entregador" : "cliente";
+
+  return { role: primaryRole, roles, isAdmin, isCourier, loading };
 };
