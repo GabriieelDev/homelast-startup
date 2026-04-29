@@ -21,7 +21,10 @@ const Checkout = () => {
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const [loading, setLoading] = useState(false);
 
-  const state = location.state as { items: CartItem[]; totalPrice: number; frete: number } | null;
+  const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
+  const state = rawState
+    ? { ...rawState, frete: typeof rawState.frete === "number" ? rawState.frete : Number((Math.random() * 10 + 5).toFixed(2)) }
+    : null;
 
   useEffect(() => {
     if (!state?.items?.length) {
