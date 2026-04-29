@@ -11,7 +11,7 @@ import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut, Shield } from "lucide-react";
+import { Zap, MapPin, LogOut, Shield, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -69,6 +69,10 @@ const Index = () => {
                 <span className="hidden sm:inline">Admin</span>
               </Button>
             )}
+            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/pedidos")}>
+              <Package className="h-4 w-4" />
+              <span className="hidden sm:inline">Pedidos</span>
+            </Button>
             <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Endereços</span>

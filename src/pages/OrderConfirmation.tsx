@@ -7,6 +7,7 @@ const OrderConfirmation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as {
+    orderId: string;
     orderNumber: number;
     total: number;
     address: any;
@@ -69,7 +70,7 @@ const OrderConfirmation = () => {
         </div>
 
         <div className="space-y-3">
-          <Button onClick={() => navigate("/rastreamento", { state: { orderNumber: state.orderNumber, estimatedTime: state.estimatedTime } })} className="w-full h-12 text-base font-bold">
+          <Button onClick={() => navigate("/rastreamento", { state: { orderId: state.orderId } })} className="w-full h-12 text-base font-bold">
             Acompanhar pedido
           </Button>
           <Button variant="outline" onClick={() => navigate("/")} className="w-full">
