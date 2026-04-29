@@ -8,7 +8,7 @@ const Footer = () => (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold text-xl">Mercado Flash</span>
+            <span className="font-display font-bold text-xl">ServBem Supermercado</span>
           </div>
           <p className="text-sm opacity-60">
             Seu supermercado digital. Rápido, prático e confiável.
@@ -31,7 +31,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="border-t border-background/10 mt-8 pt-6 text-center text-sm opacity-40">
-        © 2026 Mercado Flash. Todos os direitos reservados.
+        © 2026 ServBem Supermercado. Todos os direitos reservados.
       </div>
     </div>
   </footer>

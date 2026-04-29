@@ -111,7 +111,7 @@ const Auth = () => {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Zap className="h-8 w-8 text-primary" />
-            <span className="font-display font-bold text-2xl text-foreground">Mercado Flash</span>
+            <span className="font-display font-bold text-2xl text-foreground">ServBem Supermercado</span>
           </div>
           <p className="text-muted-foreground">
             {mode === "login" && "Entre na sua conta"}

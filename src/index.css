@@ -95,4 +95,36 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
   }
+
+  /* Universal button feedback: hover lift + click press */
+  .btn-press {
+    @apply transition-all duration-200 ease-out;
+  }
+  .btn-press:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 16px -6px hsl(var(--primary) / 0.35);
+    filter: brightness(0.95);
+  }
+  .btn-press:active {
+    transform: scale(0.97);
+    filter: brightness(0.9);
+    transition-duration: 100ms;
+  }
+}
+
+/* Apply press feedback to all native buttons + anchor buttons globally */
+@layer base {
+  button:not(:disabled),
+  a[role="button"] {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out, filter 0.2s ease-out;
+  }
+  button:not(:disabled):hover,
+  a[role="button"]:hover {
+    transform: scale(1.03);
+  }
+  button:not(:disabled):active,
+  a[role="button"]:active {
+    transform: scale(0.97);
+    transition-duration: 100ms;
+  }
 }
