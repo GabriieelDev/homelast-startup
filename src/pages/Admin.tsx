@@ -172,9 +172,74 @@ const Admin = () => {
             </div>
           )}
           {tab === "pedidos" && (
-            <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-foreground">Pedidos</h2>
-              <p className="text-muted-foreground text-sm">Nenhum pedido recente.</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground">Pedidos em tempo real</h2>
+                <span className="text-xs text-muted-foreground">{orders.length} pedido(s)</span>
+              </div>
+              {orders.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Nenhum pedido recente.</p>
+              ) : (
+                <div className="space-y-3">
+                  {orders.map((o) => {
+                    const idx = STATUS_FLOW.indexOf(o.status);
+                    const next = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
+                    const items = Array.isArray(o.items) ? o.items : [];
+                    return (
+                      <div key={o.id} className="border border-border rounded-xl p-4 space-y-3 bg-card hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between flex-wrap gap-2">
+                          <div>
+                            <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {profilesMap[o.user_id] || "Cliente"} ·{" "}
+                              {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">
+                              {STATUS_LABELS[o.status]}
+                            </span>
+                            <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p><span className="font-semibold text-foreground">Itens:</span>{" "}
+                            {items.map((it: any) => `${it.quantity}x ${it.name}`).join(", ")}
+                          </p>
+                          {o.address && (
+                            <p className="flex items-start gap-1">
+                              <MapPin className="h-3 w-3 mt-0.5 shrink-0 text-primary" />
+                              {o.address.street}, {o.address.number} - {o.address.neighborhood}, {o.address.city}
+                            </p>
+                          )}
+                          <p><span className="font-semibold text-foreground">Pagamento:</span> {o.payment_method}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {STATUS_FLOW.map((s, i) => {
+                            const Icon = STATUS_ICONS[s];
+                            const done = i <= idx;
+                            return (
+                              <div key={s} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md ${done ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                                <Icon className="h-3 w-3" /> {STATUS_LABELS[s]}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {next ? (
+                          <Button size="sm" onClick={() => advanceStatus(o)} className="btn-press">
+                            Avançar para "{STATUS_LABELS[next]}"
+                          </Button>
+                        ) : (
+                          <p className="text-xs text-primary font-semibold">✓ Pedido finalizado</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
           {tab === "estoque" && (
