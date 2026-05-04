@@ -67,24 +67,7 @@ const OrderTracking = () => {
       })
       .subscribe();
 
-    // Auto-progress simulation (client-side demo)
-    const progressOrder = async () => {
-      const { data } = await supabase.from("orders").select("status, created_at").eq("id", state.orderId).maybeSingle();
-      if (!data) return;
-      const elapsed = Date.now() - new Date(data.created_at).getTime();
-      const order = ["recebido", "preparo", "caminho", "entregue"];
-      let target = "recebido";
-      if (elapsed > 45000) target = "entregue";
-      else if (elapsed > 25000) target = "caminho";
-      else if (elapsed > 10000) target = "preparo";
-      if (order.indexOf(target) > order.indexOf(data.status)) {
-        await supabase.from("orders").update({ status: target as any }).eq("id", state.orderId);
-      }
-    };
-    const interval = setInterval(progressOrder, 5000);
-    progressOrder();
-
-    return () => { supabase.removeChannel(channel); clearInterval(interval); };
+    return () => { supabase.removeChannel(channel); };
   }, [state, user, navigate]);
 
   const handleSubmitReview = async () => {
