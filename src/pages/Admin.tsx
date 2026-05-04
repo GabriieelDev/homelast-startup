@@ -15,6 +15,64 @@ const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+
+  const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
+  const STATUS_LABELS: Record<string, string> = {
+    recebido: "Pedido recebido",
+    preparo: "Em preparo",
+    caminho: "A caminho",
+    entregue: "Entregue",
+  };
+  const STATUS_ICONS: Record<string, any> = { recebido: Package, preparo: ChefHat, caminho: Truck, entregue: CheckCircle };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const load = async () => {
+      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+      const list = data ?? [];
+      setOrders(list);
+      const userIds = Array.from(new Set(list.map((o: any) => o.user_id)));
+      if (userIds.length) {
+        const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
+        const map: Record<string, string> = {};
+        (profs ?? []).forEach((p: any) => { map[p.user_id] = p.full_name; });
+        setProfilesMap(map);
+      }
+    };
+    load();
+    const channel = supabase
+      .channel("admin-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
+  const advanceStatus = async (order: any) => {
+    const idx = STATUS_FLOW.indexOf(order.status);
+    if (idx < 0 || idx >= STATUS_FLOW.length - 1) return;
+    const next = STATUS_FLOW[idx + 1];
+    const update: any = { status: next };
+    if (next === "caminho" && !order.courier_id) {
+      const { data: courier } = await supabase
+        .from("couriers")
+        .select("user_id")
+        .eq("status", "disponivel")
+        .limit(1)
+        .maybeSingle();
+      if (courier) {
+        update.courier_id = courier.user_id;
+        await supabase.from("couriers").update({ status: "em_entrega" }).eq("user_id", courier.user_id);
+      }
+    }
+    if (next === "entregue" && order.courier_id) {
+      await supabase.from("couriers").update({ status: "disponivel" }).eq("user_id", order.courier_id);
+    }
+    const { error } = await supabase.from("orders").update(update).eq("id", order.id);
+    if (error) { toast.error("Erro ao atualizar status"); return; }
+    toast.success(`Status atualizado para "${STATUS_LABELS[next]}"`);
+  };
 
   if (authLoading || roleLoading) {
     return (
