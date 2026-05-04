@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert, ChefHat, Truck, CheckCircle, MapPin } from "lucide-react";
 import { products } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "configuracoes";
 
@@ -13,6 +15,64 @@ const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+
+  const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
+  const STATUS_LABELS: Record<string, string> = {
+    recebido: "Pedido recebido",
+    preparo: "Em preparo",
+    caminho: "A caminho",
+    entregue: "Entregue",
+  };
+  const STATUS_ICONS: Record<string, any> = { recebido: Package, preparo: ChefHat, caminho: Truck, entregue: CheckCircle };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const load = async () => {
+      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+      const list = data ?? [];
+      setOrders(list);
+      const userIds = Array.from(new Set(list.map((o: any) => o.user_id)));
+      if (userIds.length) {
+        const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
+        const map: Record<string, string> = {};
+        (profs ?? []).forEach((p: any) => { map[p.user_id] = p.full_name; });
+        setProfilesMap(map);
+      }
+    };
+    load();
+    const channel = supabase
+      .channel("admin-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
+  const advanceStatus = async (order: any) => {
+    const idx = STATUS_FLOW.indexOf(order.status);
+    if (idx < 0 || idx >= STATUS_FLOW.length - 1) return;
+    const next = STATUS_FLOW[idx + 1];
+    const update: any = { status: next };
+    if (next === "caminho" && !order.courier_id) {
+      const { data: courier } = await supabase
+        .from("couriers")
+        .select("user_id")
+        .eq("status", "disponivel")
+        .limit(1)
+        .maybeSingle();
+      if (courier) {
+        update.courier_id = courier.user_id;
+        await supabase.from("couriers").update({ status: "em_entrega" }).eq("user_id", courier.user_id);
+      }
+    }
+    if (next === "entregue" && order.courier_id) {
+      await supabase.from("couriers").update({ status: "disponivel" }).eq("user_id", order.courier_id);
+    }
+    const { error } = await supabase.from("orders").update(update).eq("id", order.id);
+    if (error) { toast.error("Erro ao atualizar status"); return; }
+    toast.success(`Status atualizado para "${STATUS_LABELS[next]}"`);
+  };
 
   if (authLoading || roleLoading) {
     return (
@@ -112,9 +172,74 @@ const Admin = () => {
             </div>
           )}
           {tab === "pedidos" && (
-            <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-foreground">Pedidos</h2>
-              <p className="text-muted-foreground text-sm">Nenhum pedido recente.</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground">Pedidos em tempo real</h2>
+                <span className="text-xs text-muted-foreground">{orders.length} pedido(s)</span>
+              </div>
+              {orders.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Nenhum pedido recente.</p>
+              ) : (
+                <div className="space-y-3">
+                  {orders.map((o) => {
+                    const idx = STATUS_FLOW.indexOf(o.status);
+                    const next = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
+                    const items = Array.isArray(o.items) ? o.items : [];
+                    return (
+                      <div key={o.id} className="border border-border rounded-xl p-4 space-y-3 bg-card hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between flex-wrap gap-2">
+                          <div>
+                            <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {profilesMap[o.user_id] || "Cliente"} ·{" "}
+                              {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">
+                              {STATUS_LABELS[o.status]}
+                            </span>
+                            <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p><span className="font-semibold text-foreground">Itens:</span>{" "}
+                            {items.map((it: any) => `${it.quantity}x ${it.name}`).join(", ")}
+                          </p>
+                          {o.address && (
+                            <p className="flex items-start gap-1">
+                              <MapPin className="h-3 w-3 mt-0.5 shrink-0 text-primary" />
+                              {o.address.street}, {o.address.number} - {o.address.neighborhood}, {o.address.city}
+                            </p>
+                          )}
+                          <p><span className="font-semibold text-foreground">Pagamento:</span> {o.payment_method}</p>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {STATUS_FLOW.map((s, i) => {
+                            const Icon = STATUS_ICONS[s];
+                            const done = i <= idx;
+                            return (
+                              <div key={s} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md ${done ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                                <Icon className="h-3 w-3" /> {STATUS_LABELS[s]}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {next ? (
+                          <Button size="sm" onClick={() => advanceStatus(o)} className="btn-press">
+                            Avançar para "{STATUS_LABELS[next]}"
+                          </Button>
+                        ) : (
+                          <p className="text-xs text-primary font-semibold">✓ Pedido finalizado</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
           {tab === "estoque" && (
