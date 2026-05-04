@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert, ChefHat, Truck, CheckCircle, MapPin } from "lucide-react";
 import { products } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "configuracoes";
 
