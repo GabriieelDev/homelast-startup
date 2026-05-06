@@ -8,9 +8,10 @@ interface ProductSectionProps {
   getQuantity: (id: string) => number;
   onAdd: (product: Product) => void;
   onRemove: (id: string) => void;
+  getStock?: (id: string) => number;
 }
 
-const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove }: ProductSectionProps) => {
+const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, getStock }: ProductSectionProps) => {
   if (products.length === 0) return null;
 
   return (
@@ -24,6 +25,7 @@ const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove }
             key={product.id}
             product={product}
             quantity={getQuantity(product.id)}
+            stock={getStock ? getStock(product.id) : 99}
             onAdd={() => onAdd(product)}
             onRemove={() => onRemove(product.id)}
           />
