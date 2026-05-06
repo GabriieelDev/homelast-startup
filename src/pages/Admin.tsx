@@ -177,20 +177,61 @@ const Admin = () => {
 
         <main className="bg-card border border-border rounded-xl p-6 min-h-[400px]">
           {tab === "dashboard" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-secondary">
                   <p className="text-xs text-muted-foreground">Pedidos hoje</p>
-                  <p className="text-2xl font-bold text-foreground">12</p>
+                  <p className="text-2xl font-bold text-foreground">{metrics.todayCount}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Faturamento</p>
-                  <p className="text-2xl font-bold text-foreground">R$ 1.840,00</p>
+                  <p className="text-xs text-muted-foreground">Faturamento (entregue)</p>
+                  <p className="text-2xl font-bold text-foreground">R$ {metrics.revenue.toFixed(2)}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Produtos ativos</p>
-                  <p className="text-2xl font-bold text-foreground">{products.length}</p>
+                  <p className="text-xs text-muted-foreground">Tempo médio entrega</p>
+                  <p className="text-2xl font-bold text-foreground">{metrics.avgMins || "—"} min</p>
+                </div>
+                <div className="p-4 rounded-lg bg-secondary">
+                  <p className="text-xs text-muted-foreground">Estoque baixo</p>
+                  <p className="text-2xl font-bold text-foreground">{metrics.lowStock.length + metrics.outOfStock.length}</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg border border-border">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                    <TrendingUp className="h-4 w-4 text-primary" /> Mais vendidos
+                  </h3>
+                  {metrics.top.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Sem vendas ainda.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {metrics.top.map((t, i) => (
+                        <li key={t.id} className="flex justify-between text-sm">
+                          <span className="text-foreground">{i + 1}. {t.name}</span>
+                          <span className="font-bold text-primary">{t.qty} un</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="p-4 rounded-lg border border-border">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                    <AlertTriangle className="h-4 w-4 text-orange-500" /> Alerta de estoque
+                  </h3>
+                  {metrics.lowStock.length + metrics.outOfStock.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Tudo em estoque ✓</p>
+                  ) : (
+                    <ul className="space-y-1.5 text-sm">
+                      {metrics.outOfStock.map((p) => (
+                        <li key={p.id} className="flex justify-between"><span className="text-foreground">{p.name}</span><span className="text-destructive font-bold">Esgotado</span></li>
+                      ))}
+                      {metrics.lowStock.map((p) => (
+                        <li key={p.id} className="flex justify-between"><span className="text-foreground">{p.name}</span><span className="text-orange-500 font-bold">{stockMap[p.id]} un</span></li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </div>
@@ -284,9 +325,39 @@ const Admin = () => {
             </div>
           )}
           {tab === "estoque" && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h2 className="text-2xl font-bold text-foreground">Estoque</h2>
-              <p className="text-muted-foreground text-sm">Controle de estoque em desenvolvimento.</p>
+              <p className="text-sm text-muted-foreground">Atualize a quantidade disponível de cada produto.</p>
+              <div className="divide-y divide-border">
+                {products.map((p) => {
+                  const current = stockMap[p.id] ?? 0;
+                  const draft = editingStock[p.id] ?? String(current);
+                  const status = current === 0 ? "esgotado" : current <= 5 ? "baixo" : "ok";
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 py-2.5">
+                      <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {status === "esgotado" && <span className="text-destructive font-bold">Esgotado</span>}
+                          {status === "baixo" && <span className="text-orange-500 font-bold">Estoque baixo</span>}
+                          {status === "ok" && <span className="text-primary">Em estoque</span>}
+                        </p>
+                      </div>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={draft}
+                        onChange={(e) => setEditingStock((s) => ({ ...s, [p.id]: e.target.value }))}
+                        className="w-20 h-9"
+                      />
+                      <Button size="sm" onClick={() => updateStock(p.id, parseInt(draft, 10))} className="btn-press">
+                        Salvar
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           {tab === "configuracoes" && (
