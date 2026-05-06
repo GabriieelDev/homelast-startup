@@ -15,16 +15,21 @@ import { Zap, MapPin, LogOut, Shield, Package, Bike } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useStock } from "@/hooks/useStock";
 import { useEffect } from "react";
+import type { Product } from "@/data/products";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { isAdmin, isCourier, loading: roleLoading } = useUserRole();
+  const { getStock } = useStock();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
-  const { items, addItem, removeItem, getQuantity, totalItems, totalPrice } = useCart();
+  const cart = useCart();
+  const { items, removeItem, getQuantity, totalItems, totalPrice } = cart;
+  const addItem = (product: Product) => cart.addItem(product, getStock(product.id));
 
   const scrollToProducts = () => {
     productsRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -111,10 +116,10 @@ const Index = () => {
           />
         ) : (
           <>
-            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
           </>
         )}
         {filtered.length === 0 && (

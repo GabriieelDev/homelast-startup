@@ -4,9 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2 } from "lucide-react";
+import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
 import { CartItem } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { estimateDeliveryMinutes } from "@/lib/delivery";
+import { toast } from "sonner";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
@@ -58,10 +60,13 @@ const Checkout = () => {
   };
 
   const handleConfirm = async () => {
-    if (!user) return;
+    if (!user) { toast.error("Você precisa estar logado"); navigate("/auth"); return; }
+    if (!items.length) { toast.error("Carrinho vazio"); navigate("/"); return; }
+    if (!address) { toast.error("Selecione um endereço de entrega"); return; }
     setLoading(true);
+    const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+    const { label: estimatedTime } = estimateDeliveryMinutes(itemCount, address);
     const orderNumber = Math.floor(100000 + Math.random() * 900000);
-    const estimatedTime = "30–50 min";
     const itemsPayload = items.map((i) => ({
       id: i.product.id,
       name: i.product.name,
@@ -87,7 +92,8 @@ const Checkout = () => {
       .select("id")
       .single();
     setLoading(false);
-    if (error || !data) return;
+    if (error || !data) { toast.error("Erro ao criar pedido"); return; }
+    toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
       state: { orderId: data.id, orderNumber, total, address, estimatedTime },
       replace: true,
@@ -166,6 +172,12 @@ const Checkout = () => {
               <span>Total</span>
               <span>R$ {total.toFixed(2)}</span>
             </div>
+            {address && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                <Clock className="h-3.5 w-3.5 text-primary" />
+                Entrega em {estimateDeliveryMinutes(items.reduce((s, i) => s + i.quantity, 0), address).label}
+              </div>
+            )}
           </div>
         </div>
 
@@ -235,8 +247,8 @@ const Checkout = () => {
       {/* Fixed bottom button */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4">
         <div className="container mx-auto max-w-lg">
-          <Button onClick={handleConfirm} className="w-full h-12 text-base font-bold" disabled={loading || !address}>
-            {loading ? "Processando..." : `Confirmar pedido • R$ ${total.toFixed(2)}`}
+          <Button onClick={handleConfirm} className="w-full h-12 text-base font-bold" disabled={loading || !address || !items.length}>
+            {loading ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>) : `Confirmar pedido • R$ ${total.toFixed(2)}`}
           </Button>
         </div>
       </div>
