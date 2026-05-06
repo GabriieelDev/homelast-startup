@@ -1,4 +1,4 @@
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, AlertTriangle } from "lucide-react";
 import { Product } from "@/data/products";
 
 interface ProductCardProps {
@@ -6,9 +6,13 @@ interface ProductCardProps {
   quantity: number;
   onAdd: () => void;
   onRemove: () => void;
+  stock?: number;
 }
 
-const ProductCard = ({ product, quantity, onAdd, onRemove }: ProductCardProps) => {
+const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99 }: ProductCardProps) => {
+  const unavailable = stock <= 0;
+  const lowStock = stock > 0 && stock <= 5;
+  const reachedMax = quantity >= stock;
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
