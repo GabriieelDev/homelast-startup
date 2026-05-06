@@ -44,13 +44,51 @@ const Admin = () => {
         setProfilesMap(map);
       }
     };
+    const loadStock = async () => {
+      const { data } = await supabase.from("product_stock").select("product_id, stock");
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { map[r.product_id] = r.stock; });
+      setStockMap(map);
+    };
     load();
+    loadStock();
     const channel = supabase
       .channel("admin-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "product_stock" }, loadStock)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
+
+  const updateStock = async (productId: string, newStock: number) => {
+    if (isNaN(newStock) || newStock < 0) { toast.error("Quantidade inválida"); return; }
+    const { error } = await supabase
+      .from("product_stock")
+      .upsert({ product_id: productId, stock: newStock }, { onConflict: "product_id" });
+    if (error) { toast.error("Erro ao atualizar estoque"); return; }
+    toast.success("Estoque atualizado");
+  };
+
+  // Metrics
+  const metrics = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todays = orders.filter((o) => new Date(o.created_at) >= today);
+    const revenue = orders.filter((o) => o.status === "entregue").reduce((s, o) => s + Number(o.total), 0);
+    const counts: Record<string, number> = {};
+    orders.forEach((o) => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      items.forEach((it: any) => { counts[it.id] = (counts[it.id] ?? 0) + Number(it.quantity); });
+    });
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5)
+      .map(([id, qty]) => ({ id, qty, name: products.find((p) => p.id === id)?.name ?? id }));
+    const delivered = orders.filter((o) => o.status === "entregue" && o.created_at && o.updated_at);
+    const avgMins = delivered.length
+      ? Math.round(delivered.reduce((s, o) => s + (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000, 0) / delivered.length)
+      : 0;
+    const lowStock = products.filter((p) => (stockMap[p.id] ?? 99) > 0 && (stockMap[p.id] ?? 99) <= 5);
+    const outOfStock = products.filter((p) => (stockMap[p.id] ?? 99) === 0);
+    return { todayCount: todays.length, revenue, top, avgMins, lowStock, outOfStock };
+  }, [orders, stockMap]);
 
   const advanceStatus = async (order: any) => {
     const idx = STATUS_FLOW.indexOf(order.status);
