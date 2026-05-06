@@ -172,6 +172,12 @@ const Checkout = () => {
               <span>Total</span>
               <span>R$ {total.toFixed(2)}</span>
             </div>
+            {address && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                <Clock className="h-3.5 w-3.5 text-primary" />
+                Entrega em {estimateDeliveryMinutes(items.reduce((s, i) => s + i.quantity, 0), address).label}
+              </div>
+            )}
           </div>
         </div>
 
