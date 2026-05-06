@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert, ChefHat, Truck, CheckCircle, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp } from "lucide-react";
 import { products } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,6 +18,8 @@ const Admin = () => {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [orders, setOrders] = useState<any[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [editingStock, setEditingStock] = useState<Record<string, string>>({});
 
   const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
   const STATUS_LABELS: Record<string, string> = {
