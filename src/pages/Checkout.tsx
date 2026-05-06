@@ -4,9 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2 } from "lucide-react";
+import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
 import { CartItem } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
+import { estimateDeliveryMinutes } from "@/lib/delivery";
+import { toast } from "sonner";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
@@ -58,10 +60,13 @@ const Checkout = () => {
   };
 
   const handleConfirm = async () => {
-    if (!user) return;
+    if (!user) { toast.error("Você precisa estar logado"); navigate("/auth"); return; }
+    if (!items.length) { toast.error("Carrinho vazio"); navigate("/"); return; }
+    if (!address) { toast.error("Selecione um endereço de entrega"); return; }
     setLoading(true);
+    const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+    const { label: estimatedTime } = estimateDeliveryMinutes(itemCount, address);
     const orderNumber = Math.floor(100000 + Math.random() * 900000);
-    const estimatedTime = "30–50 min";
     const itemsPayload = items.map((i) => ({
       id: i.product.id,
       name: i.product.name,
@@ -87,7 +92,8 @@ const Checkout = () => {
       .select("id")
       .single();
     setLoading(false);
-    if (error || !data) return;
+    if (error || !data) { toast.error("Erro ao criar pedido"); return; }
+    toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
       state: { orderId: data.id, orderNumber, total, address, estimatedTime },
       replace: true,
