@@ -45,6 +45,10 @@ const Index = () => {
 
   const filtered = useMemo(() => {
     let list = products;
+    // Hide disabled products from non-admin users
+    if (!isAdmin) {
+      list = list.filter((p) => !isDisabled(p.id));
+    }
     if (category !== "all") {
       list = list.filter((p) => p.category === category);
     }
@@ -52,7 +56,7 @@ const Index = () => {
       list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     }
     return list;
-  }, [category, search]);
+  }, [category, search, isAdmin, isDisabled]);
 
   const isFiltering = search.length >= 2 || category !== "all";
 
