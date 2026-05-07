@@ -117,15 +117,18 @@ const Index = () => {
             emoji="🔍"
             products={filtered}
             getQuantity={getQuantity}
+            getStock={getStock}
             onAdd={addItem}
             onRemove={removeItem}
+            isAdmin={isAdmin}
+            onDisableProduct={disableProduct}
           />
         ) : (
           <>
-            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
           </>
         )}
         {filtered.length === 0 && (
