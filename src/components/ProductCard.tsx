@@ -1,5 +1,16 @@
-import { Plus, Minus, AlertTriangle } from "lucide-react";
+import { Plus, Minus, AlertTriangle, Trash2 } from "lucide-react";
 import { Product } from "@/data/products";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ProductCardProps {
   product: Product;
@@ -7,9 +18,11 @@ interface ProductCardProps {
   onAdd: () => void;
   onRemove: () => void;
   stock?: number;
+  isAdmin?: boolean;
+  onDisable?: () => void;
 }
 
-const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99 }: ProductCardProps) => {
+const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, onDisable }: ProductCardProps) => {
   const unavailable = stock <= 0;
   const lowStock = stock > 0 && stock <= 5;
   const reachedMax = quantity >= stock;
@@ -33,6 +46,33 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99 }: Product
         <div className="absolute top-2 right-2 z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
           <AlertTriangle className="h-3 w-3" /> Últimas {stock}
         </div>
+      )}
+      {isAdmin && onDisable && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              className="absolute bottom-2 right-2 z-10 bg-destructive text-destructive-foreground rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 active:scale-95"
+              title="Remover produto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover este produto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                "{product.name}" será desativado e deixará de aparecer para os clientes. Você poderá reativá-lo depois pelo painel admin.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={onDisable} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Confirmar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
       <div className={`aspect-square overflow-hidden bg-white p-2 ${unavailable ? "opacity-50 grayscale" : ""}`}>
         <img

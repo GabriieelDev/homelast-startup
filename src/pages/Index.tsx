@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useStock } from "@/hooks/useStock";
+import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useEffect } from "react";
 import type { Product } from "@/data/products";
 
@@ -24,6 +25,7 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const { isAdmin, isCourier, loading: roleLoading } = useUserRole();
   const { getStock } = useStock();
+  const { isDisabled, disableProduct } = useDisabledProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
@@ -43,6 +45,10 @@ const Index = () => {
 
   const filtered = useMemo(() => {
     let list = products;
+    // Hide disabled products from non-admin users
+    if (!isAdmin) {
+      list = list.filter((p) => !isDisabled(p.id));
+    }
     if (category !== "all") {
       list = list.filter((p) => p.category === category);
     }
@@ -50,7 +56,7 @@ const Index = () => {
       list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     }
     return list;
-  }, [category, search]);
+  }, [category, search, isAdmin, isDisabled]);
 
   const isFiltering = search.length >= 2 || category !== "all";
 
@@ -111,15 +117,18 @@ const Index = () => {
             emoji="🔍"
             products={filtered}
             getQuantity={getQuantity}
+            getStock={getStock}
             onAdd={addItem}
             onRemove={removeItem}
+            isAdmin={isAdmin}
+            onDisableProduct={disableProduct}
           />
         ) : (
           <>
-            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
-            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} />
+            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
           </>
         )}
         {filtered.length === 0 && (
