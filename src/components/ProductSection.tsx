@@ -9,9 +9,11 @@ interface ProductSectionProps {
   onAdd: (product: Product) => void;
   onRemove: (id: string) => void;
   getStock?: (id: string) => number;
+  isAdmin?: boolean;
+  onDisableProduct?: (id: string) => void;
 }
 
-const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, getStock }: ProductSectionProps) => {
+const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, getStock, isAdmin, onDisableProduct }: ProductSectionProps) => {
   if (products.length === 0) return null;
 
   return (
@@ -28,6 +30,8 @@ const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, 
             stock={getStock ? getStock(product.id) : 99}
             onAdd={() => onAdd(product)}
             onRemove={() => onRemove(product.id)}
+            isAdmin={isAdmin}
+            onDisable={onDisableProduct ? () => onDisableProduct(product.id) : undefined}
           />
         ))}
       </div>
