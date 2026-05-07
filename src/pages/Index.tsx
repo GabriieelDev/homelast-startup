@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useStock } from "@/hooks/useStock";
+import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useEffect } from "react";
 import type { Product } from "@/data/products";
 
