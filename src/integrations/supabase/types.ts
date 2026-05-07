@@ -125,6 +125,24 @@ export type Database = {
         }
         Relationships: []
       }
+      disabled_products: {
+        Row: {
+          created_at: string
+          disabled_by: string | null
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_by?: string | null
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          disabled_by?: string | null
+          product_id?: string
+        }
+        Relationships: []
+      }
       order_reviews: {
         Row: {
           comment: string | null
