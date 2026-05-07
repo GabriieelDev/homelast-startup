@@ -1,5 +1,16 @@
-import { Plus, Minus, AlertTriangle } from "lucide-react";
+import { Plus, Minus, AlertTriangle, Trash2 } from "lucide-react";
 import { Product } from "@/data/products";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ProductCardProps {
   product: Product;
@@ -7,9 +18,11 @@ interface ProductCardProps {
   onAdd: () => void;
   onRemove: () => void;
   stock?: number;
+  isAdmin?: boolean;
+  onDisable?: () => void;
 }
 
-const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99 }: ProductCardProps) => {
+const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, onDisable }: ProductCardProps) => {
   const unavailable = stock <= 0;
   const lowStock = stock > 0 && stock <= 5;
   const reachedMax = quantity >= stock;
