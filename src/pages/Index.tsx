@@ -25,6 +25,7 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const { isAdmin, isCourier, loading: roleLoading } = useUserRole();
   const { getStock } = useStock();
+  const { isDisabled, disableProduct } = useDisabledProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const productsRef = useRef<HTMLDivElement>(null);
