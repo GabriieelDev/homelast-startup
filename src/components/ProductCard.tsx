@@ -18,7 +18,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99 }: Product
     : 0;
 
   return (
-    <div className="group relative bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all duration-200">
+    <div className="group relative bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-200">
       {discount > 0 && !unavailable && (
         <div className="absolute top-2 left-2 z-10 bg-accent text-accent-foreground text-xs font-bold px-2 py-0.5 rounded-full">
           -{discount}%
