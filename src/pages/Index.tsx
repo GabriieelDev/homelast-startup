@@ -83,7 +83,7 @@ const Index = () => {
           <div className="flex-1">
             <SearchBar value={search} onChange={setSearch} />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
             {isAdmin && (
               <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/admin")}>
@@ -91,18 +91,26 @@ const Index = () => {
                 <span className="hidden sm:inline">Admin</span>
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/pedidos")}>
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">Pedidos</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
-              <MapPin className="h-4 w-4" />
-              <span className="hidden sm:inline">Endereços</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" aria-label="Menu do usuário">
+                  <Menu className="h-4 w-4" />
+                  <span className="hidden sm:inline">Menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/perfil")}><UserIcon className="h-4 w-4 mr-2" /> Meu perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/pedidos")}><Package className="h-4 w-4 mr-2" /> Meus pedidos</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/historico")}><History className="h-4 w-4 mr-2" /> Histórico</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/enderecos")}><MapPin className="h-4 w-4 mr-2" /> Endereços</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" /> Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="container mx-auto px-4 pb-3">
