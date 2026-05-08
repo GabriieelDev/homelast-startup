@@ -168,6 +168,7 @@ const Index = () => {
         onRemove={removeItem}
         onAdd={addItem}
       />
+      <BottomNav cartCount={totalItems} />
     </div>
   );
 };
