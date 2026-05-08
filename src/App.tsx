@@ -16,6 +16,8 @@ import Orders from "./pages/Orders.tsx";
 import Admin from "./pages/Admin.tsx";
 import Courier from "./pages/Courier.tsx";
 import CourierLogin from "./pages/CourierLogin.tsx";
+import Perfil from "./pages/Perfil.tsx";
+import Historico from "./pages/Historico.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
 import TermosDeUso from "./pages/TermosDeUso.tsx";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade.tsx";
@@ -39,6 +41,8 @@ const App = () => (
             <Route path="/confirmacao" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
             <Route path="/rastreamento" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
             <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/entregador/login" element={<CourierLogin />} />
             <Route path="/entregador" element={<ProtectedRoute><Courier /></ProtectedRoute>} />
