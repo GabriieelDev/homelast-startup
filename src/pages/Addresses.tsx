@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Zap, ArrowLeft, Plus, Star, Trash2, Edit2 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 
 interface Address {
   id: string;
@@ -81,7 +82,7 @@ const Addresses = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/")} className="text-foreground hover:text-primary"><ArrowLeft className="h-5 w-5" /></button>
@@ -160,6 +161,7 @@ const Addresses = () => {
           <p className="text-center text-muted-foreground py-8">Nenhum endereço cadastrado</p>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 };

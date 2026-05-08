@@ -63,7 +63,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 animate-slide-up">
+    <div className="fixed bottom-14 md:bottom-0 left-0 right-0 z-40 animate-slide-up">
       {expanded && (
         <div className="bg-card border-t border-border shadow-2xl max-h-[60vh] overflow-y-auto mx-auto max-w-xl rounded-t-2xl">
           <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card">

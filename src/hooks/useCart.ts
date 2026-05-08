@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Product } from "@/data/products";
+import { useState, useCallback, useEffect } from "react";
+import { Product, products as PRODUCT_CATALOG } from "@/data/products";
 import { toast } from "sonner";
 
 export interface CartItem {
@@ -7,8 +7,35 @@ export interface CartItem {
   quantity: number;
 }
 
+const STORAGE_KEY = "servbem.cart.v1";
+
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed: { id: string; quantity: number }[] = JSON.parse(raw);
+      return parsed
+        .map((p) => {
+          const product = PRODUCT_CATALOG.find((x) => x.id === p.id);
+          return product ? { product, quantity: p.quantity } : null;
+        })
+        .filter(Boolean) as CartItem[];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(items.map((i) => ({ id: i.product.id, quantity: i.quantity })))
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [items]);
 
   const addItem = useCallback((product: Product, maxStock: number = 99) => {
     let added = false;
@@ -56,5 +83,18 @@ export function useCart() {
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  return { items, addItem, removeItem, getQuantity, totalItems, totalPrice, clearCart };
+  /** Replace cart with a list of product IDs + quantities (used by "Comprar novamente"). */
+  const setCartFromIds = useCallback((entries: { id: string; quantity: number }[]) => {
+    const next: CartItem[] = entries
+      .map((e) => {
+        const product = PRODUCT_CATALOG.find((p) => p.id === e.id);
+        return product ? { product, quantity: Math.max(1, e.quantity) } : null;
+      })
+      .filter(Boolean) as CartItem[];
+    setItems(next);
+    if (next.length) toast.success("Itens adicionados ao carrinho 🛒");
+    else toast.error("Os produtos deste pedido não estão mais disponíveis");
+  }, []);
+
+  return { items, addItem, removeItem, getQuantity, totalItems, totalPrice, clearCart, setCartFromIds };
 }

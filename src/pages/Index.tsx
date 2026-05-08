@@ -11,12 +11,15 @@ import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut, Shield, Package, Bike } from "lucide-react";
+import { Zap, MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
+import BottomNav from "@/components/BottomNav";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useStock } from "@/hooks/useStock";
 import { useDisabledProducts } from "@/hooks/useDisabledProducts";
+import { useOrderNotifications } from "@/hooks/useOrderNotifications";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useEffect } from "react";
 import type { Product } from "@/data/products";
 
@@ -32,6 +35,7 @@ const Index = () => {
   const cart = useCart();
   const { items, removeItem, getQuantity, totalItems, totalPrice } = cart;
   const addItem = (product: Product) => cart.addItem(product, getStock(product.id));
+  useOrderNotifications();
 
   const scrollToProducts = () => {
     productsRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,7 +83,7 @@ const Index = () => {
           <div className="flex-1">
             <SearchBar value={search} onChange={setSearch} />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
             {isAdmin && (
               <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/admin")}>
@@ -87,18 +91,26 @@ const Index = () => {
                 <span className="hidden sm:inline">Admin</span>
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/pedidos")}>
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">Pedidos</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/enderecos")}>
-              <MapPin className="h-4 w-4" />
-              <span className="hidden sm:inline">Endereços</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" aria-label="Menu do usuário">
+                  <Menu className="h-4 w-4" />
+                  <span className="hidden sm:inline">Menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/perfil")}><UserIcon className="h-4 w-4 mr-2" /> Meu perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/pedidos")}><Package className="h-4 w-4 mr-2" /> Meus pedidos</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/historico")}><History className="h-4 w-4 mr-2" /> Histórico</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/enderecos")}><MapPin className="h-4 w-4 mr-2" /> Endereços</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" /> Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="container mx-auto px-4 pb-3">
@@ -156,6 +168,7 @@ const Index = () => {
         onRemove={removeItem}
         onAdd={addItem}
       />
+      <BottomNav cartCount={totalItems} />
     </div>
   );
 };
