@@ -11,12 +11,15 @@ import Footer from "@/components/Footer";
 import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut, Shield, Package, Bike } from "lucide-react";
+import { Zap, MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
+import BottomNav from "@/components/BottomNav";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useStock } from "@/hooks/useStock";
 import { useDisabledProducts } from "@/hooks/useDisabledProducts";
+import { useOrderNotifications } from "@/hooks/useOrderNotifications";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useEffect } from "react";
 import type { Product } from "@/data/products";
 
@@ -32,6 +35,7 @@ const Index = () => {
   const cart = useCart();
   const { items, removeItem, getQuantity, totalItems, totalPrice } = cart;
   const addItem = (product: Product) => cart.addItem(product, getStock(product.id));
+  useOrderNotifications();
 
   const scrollToProducts = () => {
     productsRef.current?.scrollIntoView({ behavior: "smooth" });
