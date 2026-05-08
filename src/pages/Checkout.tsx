@@ -93,6 +93,7 @@ const Checkout = () => {
       .single();
     setLoading(false);
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
+    try { localStorage.removeItem("servbem.cart.v1"); } catch { /* ignore */ }
     toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
       state: { orderId: data.id, orderNumber, total, address, estimatedTime },
