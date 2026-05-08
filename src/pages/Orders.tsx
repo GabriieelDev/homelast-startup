@@ -21,11 +21,13 @@ interface Order {
   status: keyof typeof STATUS_META;
   created_at: string;
   estimated_time: string | null;
+  items?: { id: string; name: string; quantity: number }[];
 }
 
 const Orders = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { setCartFromIds } = useCart();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +36,7 @@ const Orders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id, order_number, total, status, created_at, estimated_time")
+        .select("id, order_number, total, status, created_at, estimated_time, items")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       setOrders((data as Order[]) ?? []);
