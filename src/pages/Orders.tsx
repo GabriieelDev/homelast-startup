@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Zap, Package, Clock, CheckCircle, Truck, ChefHat } from "lucide-react";
+import { ArrowLeft, Zap, Package, Clock, CheckCircle, Truck, ChefHat, RefreshCw } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
+import { useCart } from "@/hooks/useCart";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   recebido: { label: "Pedido recebido", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30", icon: Package },
