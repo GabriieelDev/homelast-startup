@@ -4,12 +4,31 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft, ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp } from "lucide-react";
-import { products } from "@/data/products";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft,
+  ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
+  Plus, Pencil, Trash2, Power, PowerOff,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useProducts } from "@/hooks/useProducts";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import type { Product } from "@/data/products";
 
 type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "configuracoes";
+type Period = "day" | "week" | "month" | "semester" | "year";
+
+const PERIOD_LABEL: Record<Period, string> = {
+  day: "Hoje", week: "7 dias", month: "30 dias", semester: "6 meses", year: "12 meses",
+};
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -20,13 +39,18 @@ const Admin = () => {
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [editingStock, setEditingStock] = useState<Record<string, string>>({});
+  const [period, setPeriod] = useState<Period>("month");
+  const [productFormOpen, setProductFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+
+  const { products } = useProducts();
+  const { settings, save: saveSettings } = useStoreSettings();
+  const [draftSettings, setDraftSettings] = useState(settings);
+  useEffect(() => { setDraftSettings(settings); }, [settings]);
 
   const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
   const STATUS_LABELS: Record<string, string> = {
-    recebido: "Pedido recebido",
-    preparo: "Em preparo",
-    caminho: "A caminho",
-    entregue: "Entregue",
+    recebido: "Pedido recebido", preparo: "Em preparo", caminho: "A caminho", entregue: "Entregue",
   };
   const STATUS_ICONS: Record<string, any> = { recebido: Package, preparo: ChefHat, caminho: Truck, entregue: CheckCircle };
 
@@ -50,8 +74,7 @@ const Admin = () => {
       (data ?? []).forEach((r: any) => { map[r.product_id] = r.stock; });
       setStockMap(map);
     };
-    load();
-    loadStock();
+    load(); loadStock();
     const channel = supabase
       .channel("admin-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
@@ -69,26 +92,67 @@ const Admin = () => {
     toast.success("Estoque atualizado");
   };
 
-  // Metrics
+  const adjustStock = async (productId: string, delta: number) => {
+    const current = stockMap[productId] ?? 0;
+    await updateStock(productId, Math.max(0, current + delta));
+  };
+
+  const periodStart = useMemo(() => {
+    const d = new Date();
+    if (period === "day") { d.setHours(0, 0, 0, 0); return d; }
+    if (period === "week") { d.setDate(d.getDate() - 7); return d; }
+    if (period === "month") { d.setDate(d.getDate() - 30); return d; }
+    if (period === "semester") { d.setMonth(d.getMonth() - 6); return d; }
+    d.setFullYear(d.getFullYear() - 1); return d;
+  }, [period]);
+
+  const previousStart = useMemo(() => {
+    const span = Date.now() - periodStart.getTime();
+    return new Date(periodStart.getTime() - span);
+  }, [periodStart]);
+
   const metrics = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const todays = orders.filter((o) => new Date(o.created_at) >= today);
-    const revenue = orders.filter((o) => o.status === "entregue").reduce((s, o) => s + Number(o.total), 0);
+    const inPeriod = orders.filter((o) => new Date(o.created_at) >= periodStart);
+    const previous = orders.filter((o) => {
+      const t = new Date(o.created_at);
+      return t >= previousStart && t < periodStart;
+    });
+    const delivered = inPeriod.filter((o) => o.status === "entregue");
+    const revenue = delivered.reduce((s, o) => s + Number(o.total), 0);
+    const previousRevenue = previous.filter((o) => o.status === "entregue").reduce((s, o) => s + Number(o.total), 0);
+    const ordersCount = inPeriod.length;
+    const avgTicket = ordersCount ? revenue / ordersCount : 0;
+
     const counts: Record<string, number> = {};
-    orders.forEach((o) => {
+    inPeriod.forEach((o) => {
       const items = Array.isArray(o.items) ? o.items : [];
       items.forEach((it: any) => { counts[it.id] = (counts[it.id] ?? 0) + Number(it.quantity); });
     });
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5)
       .map(([id, qty]) => ({ id, qty, name: products.find((p) => p.id === id)?.name ?? id }));
-    const delivered = orders.filter((o) => o.status === "entregue" && o.created_at && o.updated_at);
-    const avgMins = delivered.length
-      ? Math.round(delivered.reduce((s, o) => s + (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000, 0) / delivered.length)
+
+    const deliveredAll = orders.filter((o) => o.status === "entregue" && o.created_at && o.updated_at);
+    const avgMins = deliveredAll.length
+      ? Math.round(deliveredAll.reduce((s, o) => s + (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000, 0) / deliveredAll.length)
       : 0;
+
     const lowStock = products.filter((p) => (stockMap[p.id] ?? 99) > 0 && (stockMap[p.id] ?? 99) <= 5);
     const outOfStock = products.filter((p) => (stockMap[p.id] ?? 99) === 0);
-    return { todayCount: todays.length, revenue, top, avgMins, lowStock, outOfStock };
-  }, [orders, stockMap]);
+
+    const variation = previousRevenue > 0 ? ((revenue - previousRevenue) / previousRevenue) * 100 : null;
+
+    // Simple revenue chart (per bucket)
+    const buckets = period === "day" ? 24 : period === "week" ? 7 : period === "month" ? 30 : period === "semester" ? 26 : 12;
+    const bucketSize = (Date.now() - periodStart.getTime()) / buckets;
+    const series = Array.from({ length: buckets }, () => 0);
+    delivered.forEach((o) => {
+      const idx = Math.min(buckets - 1, Math.floor((new Date(o.created_at).getTime() - periodStart.getTime()) / bucketSize));
+      if (idx >= 0) series[idx] += Number(o.total);
+    });
+    const seriesMax = Math.max(1, ...series);
+
+    return { revenue, ordersCount, avgTicket, top, avgMins, lowStock, outOfStock, variation, series, seriesMax };
+  }, [orders, stockMap, products, periodStart, previousStart, period]);
 
   const advanceStatus = async (order: any) => {
     const idx = STATUS_FLOW.indexOf(order.status);
@@ -96,12 +160,7 @@ const Admin = () => {
     const next = STATUS_FLOW[idx + 1];
     const update: any = { status: next };
     if (next === "caminho" && !order.courier_id) {
-      const { data: courier } = await supabase
-        .from("couriers")
-        .select("user_id")
-        .eq("status", "disponivel")
-        .limit(1)
-        .maybeSingle();
+      const { data: courier } = await supabase.from("couriers").select("user_id").eq("status", "disponivel").limit(1).maybeSingle();
       if (courier) {
         update.courier_id = courier.user_id;
         await supabase.from("couriers").update({ status: "em_entrega" }).eq("user_id", courier.user_id);
@@ -115,6 +174,18 @@ const Admin = () => {
     toast.success(`Status atualizado para "${STATUS_LABELS[next]}"`);
   };
 
+  const toggleProductActive = async (p: Product) => {
+    const { error } = await supabase.from("products").update({ active: !p.active }).eq("id", p.id);
+    if (error) toast.error("Erro ao atualizar produto");
+    else toast.success(p.active ? "Produto desativado" : "Produto ativado");
+  };
+
+  const deleteProduct = async (p: Product) => {
+    const { error } = await supabase.from("products").delete().eq("id", p.id);
+    if (error) toast.error("Erro ao remover produto");
+    else toast.success("Produto removido");
+  };
+
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -122,9 +193,7 @@ const Admin = () => {
       </div>
     );
   }
-
   if (!user) return <Navigate to="/auth" replace />;
-
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -178,23 +247,48 @@ const Admin = () => {
         <main className="bg-card border border-border rounded-xl p-6 min-h-[400px]">
           {tab === "dashboard" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+                <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(PERIOD_LABEL) as Period[]).map((p) => (
+                      <SelectItem key={p} value={p}>{PERIOD_LABEL[p]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Pedidos hoje</p>
-                  <p className="text-2xl font-bold text-foreground">{metrics.todayCount}</p>
+                  <p className="text-xs text-muted-foreground">Faturamento</p>
+                  <p className="text-2xl font-bold text-foreground">R$ {metrics.revenue.toFixed(2)}</p>
+                  {metrics.variation !== null && (
+                    <p className={`text-xs font-semibold ${metrics.variation >= 0 ? "text-primary" : "text-destructive"}`}>
+                      {metrics.variation >= 0 ? "▲" : "▼"} {Math.abs(metrics.variation).toFixed(1)}% vs anterior
+                    </p>
+                  )}
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Faturamento (entregue)</p>
-                  <p className="text-2xl font-bold text-foreground">R$ {metrics.revenue.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Pedidos</p>
+                  <p className="text-2xl font-bold text-foreground">{metrics.ordersCount}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-secondary">
+                  <p className="text-xs text-muted-foreground">Ticket médio</p>
+                  <p className="text-2xl font-bold text-foreground">R$ {metrics.avgTicket.toFixed(2)}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-secondary">
                   <p className="text-xs text-muted-foreground">Tempo médio entrega</p>
                   <p className="text-2xl font-bold text-foreground">{metrics.avgMins || "—"} min</p>
                 </div>
-                <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Estoque baixo</p>
-                  <p className="text-2xl font-bold text-foreground">{metrics.lowStock.length + metrics.outOfStock.length}</p>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground mb-3">Faturamento ({PERIOD_LABEL[period]})</h3>
+                <div className="flex items-end gap-1 h-32">
+                  {metrics.series.map((v, i) => (
+                    <div key={i} className="flex-1 bg-primary/80 rounded-t hover:bg-primary transition-colors" style={{ height: `${(v / metrics.seriesMax) * 100}%`, minHeight: v > 0 ? "4px" : "1px" }} title={`R$ ${v.toFixed(2)}`} />
+                  ))}
                 </div>
               </div>
 
@@ -204,7 +298,7 @@ const Admin = () => {
                     <TrendingUp className="h-4 w-4 text-primary" /> Mais vendidos
                   </h3>
                   {metrics.top.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Sem vendas ainda.</p>
+                    <p className="text-sm text-muted-foreground">Sem vendas no período.</p>
                   ) : (
                     <ul className="space-y-2">
                       {metrics.top.map((t, i) => (
@@ -236,23 +330,52 @@ const Admin = () => {
               </div>
             </div>
           )}
+
           {tab === "produtos" && (
-            <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-foreground">Produtos</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground">Produtos ({products.length})</h2>
+                <Button onClick={() => { setEditingProduct(undefined); setProductFormOpen(true); }} className="gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar
+                </Button>
+              </div>
               <div className="divide-y divide-border">
-                {products.slice(0, 10).map((p) => (
-                  <div key={p.id} className="flex items-center gap-3 py-2">
-                    <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.category}</p>
+                {products.map((p) => (
+                  <div key={p.id} className="flex items-center gap-3 py-2.5">
+                    <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {p.name} {!p.active && <span className="text-xs text-muted-foreground">(inativo)</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{p.category} · R$ {p.price.toFixed(2)}</p>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">R$ {p.price.toFixed(2)}</span>
+                    <Button size="icon" variant="ghost" title={p.active ? "Desativar" : "Ativar"} onClick={() => toggleProductActive(p)}>
+                      {p.active ? <Power className="h-4 w-4 text-primary" /> : <PowerOff className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" onClick={() => { setEditingProduct(p); setProductFormOpen(true); }}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remover {p.name}?</AlertDialogTitle>
+                          <AlertDialogDescription>Esta ação é permanente. Para ocultar sem apagar, use desativar.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteProduct(p)} className="bg-destructive">Remover</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
           {tab === "pedidos" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -278,13 +401,10 @@ const Admin = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">
-                              {STATUS_LABELS[o.status]}
-                            </span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">{STATUS_LABELS[o.status]}</span>
                             <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
                           </div>
                         </div>
-
                         <div className="text-xs text-muted-foreground space-y-1">
                           <p><span className="font-semibold text-foreground">Itens:</span>{" "}
                             {items.map((it: any) => `${it.quantity}x ${it.name}`).join(", ")}
@@ -297,7 +417,6 @@ const Admin = () => {
                           )}
                           <p><span className="font-semibold text-foreground">Pagamento:</span> {o.payment_method}</p>
                         </div>
-
                         <div className="flex items-center gap-2 flex-wrap">
                           {STATUS_FLOW.map((s, i) => {
                             const Icon = STATUS_ICONS[s];
@@ -309,7 +428,6 @@ const Admin = () => {
                             );
                           })}
                         </div>
-
                         {next ? (
                           <Button size="sm" onClick={() => advanceStatus(o)} className="btn-press">
                             Avançar para "{STATUS_LABELS[next]}"
@@ -324,50 +442,88 @@ const Admin = () => {
               )}
             </div>
           )}
+
           {tab === "estoque" && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-foreground">Estoque</h2>
-              <p className="text-sm text-muted-foreground">Atualize a quantidade disponível de cada produto.</p>
+              <p className="text-sm text-muted-foreground">Atualize a quantidade ou use +/- para ajustar rapidamente.</p>
               <div className="divide-y divide-border">
                 {products.map((p) => {
                   const current = stockMap[p.id] ?? 0;
                   const draft = editingStock[p.id] ?? String(current);
                   const status = current === 0 ? "esgotado" : current <= 5 ? "baixo" : "ok";
                   return (
-                    <div key={p.id} className="flex items-center gap-3 py-2.5">
-                      <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
+                    <div key={p.id} className="flex items-center gap-2 py-2.5">
+                      <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs">
                           {status === "esgotado" && <span className="text-destructive font-bold">Esgotado</span>}
                           {status === "baixo" && <span className="text-orange-500 font-bold">Estoque baixo</span>}
                           {status === "ok" && <span className="text-primary">Em estoque</span>}
                         </p>
                       </div>
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => adjustStock(p.id, -1)}>−</Button>
                       <Input
-                        type="number"
-                        min={0}
-                        value={draft}
+                        type="number" min={0} value={draft}
                         onChange={(e) => setEditingStock((s) => ({ ...s, [p.id]: e.target.value }))}
-                        className="w-20 h-9"
+                        className="w-16 h-8"
                       />
-                      <Button size="sm" onClick={() => updateStock(p.id, parseInt(draft, 10))} className="btn-press">
-                        Salvar
-                      </Button>
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => adjustStock(p.id, +1)}>+</Button>
+                      <Button size="sm" onClick={() => updateStock(p.id, parseInt(draft, 10))}>Salvar</Button>
                     </div>
                   );
                 })}
               </div>
             </div>
           )}
+
           {tab === "configuracoes" && (
-            <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-foreground">Configurações</h2>
-              <p className="text-muted-foreground text-sm">Configurações da loja em desenvolvimento.</p>
-            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const minS = Number(draftSettings.min_shipping);
+                const maxS = Number(draftSettings.max_shipping);
+                if (maxS < minS) { toast.error("Frete máximo deve ser maior que o mínimo"); return; }
+                const err = await saveSettings({
+                  name: draftSettings.name,
+                  phone: draftSettings.phone,
+                  address: draftSettings.address,
+                  hours: draftSettings.hours,
+                  min_order: Number(draftSettings.min_order),
+                  min_shipping: minS,
+                  max_shipping: maxS,
+                });
+                if (err) toast.error("Erro ao salvar"); else toast.success("Configurações salvas ✅");
+              }}
+              className="space-y-4 max-w-xl"
+            >
+              <h2 className="text-2xl font-bold text-foreground">Configurações da loja</h2>
+
+              <div className="space-y-3 p-4 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground">Dados do mercado</h3>
+                <div className="space-y-1"><Label>Nome</Label><Input value={draftSettings.name} onChange={(e) => setDraftSettings({ ...draftSettings, name: e.target.value })} /></div>
+                <div className="space-y-1"><Label>Telefone</Label><Input value={draftSettings.phone} onChange={(e) => setDraftSettings({ ...draftSettings, phone: e.target.value })} placeholder="(11) 99999-9999" /></div>
+                <div className="space-y-1"><Label>Endereço</Label><Input value={draftSettings.address} onChange={(e) => setDraftSettings({ ...draftSettings, address: e.target.value })} placeholder="Rua, número, bairro, cidade" /></div>
+                <div className="space-y-1"><Label>Horário de funcionamento</Label><Input value={draftSettings.hours} onChange={(e) => setDraftSettings({ ...draftSettings, hours: e.target.value })} /></div>
+              </div>
+
+              <div className="space-y-3 p-4 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground">Pedido & frete</h3>
+                <div className="space-y-1"><Label>Pedido mínimo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.min_order} onChange={(e) => setDraftSettings({ ...draftSettings, min_order: Number(e.target.value) })} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1"><Label>Frete mínimo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.min_shipping} onChange={(e) => setDraftSettings({ ...draftSettings, min_shipping: Number(e.target.value) })} /></div>
+                  <div className="space-y-1"><Label>Frete máximo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.max_shipping} onChange={(e) => setDraftSettings({ ...draftSettings, max_shipping: Number(e.target.value) })} /></div>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full">Salvar configurações</Button>
+            </form>
           )}
         </main>
       </div>
+
+      <ProductFormDialog open={productFormOpen} onOpenChange={setProductFormOpen} product={editingProduct} />
     </div>
   );
 };
