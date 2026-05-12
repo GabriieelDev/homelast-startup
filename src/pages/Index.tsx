@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
 import SearchBar from "@/components/SearchBar";
@@ -8,10 +8,9 @@ import FloatingCart from "@/components/FloatingCart";
 import Features from "@/components/Features";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
-import { products } from "@/data/products";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu } from "lucide-react";
+import { Zap, MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import BottomNav from "@/components/BottomNav";
@@ -19,8 +18,9 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useStock } from "@/hooks/useStock";
 import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useOrderNotifications } from "@/hooks/useOrderNotifications";
+import { useProducts } from "@/hooks/useProducts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useEffect } from "react";
+import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import type { Product } from "@/data/products";
 
 const Index = () => {
@@ -29,8 +29,10 @@ const Index = () => {
   const { isAdmin, isCourier, loading: roleLoading } = useUserRole();
   const { getStock } = useStock();
   const { isDisabled, disableProduct } = useDisabledProducts();
+  const { products } = useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [showProductForm, setShowProductForm] = useState(false);
   const productsRef = useRef<HTMLDivElement>(null);
   const cart = useCart();
   const { items, removeItem, getQuantity, totalItems, totalPrice } = cart;
@@ -49,9 +51,8 @@ const Index = () => {
 
   const filtered = useMemo(() => {
     let list = products;
-    // Hide disabled products from non-admin users
     if (!isAdmin) {
-      list = list.filter((p) => !isDisabled(p.id));
+      list = list.filter((p) => p.active !== false && !isDisabled(p.id));
     }
     if (category !== "all") {
       list = list.filter((p) => p.category === category);
@@ -60,7 +61,7 @@ const Index = () => {
       list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     }
     return list;
-  }, [category, search, isAdmin, isDisabled]);
+  }, [products, category, search, isAdmin, isDisabled]);
 
   const isFiltering = search.length >= 2 || category !== "all";
 
@@ -71,7 +72,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2 shrink-0">
@@ -118,11 +118,16 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero - only show when not filtering */}
       {!isFiltering && <HeroSection onStart={scrollToProducts} />}
 
-      {/* Products Feed */}
       <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-28">
+        {isAdmin && (
+          <div className="flex justify-end">
+            <Button onClick={() => setShowProductForm(true)} className="gap-2">
+              <Plus className="h-4 w-4" /> Adicionar produto
+            </Button>
+          </div>
+        )}
         {isFiltering ? (
           <ProductSection
             title={`Resultados${search ? ` para "${search}"` : ""}`}
@@ -161,14 +166,12 @@ const Index = () => {
 
       <Footer />
 
-      <FloatingCart
-        items={items}
-        totalItems={totalItems}
-        totalPrice={totalPrice}
-        onRemove={removeItem}
-        onAdd={addItem}
-      />
+      <FloatingCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
       <BottomNav cartCount={totalItems} />
+
+      {isAdmin && (
+        <ProductFormDialog open={showProductForm} onOpenChange={setShowProductForm} />
+      )}
     </div>
   );
 };
