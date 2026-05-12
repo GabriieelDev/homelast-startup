@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
+import { useProducts } from "@/hooks/useProducts";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Zap, RefreshCw, Eye } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { toast } from "sonner";
 
 interface OrderRow {
   id: string;
@@ -26,7 +28,8 @@ const STATUS_LABEL: Record<string, string> = {
 const Historico = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { setCartFromIds } = useCart();
+  const { setCartFromProducts } = useCart();
+  const { getById } = useProducts();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,8 +47,11 @@ const Historico = () => {
   }, [user]);
 
   const buyAgain = (o: OrderRow) => {
-    const entries = (o.items ?? []).map((i) => ({ id: i.id, quantity: i.quantity }));
-    setCartFromIds(entries);
+    const entries = (o.items ?? [])
+      .map((i) => { const p = getById(i.id); return p ? { product: p, quantity: i.quantity } : null; })
+      .filter(Boolean) as { product: any; quantity: number }[];
+    if (!entries.length) { toast.error("Produtos não estão mais disponíveis"); return; }
+    setCartFromProducts(entries);
     navigate("/");
   };
 

@@ -256,6 +256,51 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image: string
+          name: string
+          original_price: number | null
+          price: number
+          sections: string[]
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          id: string
+          image?: string
+          name: string
+          original_price?: number | null
+          price?: number
+          sections?: string[]
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string
+          name?: string
+          original_price?: number | null
+          price?: number
+          sections?: string[]
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -280,6 +325,42 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      store_settings: {
+        Row: {
+          address: string | null
+          hours: string | null
+          id: string
+          max_shipping: number
+          min_order: number
+          min_shipping: number
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          hours?: string | null
+          id: string
+          max_shipping?: number
+          min_order?: number
+          min_shipping?: number
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          hours?: string | null
+          id?: string
+          max_shipping?: number
+          min_order?: number
+          min_shipping?: number
+          name?: string
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

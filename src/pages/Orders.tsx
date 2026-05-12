@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Zap, Package, Clock, CheckCircle, Truck, ChefHat, RefreshCw } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/hooks/useCart";
+import { useProducts } from "@/hooks/useProducts";
+import { toast } from "sonner";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
   recebido: { label: "Pedido recebido", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30", icon: Package },
@@ -27,7 +29,16 @@ interface Order {
 const Orders = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { setCartFromIds } = useCart();
+  const { setCartFromProducts } = useCart();
+  const { getById } = useProducts();
+  const repurchase = (items: { id: string; quantity: number }[]) => {
+    const entries = items
+      .map((i) => { const p = getById(i.id); return p ? { product: p, quantity: i.quantity } : null; })
+      .filter(Boolean) as { product: any; quantity: number }[];
+    if (!entries.length) { toast.error("Produtos não estão mais disponíveis"); return; }
+    setCartFromProducts(entries);
+    navigate("/");
+  };
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +106,7 @@ const Orders = () => {
                       Ver detalhes
                     </Button>
                     {o.items?.length ? (
-                      <Button size="sm" className="gap-1.5" onClick={() => { setCartFromIds(o.items!.map(i => ({ id: i.id, quantity: i.quantity }))); navigate("/"); }}>
+                      <Button size="sm" className="gap-1.5" onClick={() => repurchase(o.items!)}>
                         <RefreshCw className="h-3.5 w-3.5" /> Recomprar
                       </Button>
                     ) : null}

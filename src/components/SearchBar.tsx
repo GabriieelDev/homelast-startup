@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, X } from "lucide-react";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 interface SearchBarProps {
   value: string;
@@ -9,13 +9,14 @@ interface SearchBarProps {
 
 const SearchBar = ({ value, onChange }: SearchBarProps) => {
   const [focused, setFocused] = useState(false);
+  const { products } = useProducts();
 
   const suggestions = useMemo(() => {
     if (value.length < 2) return [];
     return products
-      .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
+      .filter((p) => p.active !== false && p.name.toLowerCase().includes(value.toLowerCase()))
       .slice(0, 5);
-  }, [value]);
+  }, [value, products]);
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
