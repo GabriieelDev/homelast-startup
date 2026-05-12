@@ -8,6 +8,7 @@ import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, Ch
 import { CartItem } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { toast } from "sonner";
 
 const PAYMENT_METHODS = [
@@ -26,10 +27,15 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const { coupon, error: couponError, loading: couponLoading, apply: applyCoupon, clear: clearCoupon } = useCoupon();
+  const { settings } = useStoreSettings();
 
   const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
+  const minS = settings.min_shipping;
+  const maxS = Math.max(minS, settings.max_shipping);
   const state = rawState
-    ? { ...rawState, frete: typeof rawState.frete === "number" ? rawState.frete : Number((Math.random() * 10 + 5).toFixed(2)) }
+    ? { ...rawState, frete: typeof rawState.frete === "number"
+        ? Math.min(maxS, Math.max(minS, rawState.frete))
+        : Number((Math.random() * (maxS - minS) + minS).toFixed(2)) }
     : null;
 
   useEffect(() => {
@@ -63,6 +69,10 @@ const Checkout = () => {
     if (!user) { toast.error("Você precisa estar logado"); navigate("/auth"); return; }
     if (!items.length) { toast.error("Carrinho vazio"); navigate("/"); return; }
     if (!address) { toast.error("Selecione um endereço de entrega"); return; }
+    if (settings.min_order > 0 && totalPrice < settings.min_order) {
+      toast.error(`Pedido mínimo de R$ ${settings.min_order.toFixed(2)}`);
+      return;
+    }
     setLoading(true);
     const itemCount = items.reduce((s, i) => s + i.quantity, 0);
     const { label: estimatedTime } = estimateDeliveryMinutes(itemCount, address);
@@ -93,7 +103,7 @@ const Checkout = () => {
       .single();
     setLoading(false);
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
-    try { localStorage.removeItem("servbem.cart.v1"); } catch { /* ignore */ }
+    try { localStorage.removeItem("servbem.cart.v2"); } catch { /* ignore */ }
     toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
       state: { orderId: data.id, orderNumber, total, address, estimatedTime },
