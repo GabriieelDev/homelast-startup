@@ -27,6 +27,7 @@ const SECTIONS = [
 const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [costPrice, setCostPrice] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [image, setImage] = useState("");
   const [category, setCategory] = useState("mercearia");
@@ -40,6 +41,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
     if (open) {
       setName(product?.name ?? "");
       setPrice(product ? String(product.price) : "");
+      setCostPrice(product?.costPrice ? String(product.costPrice) : "");
       setOriginalPrice(product?.originalPrice ? String(product.originalPrice) : "");
       setImage(product?.image ?? "");
       setCategory(product?.category ?? "mercearia");
@@ -50,6 +52,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
     }
   }, [open, product]);
 
+  const priceNum = parseFloat(price) || 0;
+  const costNum = parseFloat(costPrice) || 0;
+  const margin = priceNum > 0 && costNum > 0 ? ((priceNum - costNum) / priceNum) * 100 : null;
+
   const toggleSection = (id: string) => {
     setSections((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
   };
@@ -57,12 +63,12 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !price) { toast.error("Preencha nome e preço"); return; }
-    const priceNum = parseFloat(price);
     if (isNaN(priceNum) || priceNum < 0) { toast.error("Preço inválido"); return; }
     setSaving(true);
     const payload: any = {
       name: name.trim(),
       price: priceNum,
+      cost_price: costNum,
       original_price: originalPrice ? parseFloat(originalPrice) : null,
       image: image.trim() || "/placeholder.svg",
       category,
@@ -103,6 +109,15 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label>Preço (R$)</Label><Input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} required /></div>
             <div className="space-y-1"><Label>Preço original</Label><Input type="number" step="0.01" min="0" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} placeholder="opcional" /></div>
+          </div>
+          <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
+            <div className="space-y-1">
+              <Label>Preço de custo (R$)</Label>
+              <Input type="number" step="0.01" min="0" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="0,00" />
+            </div>
+            <div className={`px-3 py-2 rounded-lg text-sm font-bold ${margin === null ? "bg-muted text-muted-foreground" : margin >= 30 ? "bg-primary/10 text-primary" : margin >= 0 ? "bg-orange-500/10 text-orange-600" : "bg-destructive/10 text-destructive"}`}>
+              Margem: {margin === null ? "—" : `${margin.toFixed(1)}%`}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
