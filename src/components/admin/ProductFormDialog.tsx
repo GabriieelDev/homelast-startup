@@ -63,7 +63,6 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !price) { toast.error("Preencha nome e preço"); return; }
-    const priceNum = parseFloat(price);
     if (isNaN(priceNum) || priceNum < 0) { toast.error("Preço inválido"); return; }
     setSaving(true);
     const payload: any = {
