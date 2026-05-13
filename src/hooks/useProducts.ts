@@ -30,7 +30,7 @@ export function useProducts() {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel("products-feed")
+      .channel(`products-feed-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
