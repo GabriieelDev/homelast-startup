@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft,
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
-  Plus, Pencil, Trash2, Power, PowerOff,
+  Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,8 +22,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { Product } from "@/data/products";
+import { downloadCSV, downloadExcelXML, openPrintableReport } from "@/lib/reports";
 
-type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
@@ -212,8 +213,131 @@ const Admin = () => {
     { key: "produtos", label: "Produtos", icon: Package },
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
+    { key: "financeiro", label: "Financeiro", icon: DollarSign },
+    { key: "relatorios", label: "Relatórios", icon: FileText },
     { key: "configuracoes", label: "Configurações", icon: Settings },
   ];
+
+  // ---- Financeiro: lucro por pedido baseado em cost_price ----
+  const productCostMap = useMemo(() => {
+    const m: Record<string, number> = {};
+    products.forEach((p) => { m[p.id] = p.costPrice ?? 0; });
+    return m;
+  }, [products]);
+
+  const financial = useMemo(() => {
+    const inPeriod = orders.filter((o) => new Date(o.created_at) >= periodStart && o.status === "entregue");
+    let revenue = 0, cogs = 0;
+    const byProduct: Record<string, { name: string; qty: number; revenue: number; cost: number }> = {};
+    inPeriod.forEach((o) => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      items.forEach((it: any) => {
+        const qty = Number(it.quantity) || 0;
+        const lineRev = Number(it.price) * qty;
+        const lineCost = (productCostMap[it.id] ?? 0) * qty;
+        revenue += lineRev;
+        cogs += lineCost;
+        if (!byProduct[it.id]) byProduct[it.id] = { name: it.name, qty: 0, revenue: 0, cost: 0 };
+        byProduct[it.id].qty += qty;
+        byProduct[it.id].revenue += lineRev;
+        byProduct[it.id].cost += lineCost;
+      });
+    });
+    const profit = revenue - cogs;
+    const marginPct = revenue > 0 ? (profit / revenue) * 100 : 0;
+    const topProfit = Object.entries(byProduct)
+      .map(([id, v]) => ({ id, ...v, profit: v.revenue - v.cost, margin: v.revenue > 0 ? ((v.revenue - v.cost) / v.revenue) * 100 : 0 }))
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, 5);
+    return { revenue, cogs, profit, marginPct, topProfit, ordersCount: inPeriod.length };
+  }, [orders, productCostMap, periodStart]);
+
+  // ---- Relatórios: builders ----
+  const buildSalesRows = () => orders
+    .filter((o) => new Date(o.created_at) >= periodStart && o.status === "entregue")
+    .map((o) => ({
+      pedido: o.order_number,
+      data: new Date(o.created_at).toLocaleString("pt-BR"),
+      cliente: profilesMap[o.user_id] || "—",
+      itens: (Array.isArray(o.items) ? o.items : []).reduce((s: number, it: any) => s + Number(it.quantity), 0),
+      subtotal: Number(o.subtotal).toFixed(2),
+      frete: Number(o.shipping).toFixed(2),
+      total: Number(o.total).toFixed(2),
+      pagamento: o.payment_method,
+    }));
+
+  const buildOrdersRows = () => orders.map((o) => ({
+    pedido: o.order_number,
+    data: new Date(o.created_at).toLocaleString("pt-BR"),
+    status: STATUS_LABELS[o.status] ?? o.status,
+    cliente: profilesMap[o.user_id] || "—",
+    itens: (Array.isArray(o.items) ? o.items : []).map((it: any) => `${it.quantity}x ${it.name}`).join(" | "),
+    total: Number(o.total).toFixed(2),
+    pagamento: o.payment_method,
+  }));
+
+  const buildProductsRows = () => {
+    const counts: Record<string, { qty: number; revenue: number }> = {};
+    orders.filter((o) => new Date(o.created_at) >= periodStart && o.status === "entregue").forEach((o) => {
+      (Array.isArray(o.items) ? o.items : []).forEach((it: any) => {
+        const qty = Number(it.quantity) || 0;
+        if (!counts[it.id]) counts[it.id] = { qty: 0, revenue: 0 };
+        counts[it.id].qty += qty;
+        counts[it.id].revenue += Number(it.price) * qty;
+      });
+    });
+    return products.map((p) => {
+      const c = counts[p.id] ?? { qty: 0, revenue: 0 };
+      const cost = (p.costPrice ?? 0) * c.qty;
+      return {
+        produto: p.name,
+        categoria: p.category,
+        preco: p.price.toFixed(2),
+        custo: (p.costPrice ?? 0).toFixed(2),
+        margem_pct: p.costPrice && p.price ? (((p.price - p.costPrice) / p.price) * 100).toFixed(1) : "—",
+        vendidos: c.qty,
+        receita: c.revenue.toFixed(2),
+        lucro: (c.revenue - cost).toFixed(2),
+        estoque: stockMap[p.id] ?? 0,
+        ativo: p.active ? "sim" : "não",
+      };
+    }).sort((a, b) => Number(b.vendidos) - Number(a.vendidos));
+  };
+
+  const buildStockRows = () => products.map((p) => {
+    const s = stockMap[p.id] ?? 0;
+    return {
+      produto: p.name,
+      categoria: p.category,
+      estoque: s,
+      status: s === 0 ? "Esgotado" : s <= 5 ? "Baixo" : "OK",
+    };
+  });
+
+  const buildClientsRows = () => {
+    const map: Record<string, { name: string; orders: number; total: number }> = {};
+    orders.forEach((o) => {
+      const id = o.user_id;
+      if (!map[id]) map[id] = { name: profilesMap[id] || "—", orders: 0, total: 0 };
+      map[id].orders += 1;
+      map[id].total += Number(o.total);
+    });
+    return Object.values(map).map((c) => ({
+      cliente: c.name,
+      pedidos: c.orders,
+      total_gasto: c.total.toFixed(2),
+      ticket_medio: (c.total / c.orders).toFixed(2),
+    })).sort((a, b) => Number(b.total_gasto) - Number(a.total_gasto));
+  };
+
+  const REPORTS = [
+    { key: "vendas", title: "Vendas", build: buildSalesRows, sub: PERIOD_LABEL[period] },
+    { key: "pedidos", title: "Pedidos", build: buildOrdersRows, sub: "Todos os pedidos" },
+    { key: "produtos", title: "Produtos & lucratividade", build: buildProductsRows, sub: PERIOD_LABEL[period] },
+    { key: "estoque", title: "Estoque", build: buildStockRows, sub: "Snapshot atual" },
+    { key: "clientes", title: "Clientes", build: buildClientsRows, sub: "Histórico completo" },
+  ];
+
 
   return (
     <div className="min-h-screen bg-background">
