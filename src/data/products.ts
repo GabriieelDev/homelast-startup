@@ -13,6 +13,7 @@ export interface Product {
   unit: string;
   description?: string;
   active?: boolean;
+  costPrice?: number;
 }
 
 export const categories = [

@@ -14,6 +14,7 @@ function fromRow(r: any): Product {
     unit: r.unit ?? "un",
     description: r.description ?? "",
     active: r.active !== false,
+    costPrice: r.cost_price ? Number(r.cost_price) : 0,
   } as Product;
 }
 
