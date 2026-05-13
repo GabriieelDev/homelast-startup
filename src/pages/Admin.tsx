@@ -602,6 +602,112 @@ const Admin = () => {
             </div>
           )}
 
+          {tab === "financeiro" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <h2 className="text-2xl font-bold text-foreground">Financeiro & Lucro</h2>
+                <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(PERIOD_LABEL) as Period[]).map((p) => (
+                      <SelectItem key={p} value={p}>{PERIOD_LABEL[p]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg bg-secondary">
+                  <p className="text-xs text-muted-foreground">Receita</p>
+                  <p className="text-2xl font-bold text-foreground">R$ {financial.revenue.toFixed(2)}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-secondary">
+                  <p className="text-xs text-muted-foreground">Custo (CMV)</p>
+                  <p className="text-2xl font-bold text-foreground">R$ {financial.cogs.toFixed(2)}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-primary/10">
+                  <p className="text-xs text-muted-foreground">Lucro estimado</p>
+                  <p className="text-2xl font-bold text-primary">R$ {financial.profit.toFixed(2)}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-secondary">
+                  <p className="text-xs text-muted-foreground">Margem média</p>
+                  <p className="text-2xl font-bold text-foreground">{financial.marginPct.toFixed(1)}%</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground mb-3">Top 5 produtos mais lucrativos</h3>
+                {financial.topProfit.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Sem dados. Cadastre o <strong>preço de custo</strong> em cada produto para visualizar lucro.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {financial.topProfit.map((p, i) => (
+                      <div key={p.id} className="flex items-center justify-between text-sm border-b border-border last:border-0 pb-2 last:pb-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate">{i + 1}. {p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.qty} un · margem {p.margin.toFixed(1)}%</p>
+                        </div>
+                        <span className="font-bold text-primary">R$ {p.profit.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-sm text-foreground">
+                💡 Os cálculos de lucro consideram apenas pedidos <strong>entregues</strong> no período e o
+                preço de custo cadastrado em cada produto. Edite produtos para definir o custo.
+              </div>
+            </div>
+          )}
+
+          {tab === "relatorios" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <h2 className="text-2xl font-bold text-foreground">Relatórios</h2>
+                <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(PERIOD_LABEL) as Period[]).map((p) => (
+                      <SelectItem key={p} value={p}>{PERIOD_LABEL[p]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Exporte os dados da loja em CSV (planilhas/Sheets), Excel (.xls) ou PDF (via impressão do navegador).
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-3">
+                {REPORTS.map((r) => (
+                  <div key={r.key} className="p-4 rounded-lg border border-border space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{r.title}</h3>
+                      <p className="text-xs text-muted-foreground">{r.sub}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" className="gap-1.5"
+                        onClick={() => downloadCSV(`${r.key}-${Date.now()}.csv`, r.build())}>
+                        <Download className="h-3.5 w-3.5" /> CSV
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-1.5"
+                        onClick={() => downloadExcelXML(`${r.key}-${Date.now()}.xls`, r.build(), r.title)}>
+                        <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-1.5"
+                        onClick={() => openPrintableReport(r.title, r.build(), r.sub)}>
+                        <Printer className="h-3.5 w-3.5" /> PDF
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {tab === "configuracoes" && (
             <form
               onSubmit={async (e) => {
