@@ -27,6 +27,7 @@ const SECTIONS = [
 const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [costPrice, setCostPrice] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [image, setImage] = useState("");
   const [category, setCategory] = useState("mercearia");
@@ -40,6 +41,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
     if (open) {
       setName(product?.name ?? "");
       setPrice(product ? String(product.price) : "");
+      setCostPrice(product?.costPrice ? String(product.costPrice) : "");
       setOriginalPrice(product?.originalPrice ? String(product.originalPrice) : "");
       setImage(product?.image ?? "");
       setCategory(product?.category ?? "mercearia");
@@ -49,6 +51,10 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       setStock("50");
     }
   }, [open, product]);
+
+  const priceNum = parseFloat(price) || 0;
+  const costNum = parseFloat(costPrice) || 0;
+  const margin = priceNum > 0 && costNum > 0 ? ((priceNum - costNum) / priceNum) * 100 : null;
 
   const toggleSection = (id: string) => {
     setSections((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
@@ -63,6 +69,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
     const payload: any = {
       name: name.trim(),
       price: priceNum,
+      cost_price: costNum,
       original_price: originalPrice ? parseFloat(originalPrice) : null,
       image: image.trim() || "/placeholder.svg",
       category,
