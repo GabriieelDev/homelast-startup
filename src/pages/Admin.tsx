@@ -412,7 +412,7 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-6 grid md:grid-cols-[220px_1fr] gap-6">
         <aside className="space-y-1">
-          {tabs.map(({ key, label, icon: Icon }) => (
+          {tabs.map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
@@ -420,7 +420,13 @@ const Admin = () => {
                 tab === key ? "bg-primary text-primary-foreground shadow" : "text-foreground hover:bg-secondary"
               }`}
             >
-              <Icon className="h-4 w-4" /> {label}
+              <Icon className="h-4 w-4" />
+              <span className="flex-1 text-left">{label}</span>
+              {badge && badge > 0 ? (
+                <span className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                  tab === key ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground"
+                }`}>{badge}</span>
+              ) : null}
             </button>
           ))}
         </aside>
