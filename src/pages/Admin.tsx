@@ -10,6 +10,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft,
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
+  Bell, BellOff, Clock, TrendingDown, PackageX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ import {
 import type { Product } from "@/data/products";
 import { downloadCSV, downloadExcelXML, openPrintableReport } from "@/lib/reports";
 
-type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "financeiro" | "relatorios" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
@@ -221,6 +222,61 @@ const Admin = () => {
     return { revenue, cogs, profit, marginPct, topProfit, ordersCount: inPeriod.length };
   }, [orders, productCostMap, periodStart]);
 
+  // ---- Alertas configuráveis ----
+  type AlertItem = {
+    id: string;
+    kind: "stock_out" | "stock_low" | "order_late" | "sales_drop";
+    severity: "high" | "medium" | "low";
+    title: string;
+    detail: string;
+  };
+  const alerts = useMemo<AlertItem[]>(() => {
+    if (!settings.alerts_enabled) return [];
+    const list: AlertItem[] = [];
+    const lowT = settings.low_stock_threshold;
+    const lateT = settings.late_order_minutes;
+    const dropT = settings.sales_drop_pct;
+
+    products.forEach((p) => {
+      const s = stockMap[p.id] ?? 99;
+      if (s === 0) {
+        list.push({ id: `out-${p.id}`, kind: "stock_out", severity: "high",
+          title: `${p.name} esgotado`, detail: `Produto sem estoque — indisponível na loja.` });
+      } else if (s <= lowT) {
+        list.push({ id: `low-${p.id}`, kind: "stock_low", severity: "medium",
+          title: `${p.name} com estoque baixo`, detail: `Restam ${s} un (limite: ${lowT}).` });
+      }
+    });
+
+    const now = Date.now();
+    orders.forEach((o) => {
+      if (o.status === "entregue" || o.status === "cancelado") return;
+      const mins = Math.floor((now - new Date(o.created_at).getTime()) / 60000);
+      if (mins >= lateT) {
+        list.push({ id: `late-${o.id}`, kind: "order_late", severity: "high",
+          title: `Pedido #${o.order_number} atrasado`, detail: `Aberto há ${mins} min (limite: ${lateT}).` });
+      }
+    });
+
+    const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
+    const startYesterday = new Date(startToday); startYesterday.setDate(startYesterday.getDate() - 1);
+    const sumRange = (from: Date, to: Date) => orders
+      .filter((o) => o.status === "entregue" && new Date(o.created_at) >= from && new Date(o.created_at) < to)
+      .reduce((s, o) => s + Number(o.total), 0);
+    const today = sumRange(startToday, new Date(now));
+    const yesterday = sumRange(startYesterday, startToday);
+    if (yesterday > 0) {
+      const dropPct = ((yesterday - today) / yesterday) * 100;
+      if (dropPct >= dropT) {
+        list.push({ id: "sales-drop", kind: "sales_drop", severity: "medium",
+          title: "Queda de vendas hoje", detail: `Hoje R$ ${today.toFixed(2)} vs ontem R$ ${yesterday.toFixed(2)} (-${dropPct.toFixed(0)}%, limite: ${dropT}%).` });
+      }
+    }
+
+    const order = { high: 0, medium: 1, low: 2 } as const;
+    return list.sort((a, b) => order[a.severity] - order[b.severity]);
+  }, [products, stockMap, orders, settings]);
+
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -242,11 +298,12 @@ const Admin = () => {
     );
   }
 
-  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard }[] = [
+  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "produtos", label: "Produtos", icon: Package },
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
+    { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
     { key: "financeiro", label: "Financeiro", icon: DollarSign },
     { key: "relatorios", label: "Relatórios", icon: FileText },
     { key: "configuracoes", label: "Configurações", icon: Settings },
@@ -355,7 +412,7 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-6 grid md:grid-cols-[220px_1fr] gap-6">
         <aside className="space-y-1">
-          {tabs.map(({ key, label, icon: Icon }) => (
+          {tabs.map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
@@ -363,7 +420,13 @@ const Admin = () => {
                 tab === key ? "bg-primary text-primary-foreground shadow" : "text-foreground hover:bg-secondary"
               }`}
             >
-              <Icon className="h-4 w-4" /> {label}
+              <Icon className="h-4 w-4" />
+              <span className="flex-1 text-left">{label}</span>
+              {badge && badge > 0 ? (
+                <span className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                  tab === key ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground"
+                }`}>{badge}</span>
+              ) : null}
             </button>
           ))}
         </aside>
@@ -599,6 +662,100 @@ const Admin = () => {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {tab === "alertas" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    <Bell className="h-6 w-6 text-primary" /> Alertas
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {settings.alerts_enabled
+                      ? `${alerts.length} alerta(s) ativo(s) com base nas suas regras.`
+                      : "Alertas desativados nas configurações."}
+                  </p>
+                </div>
+                <Button
+                  variant={settings.alerts_enabled ? "outline" : "default"}
+                  className="gap-2"
+                  onClick={async () => {
+                    const err = await saveSettings({ alerts_enabled: !settings.alerts_enabled } as any);
+                    if (err) toast.error("Erro ao atualizar"); else toast.success(settings.alerts_enabled ? "Alertas desativados" : "Alertas ativados");
+                  }}
+                >
+                  {settings.alerts_enabled ? <><BellOff className="h-4 w-4" /> Desativar</> : <><Bell className="h-4 w-4" /> Ativar</>}
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {!settings.alerts_enabled ? (
+                  <div className="p-6 rounded-lg border border-dashed border-border text-center text-muted-foreground">
+                    Ative os alertas para começar a receber notificações.
+                  </div>
+                ) : alerts.length === 0 ? (
+                  <div className="p-6 rounded-lg border border-dashed border-border text-center text-muted-foreground">
+                    🎉 Nenhum alerta no momento. Tudo certo!
+                  </div>
+                ) : (
+                  alerts.map((a) => {
+                    const Icon = a.kind === "stock_out" ? PackageX
+                      : a.kind === "stock_low" ? AlertTriangle
+                      : a.kind === "order_late" ? Clock
+                      : TrendingDown;
+                    const tone = a.severity === "high"
+                      ? "bg-destructive/10 border-destructive/40"
+                      : "bg-orange-500/10 border-orange-500/40";
+                    return (
+                      <div key={a.id} className={`flex items-start gap-3 p-3 rounded-lg border ${tone}`}>
+                        <Icon className={`h-5 w-5 shrink-0 mt-0.5 ${a.severity === "high" ? "text-destructive" : "text-orange-500"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground">{a.title}</p>
+                          <p className="text-xs text-muted-foreground">{a.detail}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const err = await saveSettings({
+                    low_stock_threshold: Number(draftSettings.low_stock_threshold),
+                    late_order_minutes: Number(draftSettings.late_order_minutes),
+                    sales_drop_pct: Number(draftSettings.sales_drop_pct),
+                  } as any);
+                  if (err) toast.error("Erro ao salvar"); else toast.success("Regras de alerta salvas ✅");
+                }}
+                className="space-y-4 p-4 rounded-lg border border-border"
+              >
+                <h3 className="font-semibold text-foreground">Regras configuráveis</h3>
+                <div className="grid md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label>Estoque baixo (≤ un)</Label>
+                    <Input type="number" min="1" value={draftSettings.low_stock_threshold}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, low_stock_threshold: Number(e.target.value) })} />
+                    <p className="text-[11px] text-muted-foreground">Avisar quando produto chega nesse nível.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Pedido atrasado (min)</Label>
+                    <Input type="number" min="5" value={draftSettings.late_order_minutes}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, late_order_minutes: Number(e.target.value) })} />
+                    <p className="text-[11px] text-muted-foreground">Pedido aberto há mais que isso vira alerta.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Queda de vendas (%)</Label>
+                    <Input type="number" min="1" max="100" value={draftSettings.sales_drop_pct}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, sales_drop_pct: Number(e.target.value) })} />
+                    <p className="text-[11px] text-muted-foreground">Comparativo hoje vs ontem.</p>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full md:w-auto">Salvar regras</Button>
+              </form>
             </div>
           )}
 
