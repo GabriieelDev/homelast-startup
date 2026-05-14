@@ -334,35 +334,47 @@ export type Database = {
       store_settings: {
         Row: {
           address: string | null
+          alerts_enabled: boolean
           hours: string | null
           id: string
+          late_order_minutes: number
+          low_stock_threshold: number
           max_shipping: number
           min_order: number
           min_shipping: number
           name: string
           phone: string | null
+          sales_drop_pct: number
           updated_at: string
         }
         Insert: {
           address?: string | null
+          alerts_enabled?: boolean
           hours?: string | null
           id: string
+          late_order_minutes?: number
+          low_stock_threshold?: number
           max_shipping?: number
           min_order?: number
           min_shipping?: number
           name?: string
           phone?: string | null
+          sales_drop_pct?: number
           updated_at?: string
         }
         Update: {
           address?: string | null
+          alerts_enabled?: boolean
           hours?: string | null
           id?: string
+          late_order_minutes?: number
+          low_stock_threshold?: number
           max_shipping?: number
           min_order?: number
           min_shipping?: number
           name?: string
           phone?: string | null
+          sales_drop_pct?: number
           updated_at?: string
         }
         Relationships: []
