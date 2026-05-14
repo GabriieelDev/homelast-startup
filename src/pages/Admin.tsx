@@ -187,6 +187,40 @@ const Admin = () => {
     else toast.success("Produto removido");
   };
 
+  // ---- Financeiro: lucro por pedido baseado em cost_price ----
+  const productCostMap = useMemo(() => {
+    const m: Record<string, number> = {};
+    products.forEach((p) => { m[p.id] = p.costPrice ?? 0; });
+    return m;
+  }, [products]);
+
+  const financial = useMemo(() => {
+    const inPeriod = orders.filter((o) => new Date(o.created_at) >= periodStart && o.status === "entregue");
+    let revenue = 0, cogs = 0;
+    const byProduct: Record<string, { name: string; qty: number; revenue: number; cost: number }> = {};
+    inPeriod.forEach((o) => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      items.forEach((it: any) => {
+        const qty = Number(it.quantity) || 0;
+        const lineRev = Number(it.price) * qty;
+        const lineCost = (productCostMap[it.id] ?? 0) * qty;
+        revenue += lineRev;
+        cogs += lineCost;
+        if (!byProduct[it.id]) byProduct[it.id] = { name: it.name, qty: 0, revenue: 0, cost: 0 };
+        byProduct[it.id].qty += qty;
+        byProduct[it.id].revenue += lineRev;
+        byProduct[it.id].cost += lineCost;
+      });
+    });
+    const profit = revenue - cogs;
+    const marginPct = revenue > 0 ? (profit / revenue) * 100 : 0;
+    const topProfit = Object.entries(byProduct)
+      .map(([id, v]) => ({ id, ...v, profit: v.revenue - v.cost, margin: v.revenue > 0 ? ((v.revenue - v.cost) / v.revenue) * 100 : 0 }))
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, 5);
+    return { revenue, cogs, profit, marginPct, topProfit, ordersCount: inPeriod.length };
+  }, [orders, productCostMap, periodStart]);
+
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
