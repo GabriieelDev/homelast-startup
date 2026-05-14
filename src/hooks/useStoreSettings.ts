@@ -10,6 +10,10 @@ export interface StoreSettings {
   min_order: number;
   min_shipping: number;
   max_shipping: number;
+  alerts_enabled: boolean;
+  low_stock_threshold: number;
+  late_order_minutes: number;
+  sales_drop_pct: number;
 }
 
 const DEFAULTS: StoreSettings = {
@@ -21,6 +25,10 @@ const DEFAULTS: StoreSettings = {
   min_order: 0,
   min_shipping: 5,
   max_shipping: 15,
+  alerts_enabled: true,
+  low_stock_threshold: 5,
+  late_order_minutes: 60,
+  sales_drop_pct: 30,
 };
 
 export function useStoreSettings() {
