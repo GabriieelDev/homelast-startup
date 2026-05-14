@@ -298,11 +298,12 @@ const Admin = () => {
     );
   }
 
-  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard }[] = [
+  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "produtos", label: "Produtos", icon: Package },
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
+    { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
     { key: "financeiro", label: "Financeiro", icon: DollarSign },
     { key: "relatorios", label: "Relatórios", icon: FileText },
     { key: "configuracoes", label: "Configurações", icon: Settings },
