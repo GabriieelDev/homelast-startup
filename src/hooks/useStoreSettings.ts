@@ -44,6 +44,10 @@ export function useStoreSettings() {
         min_order: Number(data.min_order ?? 0),
         min_shipping: Number(data.min_shipping ?? 5),
         max_shipping: Number(data.max_shipping ?? 15),
+        alerts_enabled: (data as any).alerts_enabled ?? true,
+        low_stock_threshold: Number((data as any).low_stock_threshold ?? 5),
+        late_order_minutes: Number((data as any).late_order_minutes ?? 60),
+        sales_drop_pct: Number((data as any).sales_drop_pct ?? 30),
       } as StoreSettings);
     }
     setLoading(false);
