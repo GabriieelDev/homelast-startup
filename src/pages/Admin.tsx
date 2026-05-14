@@ -25,7 +25,7 @@ import {
 import type { Product } from "@/data/products";
 import { downloadCSV, downloadExcelXML, openPrintableReport } from "@/lib/reports";
 
-type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "financeiro" | "relatorios" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
