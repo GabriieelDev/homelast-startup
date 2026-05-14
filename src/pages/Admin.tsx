@@ -10,6 +10,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft,
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
+  Bell, BellOff, Clock, TrendingDown, PackageX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
