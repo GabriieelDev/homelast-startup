@@ -222,6 +222,61 @@ const Admin = () => {
     return { revenue, cogs, profit, marginPct, topProfit, ordersCount: inPeriod.length };
   }, [orders, productCostMap, periodStart]);
 
+  // ---- Alertas configuráveis ----
+  type AlertItem = {
+    id: string;
+    kind: "stock_out" | "stock_low" | "order_late" | "sales_drop";
+    severity: "high" | "medium" | "low";
+    title: string;
+    detail: string;
+  };
+  const alerts = useMemo<AlertItem[]>(() => {
+    if (!settings.alerts_enabled) return [];
+    const list: AlertItem[] = [];
+    const lowT = settings.low_stock_threshold;
+    const lateT = settings.late_order_minutes;
+    const dropT = settings.sales_drop_pct;
+
+    products.forEach((p) => {
+      const s = stockMap[p.id] ?? 99;
+      if (s === 0) {
+        list.push({ id: `out-${p.id}`, kind: "stock_out", severity: "high",
+          title: `${p.name} esgotado`, detail: `Produto sem estoque — indisponível na loja.` });
+      } else if (s <= lowT) {
+        list.push({ id: `low-${p.id}`, kind: "stock_low", severity: "medium",
+          title: `${p.name} com estoque baixo`, detail: `Restam ${s} un (limite: ${lowT}).` });
+      }
+    });
+
+    const now = Date.now();
+    orders.forEach((o) => {
+      if (o.status === "entregue" || o.status === "cancelado") return;
+      const mins = Math.floor((now - new Date(o.created_at).getTime()) / 60000);
+      if (mins >= lateT) {
+        list.push({ id: `late-${o.id}`, kind: "order_late", severity: "high",
+          title: `Pedido #${o.order_number} atrasado`, detail: `Aberto há ${mins} min (limite: ${lateT}).` });
+      }
+    });
+
+    const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
+    const startYesterday = new Date(startToday); startYesterday.setDate(startYesterday.getDate() - 1);
+    const sumRange = (from: Date, to: Date) => orders
+      .filter((o) => o.status === "entregue" && new Date(o.created_at) >= from && new Date(o.created_at) < to)
+      .reduce((s, o) => s + Number(o.total), 0);
+    const today = sumRange(startToday, new Date(now));
+    const yesterday = sumRange(startYesterday, startToday);
+    if (yesterday > 0) {
+      const dropPct = ((yesterday - today) / yesterday) * 100;
+      if (dropPct >= dropT) {
+        list.push({ id: "sales-drop", kind: "sales_drop", severity: "medium",
+          title: "Queda de vendas hoje", detail: `Hoje R$ ${today.toFixed(2)} vs ontem R$ ${yesterday.toFixed(2)} (-${dropPct.toFixed(0)}%, limite: ${dropT}%).` });
+      }
+    }
+
+    const order = { high: 0, medium: 1, low: 2 } as const;
+    return list.sort((a, b) => order[a.severity] - order[b.severity]);
+  }, [products, stockMap, orders, settings]);
+
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
