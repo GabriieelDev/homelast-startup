@@ -665,6 +665,100 @@ const Admin = () => {
             </div>
           )}
 
+          {tab === "alertas" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    <Bell className="h-6 w-6 text-primary" /> Alertas
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {settings.alerts_enabled
+                      ? `${alerts.length} alerta(s) ativo(s) com base nas suas regras.`
+                      : "Alertas desativados nas configurações."}
+                  </p>
+                </div>
+                <Button
+                  variant={settings.alerts_enabled ? "outline" : "default"}
+                  className="gap-2"
+                  onClick={async () => {
+                    const err = await saveSettings({ alerts_enabled: !settings.alerts_enabled } as any);
+                    if (err) toast.error("Erro ao atualizar"); else toast.success(settings.alerts_enabled ? "Alertas desativados" : "Alertas ativados");
+                  }}
+                >
+                  {settings.alerts_enabled ? <><BellOff className="h-4 w-4" /> Desativar</> : <><Bell className="h-4 w-4" /> Ativar</>}
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {!settings.alerts_enabled ? (
+                  <div className="p-6 rounded-lg border border-dashed border-border text-center text-muted-foreground">
+                    Ative os alertas para começar a receber notificações.
+                  </div>
+                ) : alerts.length === 0 ? (
+                  <div className="p-6 rounded-lg border border-dashed border-border text-center text-muted-foreground">
+                    🎉 Nenhum alerta no momento. Tudo certo!
+                  </div>
+                ) : (
+                  alerts.map((a) => {
+                    const Icon = a.kind === "stock_out" ? PackageX
+                      : a.kind === "stock_low" ? AlertTriangle
+                      : a.kind === "order_late" ? Clock
+                      : TrendingDown;
+                    const tone = a.severity === "high"
+                      ? "bg-destructive/10 border-destructive/40"
+                      : "bg-orange-500/10 border-orange-500/40";
+                    return (
+                      <div key={a.id} className={`flex items-start gap-3 p-3 rounded-lg border ${tone}`}>
+                        <Icon className={`h-5 w-5 shrink-0 mt-0.5 ${a.severity === "high" ? "text-destructive" : "text-orange-500"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground">{a.title}</p>
+                          <p className="text-xs text-muted-foreground">{a.detail}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const err = await saveSettings({
+                    low_stock_threshold: Number(draftSettings.low_stock_threshold),
+                    late_order_minutes: Number(draftSettings.late_order_minutes),
+                    sales_drop_pct: Number(draftSettings.sales_drop_pct),
+                  } as any);
+                  if (err) toast.error("Erro ao salvar"); else toast.success("Regras de alerta salvas ✅");
+                }}
+                className="space-y-4 p-4 rounded-lg border border-border"
+              >
+                <h3 className="font-semibold text-foreground">Regras configuráveis</h3>
+                <div className="grid md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label>Estoque baixo (≤ un)</Label>
+                    <Input type="number" min="1" value={draftSettings.low_stock_threshold}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, low_stock_threshold: Number(e.target.value) })} />
+                    <p className="text-[11px] text-muted-foreground">Avisar quando produto chega nesse nível.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Pedido atrasado (min)</Label>
+                    <Input type="number" min="5" value={draftSettings.late_order_minutes}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, late_order_minutes: Number(e.target.value) })} />
+                    <p className="text-[11px] text-muted-foreground">Pedido aberto há mais que isso vira alerta.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Queda de vendas (%)</Label>
+                    <Input type="number" min="1" max="100" value={draftSettings.sales_drop_pct}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, sales_drop_pct: Number(e.target.value) })} />
+                    <p className="text-[11px] text-muted-foreground">Comparativo hoje vs ontem.</p>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full md:w-auto">Salvar regras</Button>
+              </form>
+            </div>
+          )}
+
           {tab === "financeiro" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between flex-wrap gap-3">
