@@ -54,6 +54,7 @@ const App = () => (
             <Route path="/privacidade" element={<PoliticaPrivacidade />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <FloatingWhatsApp />
           </BrowserRouter>
         </TooltipProvider>
       </CartSyncProvider>
