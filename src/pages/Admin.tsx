@@ -11,6 +11,7 @@ import {
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
+  Instagram, Facebook, MessageCircle, Music2, GripVertical,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -872,6 +873,18 @@ const Admin = () => {
                 const minS = Number(draftSettings.min_shipping);
                 const maxS = Number(draftSettings.max_shipping);
                 if (maxS < minS) { toast.error("Frete máximo deve ser maior que o mínimo"); return; }
+                // Validate social URLs
+                const invalid = (draftSettings.social_links || []).find((l) => {
+                  if (!l.enabled || !l.url?.trim()) return false;
+                  if (l.platform === "whatsapp") return !/^\+?\d[\d\s().-]{7,}$/.test(l.url) && !/^https?:\/\/(wa\.me|api\.whatsapp\.com)/i.test(l.url);
+                  try {
+                    const u = /^https?:\/\//i.test(l.url) ? l.url : `https://${l.url}`;
+                    new URL(u);
+                    return false;
+                  } catch { return true; }
+                });
+                if (invalid) { toast.error(`URL inválida para ${invalid.platform}`); return; }
+
                 const err = await saveSettings({
                   name: draftSettings.name,
                   phone: draftSettings.phone,
@@ -880,7 +893,8 @@ const Admin = () => {
                   min_order: Number(draftSettings.min_order),
                   min_shipping: minS,
                   max_shipping: maxS,
-                });
+                  social_links: (draftSettings.social_links || []).map((l, i) => ({ ...l, order: i })),
+                } as any);
                 if (err) toast.error("Erro ao salvar"); else toast.success("Configurações salvas ✅");
               }}
               className="space-y-4 max-w-xl"
@@ -902,6 +916,44 @@ const Admin = () => {
                   <div className="space-y-1"><Label>Frete mínimo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.min_shipping} onChange={(e) => setDraftSettings({ ...draftSettings, min_shipping: Number(e.target.value) })} /></div>
                   <div className="space-y-1"><Label>Frete máximo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.max_shipping} onChange={(e) => setDraftSettings({ ...draftSettings, max_shipping: Number(e.target.value) })} /></div>
                 </div>
+              </div>
+
+              <div className="space-y-3 p-4 rounded-lg border border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">Redes sociais</h3>
+                  <span className="text-xs text-muted-foreground">Aparecem no rodapé, sobre nós e confirmação de pedido</span>
+                </div>
+                {(["instagram", "facebook", "whatsapp", "tiktok"] as const).map((platform) => {
+                  const links = draftSettings.social_links || [];
+                  const link = links.find((l) => l.platform === platform) || { platform, url: "", enabled: false, order: links.length };
+                  const Icon = platform === "instagram" ? Instagram : platform === "facebook" ? Facebook : platform === "whatsapp" ? MessageCircle : Music2;
+                  const placeholder = platform === "whatsapp" ? "(11) 99999-9999 ou wa.me/55..." : `https://${platform}.com/seuperfil`;
+                  const update = (patch: Partial<typeof link>) => {
+                    const next = [...links.filter((l) => l.platform !== platform), { ...link, ...patch }];
+                    setDraftSettings({ ...draftSettings, social_links: next.map((l, i) => ({ ...l, order: i })) });
+                  };
+                  return (
+                    <div key={platform} className="flex items-center gap-2 p-2 rounded-md border border-border">
+                      <Icon className="h-5 w-5 text-primary shrink-0" />
+                      <Input
+                        value={link.url}
+                        onChange={(e) => update({ url: e.target.value })}
+                        placeholder={placeholder}
+                        className="flex-1 h-9"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={link.enabled ? "default" : "outline"}
+                        className="gap-1.5 shrink-0"
+                        onClick={() => update({ enabled: !link.enabled })}
+                      >
+                        {link.enabled ? <><Power className="h-3.5 w-3.5" /> Ativo</> : <><PowerOff className="h-3.5 w-3.5" /> Inativo</>}
+                      </Button>
+                    </div>
+                  );
+                })}
+                <p className="text-[11px] text-muted-foreground">Se nenhuma rede estiver ativa com link válido, a seção fica oculta para o cliente.</p>
               </div>
 
               <Button type="submit" className="w-full">Salvar configurações</Button>
