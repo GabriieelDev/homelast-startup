@@ -78,6 +78,13 @@ const OrderConfirmation = () => {
             Continuar comprando
           </Button>
         </div>
+
+        <div className="pt-2 space-y-2">
+          <p className="text-sm text-muted-foreground">Siga-nos nas redes sociais</p>
+          <div className="flex justify-center">
+            <SocialLinks variant="inline" />
+          </div>
+        </div>
       </div>
     </div>
   );
