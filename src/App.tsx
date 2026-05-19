@@ -53,8 +53,9 @@ const App = () => (
             <Route path="/privacidade" element={<PoliticaPrivacidade />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartSyncProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
