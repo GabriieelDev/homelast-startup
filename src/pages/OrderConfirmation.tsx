@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, MapPin, Clock, Package } from "lucide-react";
 import { useEffect } from "react";
+import SocialLinks from "@/components/SocialLinks";
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
@@ -76,6 +77,13 @@ const OrderConfirmation = () => {
           <Button variant="outline" onClick={() => navigate("/")} className="w-full">
             Continuar comprando
           </Button>
+        </div>
+
+        <div className="pt-2 space-y-2">
+          <p className="text-sm text-muted-foreground">Siga-nos nas redes sociais</p>
+          <div className="flex justify-center">
+            <SocialLinks variant="inline" />
+          </div>
         </div>
       </div>
     </div>
