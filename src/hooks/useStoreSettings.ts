@@ -81,7 +81,7 @@ export function useStoreSettings() {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel("store-settings-feed")
+      .channel(`store-settings-feed-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "store_settings" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
