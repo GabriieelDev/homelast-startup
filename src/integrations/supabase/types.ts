@@ -345,6 +345,7 @@ export type Database = {
           name: string
           phone: string | null
           sales_drop_pct: number
+          social_links: Json
           updated_at: string
         }
         Insert: {
@@ -360,6 +361,7 @@ export type Database = {
           name?: string
           phone?: string | null
           sales_drop_pct?: number
+          social_links?: Json
           updated_at?: string
         }
         Update: {
@@ -375,7 +377,26 @@ export type Database = {
           name?: string
           phone?: string | null
           sales_drop_pct?: number
+          social_links?: Json
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_carts: {
+        Row: {
+          items: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          items?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          items?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
