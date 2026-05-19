@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, MapPin, Clock, Package } from "lucide-react";
 import { useEffect } from "react";
+import SocialLinks from "@/components/SocialLinks";
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();

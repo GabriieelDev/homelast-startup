@@ -1,6 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export type SocialPlatform = "instagram" | "facebook" | "whatsapp" | "tiktok";
+
+export interface SocialLink {
+  platform: SocialPlatform;
+  url: string;
+  enabled: boolean;
+  order: number;
+}
+
 export interface StoreSettings {
   id: string;
   name: string;
@@ -14,6 +23,7 @@ export interface StoreSettings {
   low_stock_threshold: number;
   late_order_minutes: number;
   sales_drop_pct: number;
+  social_links: SocialLink[];
 }
 
 const DEFAULTS: StoreSettings = {
@@ -29,7 +39,20 @@ const DEFAULTS: StoreSettings = {
   low_stock_threshold: 5,
   late_order_minutes: 60,
   sales_drop_pct: 30,
+  social_links: [],
 };
+
+function parseSocialLinks(raw: unknown): SocialLink[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((l): l is Record<string, unknown> => !!l && typeof l === "object")
+    .map((l, i) => ({
+      platform: (l.platform as SocialPlatform) ?? "instagram",
+      url: typeof l.url === "string" ? l.url : "",
+      enabled: l.enabled !== false,
+      order: typeof l.order === "number" ? l.order : i,
+    }));
+}
 
 export function useStoreSettings() {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULTS);
@@ -38,17 +61,19 @@ export function useStoreSettings() {
   const load = useCallback(async () => {
     const { data } = await supabase.from("store_settings").select("*").eq("id", "main").maybeSingle();
     if (data) {
+      const d = data as any;
       setSettings({
         ...DEFAULTS,
-        ...data,
-        min_order: Number(data.min_order ?? 0),
-        min_shipping: Number(data.min_shipping ?? 5),
-        max_shipping: Number(data.max_shipping ?? 15),
-        alerts_enabled: (data as any).alerts_enabled ?? true,
-        low_stock_threshold: Number((data as any).low_stock_threshold ?? 5),
-        late_order_minutes: Number((data as any).late_order_minutes ?? 60),
-        sales_drop_pct: Number((data as any).sales_drop_pct ?? 30),
-      } as StoreSettings);
+        ...d,
+        min_order: Number(d.min_order ?? 0),
+        min_shipping: Number(d.min_shipping ?? 5),
+        max_shipping: Number(d.max_shipping ?? 15),
+        alerts_enabled: d.alerts_enabled ?? true,
+        low_stock_threshold: Number(d.low_stock_threshold ?? 5),
+        late_order_minutes: Number(d.late_order_minutes ?? 60),
+        sales_drop_pct: Number(d.sales_drop_pct ?? 30),
+        social_links: parseSocialLinks(d.social_links),
+      });
     }
     setLoading(false);
   }, []);
@@ -65,7 +90,7 @@ export function useStoreSettings() {
   const save = useCallback(async (patch: Partial<StoreSettings>) => {
     const { error } = await supabase
       .from("store_settings")
-      .update(patch)
+      .update(patch as any)
       .eq("id", "main");
     if (!error) await load();
     return error;
