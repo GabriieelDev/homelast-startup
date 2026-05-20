@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { categories, type Product } from "@/data/products";
 import { toast } from "sonner";
+import { Upload, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -36,6 +37,21 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [stock, setStock] = useState("50");
   const [sections, setSections] = useState<string[]>(["mais-comprados"]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem maior que 5MB"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("produtos").upload(path, file, { upsert: false });
+    if (error) { setUploading(false); toast.error("Erro ao enviar imagem"); return; }
+    const { data } = supabase.storage.from("produtos").getPublicUrl(path);
+    setImage(data.publicUrl);
+    setUploading(false);
+    toast.success("Imagem enviada ✅");
+  };
 
   useEffect(() => {
     if (open) {
@@ -133,7 +149,21 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
             </div>
             <div className="space-y-1"><Label>Unidade</Label><Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="un, kg, pct..." /></div>
           </div>
-          <div className="space-y-1"><Label>URL da imagem</Label><Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://..." /></div>
+          <div className="space-y-1">
+            <Label>Imagem do produto</Label>
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-muted-foreground">sem foto</span>}
+              </div>
+              <label className="flex-1">
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                <div className="border border-dashed border-border rounded-lg px-3 py-2 text-sm text-center cursor-pointer hover:bg-secondary/50 flex items-center justify-center gap-2">
+                  {uploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <><Upload className="h-4 w-4" /> Enviar imagem</>}
+                </div>
+              </label>
+            </div>
+            <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="ou cole uma URL" className="mt-2" />
+          </div>
           {!product && (
             <div className="space-y-1"><Label>Estoque inicial</Label><Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} /></div>
           )}
