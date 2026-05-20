@@ -37,6 +37,21 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [stock, setStock] = useState("50");
   const [sections, setSections] = useState<string[]>(["mais-comprados"]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem maior que 5MB"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("produtos").upload(path, file, { upsert: false });
+    if (error) { setUploading(false); toast.error("Erro ao enviar imagem"); return; }
+    const { data } = supabase.storage.from("produtos").getPublicUrl(path);
+    setImage(data.publicUrl);
+    setUploading(false);
+    toast.success("Imagem enviada ✅");
+  };
 
   useEffect(() => {
     if (open) {
