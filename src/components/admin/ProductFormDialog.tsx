@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { categories, type Product } from "@/data/products";
 import { toast } from "sonner";
+import { Upload, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
