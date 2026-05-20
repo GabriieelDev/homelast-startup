@@ -149,7 +149,21 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
             </div>
             <div className="space-y-1"><Label>Unidade</Label><Input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="un, kg, pct..." /></div>
           </div>
-          <div className="space-y-1"><Label>URL da imagem</Label><Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://..." /></div>
+          <div className="space-y-1">
+            <Label>Imagem do produto</Label>
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-muted-foreground">sem foto</span>}
+              </div>
+              <label className="flex-1">
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+                <div className="border border-dashed border-border rounded-lg px-3 py-2 text-sm text-center cursor-pointer hover:bg-secondary/50 flex items-center justify-center gap-2">
+                  {uploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : <><Upload className="h-4 w-4" /> Enviar imagem</>}
+                </div>
+              </label>
+            </div>
+            <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="ou cole uma URL" className="mt-2" />
+          </div>
           {!product && (
             <div className="space-y-1"><Label>Estoque inicial</Label><Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} /></div>
           )}
