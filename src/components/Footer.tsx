@@ -1,7 +1,7 @@
-import { ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import SocialLinks from "@/components/SocialLinks";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   const { settings } = useStoreSettings();
@@ -10,9 +10,8 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="h-6 w-6 text-primary" />
-              <span className="font-display font-bold text-xl">{settings.name || "HomeLast Startup"}</span>
+            <div className="bg-white inline-block rounded-lg p-3">
+              <Logo className="h-16 w-auto" />
             </div>
             <p className="text-sm opacity-60">
               Seu supermercado digital. Rápido, prático e confiável.
