@@ -1,10 +1,11 @@
+import { LogoIcon } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Zap, ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
 import { CartItem } from "@/hooks/useCart";
 import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
@@ -118,7 +119,7 @@ const Checkout = () => {
           <button onClick={() => navigate(-1)} className="text-foreground">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <Zap className="h-5 w-5 text-primary" />
+          <LogoIcon className="h-5 w-5 text-primary" />
           <span className="font-display font-bold text-lg text-foreground">Pagamento</span>
         </div>
       </header>

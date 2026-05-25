@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft,
+  LayoutDashboard, Package, ShoppingBag, Boxes, Settings, ArrowLeft,
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
@@ -405,8 +406,8 @@ const Admin = () => {
             <ArrowLeft className="h-4 w-4" /> Loja
           </Button>
           <div className="flex items-center gap-2">
-            <Zap className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold text-lg text-foreground">ServBem · Admin</span>
+            <LogoIcon className="h-6 w-6 text-primary" />
+            <span className="font-display font-bold text-lg text-foreground">HomeLast · Admin</span>
           </div>
         </div>
       </header>

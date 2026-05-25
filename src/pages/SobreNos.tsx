@@ -19,7 +19,7 @@ const SobreNos = () => {
           </Link>
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold text-lg text-foreground">{settings.name || "ServBem Supermercado"}</span>
+            <span className="font-display font-bold text-lg text-foreground">{settings.name || "HomeLast Startup"}</span>
           </div>
         </div>
       </header>
@@ -27,7 +27,7 @@ const SobreNos = () => {
       <main className="flex-1 container mx-auto px-4 py-12 max-w-2xl space-y-6">
         <h1 className="text-3xl md:text-4xl font-bold text-foreground">Sobre nós</h1>
         <div className="space-y-4 text-muted-foreground leading-relaxed">
-          <p>O ServBem Supermercado nasceu com a missão de tornar as compras do dia a dia mais simples, rápidas e seguras.</p>
+          <p>O HomeLast Startup nasceu com a missão de tornar as compras do dia a dia mais simples, rápidas e seguras.</p>
           <p>Sabemos que o tempo é um dos recursos mais valiosos, e por isso criamos uma solução que elimina filas, deslocamentos e complicações.</p>
           <p>Aqui, você encontra tudo o que precisa com poucos cliques, recebendo seus produtos com agilidade e total confiança.</p>
           <p>Nosso compromisso vai além da entrega: buscamos oferecer qualidade, segurança em cada transação e um atendimento confiável.</p>

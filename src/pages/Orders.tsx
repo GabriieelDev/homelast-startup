@@ -1,9 +1,10 @@
+import { LogoIcon } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Zap, Package, Clock, CheckCircle, Truck, ChefHat, RefreshCw } from "lucide-react";
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, ChefHat, RefreshCw } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/hooks/useCart";
 import { useProducts } from "@/hooks/useProducts";
@@ -67,7 +68,7 @@ const Orders = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/")} className="text-foreground"><ArrowLeft className="h-5 w-5" /></button>
-          <Zap className="h-5 w-5 text-primary" />
+          <LogoIcon className="h-5 w-5 text-primary" />
           <span className="font-display font-bold text-lg text-foreground">Meus pedidos</span>
         </div>
       </header>

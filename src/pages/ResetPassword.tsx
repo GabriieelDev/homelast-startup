@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Zap } from "lucide-react";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -43,7 +43,7 @@ const ResetPassword = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
-            <Zap className="h-8 w-8 text-primary" />
+            <LogoIcon className="h-8 w-8 text-primary" />
             <span className="font-display font-bold text-2xl text-foreground">Mercado Flash</span>
           </div>
           <p className="text-muted-foreground">Defina sua nova senha</p>

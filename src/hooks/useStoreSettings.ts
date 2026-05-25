@@ -28,7 +28,7 @@ export interface StoreSettings {
 
 const DEFAULTS: StoreSettings = {
   id: "main",
-  name: "ServBem Supermercado",
+  name: "HomeLast Startup",
   phone: "",
   address: "",
   hours: "Seg–Sáb 08h–22h · Dom 08h–20h",

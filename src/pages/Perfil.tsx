@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Zap, MapPin, LogOut, KeyRound, User } from "lucide-react";
+import { ArrowLeft, MapPin, LogOut, KeyRound, User } from "lucide-react";
 import { toast } from "sonner";
 
 const Perfil = () => {
@@ -61,7 +62,7 @@ const Perfil = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/")} className="text-foreground"><ArrowLeft className="h-5 w-5" /></button>
-          <Zap className="h-5 w-5 text-primary" />
+          <LogoIcon className="h-5 w-5 text-primary" />
           <span className="font-display font-bold text-lg text-foreground">Meu Perfil</span>
         </div>
       </header>

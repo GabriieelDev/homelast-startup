@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
@@ -10,7 +11,7 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu, Plus } from "lucide-react";
+import { MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import BottomNav from "@/components/BottomNav";
@@ -75,9 +76,9 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2 shrink-0">
-            <Zap className="h-6 w-6 text-primary" />
+            <LogoIcon className="h-6 w-6 text-primary" />
             <span className="font-display font-bold text-lg text-foreground hidden sm:inline">
-              ServBem Supermercado
+              HomeLast Startup
             </span>
           </div>
           <div className="flex-1">

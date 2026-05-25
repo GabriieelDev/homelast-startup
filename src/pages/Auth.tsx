@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Zap, Eye, EyeOff, Mail, Lock, Lock as LockSmall, Truck, Leaf, MousePointerClick } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Lock as LockSmall, Truck, Leaf, MousePointerClick } from "lucide-react";
+import Logo, { LogoIcon } from "@/components/Logo";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -125,19 +126,18 @@ const Auth = () => {
   const fieldWrapper = "relative";
   const iconLeft = "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9E9E9E] pointer-events-none";
   const iconRight = "absolute right-3 top-1/2 -translate-y-1/2 text-[#9E9E9E] hover:text-[#424242] transition-colors";
-  const inputBase = "h-12 pl-10 border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] focus-visible:ring-2 focus-visible:ring-[#1976D2]/30 focus-visible:border-[#1976D2] transition-colors";
+  const inputBase = "h-12 pl-10 border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
   const labelBase = "text-sm font-medium text-[#424242]";
 
   return (
     <div className="min-h-screen flex bg-white">
       {/* LEFT PANEL — desktop only */}
-      <aside className="hidden lg:flex lg:w-3/5 relative overflow-hidden bg-gradient-to-br from-[#1565C0] to-[#1E88E5] text-white flex-col justify-between p-12">
+      <aside className="hidden lg:flex lg:w-3/5 relative overflow-hidden bg-gradient-to-br from-[#1D2D50] to-[#2A4373] text-white flex-col justify-between p-12">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
         <div className="absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-white/5 blur-3xl" />
 
-        <div className="relative z-10 flex items-center gap-2">
-          <Zap className="h-7 w-7" />
-          <span className="font-display font-bold text-xl">ServBem Supermercado</span>
+        <div className="relative z-10">
+          <Logo color="#FFFFFF" />
         </div>
 
         <div className="relative z-10 max-w-md space-y-10">
@@ -156,7 +156,7 @@ const Auth = () => {
             ].map(({ Icon, title, text }) => (
               <li key={title} className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Icon className="h-5 w-5 text-[#F57C00]" />
+                  <Icon className="h-5 w-5 text-[#00B894]" />
                 </div>
                 <div>
                   <p className="font-semibold">{title}</p>
@@ -167,7 +167,7 @@ const Auth = () => {
           </ul>
         </div>
 
-        <p className="relative z-10 text-xs text-white/60">ServBem Supermercado © 2025</p>
+        <p className="relative z-10 text-xs text-white/60">HomeLast Startup © 2025</p>
       </aside>
 
       {/* RIGHT — FORM */}
@@ -175,10 +175,10 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
           {/* Logo */}
           <div className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 rounded-2xl bg-[#1976D2]/10 flex items-center justify-center">
-              <Zap className="h-7 w-7 text-[#1976D2]" />
+            <div className="w-14 h-14 rounded-2xl bg-[#1D2D50]/10 flex items-center justify-center">
+              <LogoIcon className="h-7 w-7 text-[#1D2D50]" />
             </div>
-            <span className="lg:hidden font-display font-bold text-lg text-[#1976D2]">ServBem Supermercado</span>
+            <span className="lg:hidden font-display font-bold text-lg text-[#1D2D50]">HomeLast Startup</span>
           </div>
 
           {/* Heading */}
@@ -227,12 +227,12 @@ const Auth = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#F57C00] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#F57C00]/20 active:scale-[0.98] transition-all"
+                className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all"
               >
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
 
-              <button type="button" onClick={() => { setMode("forgot"); clearErrors(); }} className="block mx-auto text-sm text-[#1976D2] hover:underline">
+              <button type="button" onClick={() => { setMode("forgot"); clearErrors(); }} className="block mx-auto text-sm text-[#1D2D50] hover:underline">
                 Esqueci minha senha
               </button>
 
@@ -243,7 +243,7 @@ const Auth = () => {
 
               <p className="text-center text-sm text-[#616161]">
                 Não tem conta?{" "}
-                <button type="button" onClick={() => { setMode("signup"); clearErrors(); }} className="text-[#F57C00] hover:text-[#E65100] font-bold">
+                <button type="button" onClick={() => { setMode("signup"); clearErrors(); }} className="text-[#00B894] hover:text-[#E65100] font-bold">
                   Criar conta
                 </button>
               </p>
@@ -255,7 +255,7 @@ const Auth = () => {
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="fullName" className={labelBase}>Nome completo</Label>
-                <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1976D2]/30 focus-visible:border-[#1976D2]" />
+                <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
                 <FieldError field="fullName" />
               </div>
               <div className="space-y-1.5">
@@ -268,7 +268,7 @@ const Auth = () => {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone" className={labelBase}>Telefone</Label>
-                <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1976D2]/30 focus-visible:border-[#1976D2]" />
+                <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
                 <FieldError field="phone" />
               </div>
               <div className="space-y-1.5">
@@ -301,13 +301,13 @@ const Auth = () => {
                 <FieldError field="confirmPassword" />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#F57C00] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#F57C00]/20 active:scale-[0.98] transition-all">
+              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all">
                 {loading ? "Criando conta..." : "Criar conta"}
               </Button>
 
               <p className="text-center text-sm text-[#616161]">
                 Já tem conta?{" "}
-                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1976D2] hover:underline font-medium">
+                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1D2D50] hover:underline font-medium">
                   Entrar
                 </button>
               </p>
@@ -325,12 +325,12 @@ const Auth = () => {
                 </div>
                 <FieldError field="email" />
               </div>
-              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#F57C00] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#F57C00]/20 active:scale-[0.98] transition-all">
+              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all">
                 {loading ? "Enviando..." : "Enviar link de recuperação"}
               </Button>
               <p className="text-center text-sm text-[#616161]">
                 Lembrou a senha?{" "}
-                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1976D2] hover:underline font-medium">
+                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1D2D50] hover:underline font-medium">
                   Voltar ao login
                 </button>
               </p>

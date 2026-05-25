@@ -1,6 +1,7 @@
+import { LogoIcon } from "@/components/Logo";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Zap, ArrowLeft, Package, ChefHat, Truck, CheckCircle, MapPin, Clock, Star } from "lucide-react";
+import { ArrowLeft, Package, ChefHat, Truck, CheckCircle, MapPin, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +99,7 @@ const OrderTracking = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/pedidos")} className="text-foreground"><ArrowLeft className="h-5 w-5" /></button>
-          <Zap className="h-5 w-5 text-primary" />
+          <LogoIcon className="h-5 w-5 text-primary" />
           <span className="font-display font-bold text-lg text-foreground">Acompanhar pedido</span>
         </div>
       </header>

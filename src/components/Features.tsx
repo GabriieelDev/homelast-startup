@@ -1,9 +1,9 @@
-import { Rocket, Brain, Zap, Recycle } from "lucide-react";
+import { Rocket, Brain, MousePointerClick, Recycle } from "lucide-react";
 
 const features = [
   { icon: Rocket, title: "Entrega rápida", desc: "Receba em 30–60 minutos", color: "text-primary" },
   { icon: Brain, title: "Sugestões do seu histórico", desc: "Baseadas nas suas compras", color: "text-accent" },
-  { icon: Zap, title: "Compra sem complicação", desc: "Adicione com 1 clique", color: "text-primary" },
+  { icon: MousePointerClick, title: "Compra sem complicação", desc: "Adicione com 1 clique", color: "text-primary" },
   { icon: Recycle, title: "Menos desperdício", desc: "Compre só o que precisa", color: "text-accent" },
 ];
 
@@ -11,7 +11,7 @@ const Features = () => (
   <section className="py-16 bg-secondary">
     <div className="container mx-auto px-4">
       <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-10">
-        Por que escolher o <span className="text-gradient">Mercado Flash</span>?
+        Por que escolher a <span className="text-gradient">HomeLast Startup</span>?
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {features.map((f) => (

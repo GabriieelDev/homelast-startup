@@ -178,7 +178,7 @@ const Courier = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <Bike className="h-6 w-6 text-primary" />
-          <span className="font-display font-bold text-lg text-foreground flex-1">ServBem · Entregador</span>
+          <span className="font-display font-bold text-lg text-foreground flex-1">HomeLast · Entregador</span>
           <Button variant="ghost" size="sm" onClick={signOut} className="gap-1.5">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Sair</span>
@@ -295,7 +295,7 @@ const OrderCard = ({ order, primaryAction, primaryColor, onPrimary, onOpenMaps, 
           <div className="flex-1 text-sm">
             <p className="text-xs text-muted-foreground">Retirada</p>
             <p className="text-foreground">
-              {order.pickup_address?.street ?? "Loja ServBem"}, {order.pickup_address?.neighborhood ?? ""}
+              {order.pickup_address?.street ?? "Loja HomeLast"}, {order.pickup_address?.neighborhood ?? ""}
             </p>
           </div>
           <button onClick={() => onOpenMaps(order.pickup_address)} className="text-primary text-xs hover:underline">
