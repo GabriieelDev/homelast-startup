@@ -1,6 +1,6 @@
 import { useRef, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
+import { } from "lucide-react";
 import heroImage from "@/assets/hero-groceries.png";
 
 interface HeroSectionProps {
@@ -29,7 +29,7 @@ const HeroSection = ({ onStart }: HeroSectionProps) => {
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <div className="flex-1 text-center md:text-left space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-              <Zap className="h-4 w-4" />
+              <LogoIcon className="h-4 w-4" />
               Entrega em 30–60 min
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">

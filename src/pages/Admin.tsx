@@ -405,7 +405,7 @@ const Admin = () => {
             <ArrowLeft className="h-4 w-4" /> Loja
           </Button>
           <div className="flex items-center gap-2">
-            <Zap className="h-6 w-6 text-primary" />
+            <LogoIcon className="h-6 w-6 text-primary" />
             <span className="font-display font-bold text-lg text-foreground">HomeLast · Admin</span>
           </div>
         </div>

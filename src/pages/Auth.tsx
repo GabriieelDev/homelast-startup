@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Zap, Eye, EyeOff, Mail, Lock, Lock as LockSmall, Truck, Leaf, MousePointerClick } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Lock as LockSmall, Truck, Leaf, MousePointerClick } from "lucide-react";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -136,7 +136,7 @@ const Auth = () => {
         <div className="absolute bottom-0 -left-32 w-[28rem] h-[28rem] rounded-full bg-white/5 blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-2">
-          <Zap className="h-7 w-7" />
+          <LogoIcon className="h-7 w-7" />
           <span className="font-display font-bold text-xl">HomeLast Startup</span>
         </div>
 
@@ -176,7 +176,7 @@ const Auth = () => {
           {/* Logo */}
           <div className="flex flex-col items-center gap-2">
             <div className="w-14 h-14 rounded-2xl bg-[#1976D2]/10 flex items-center justify-center">
-              <Zap className="h-7 w-7 text-[#1976D2]" />
+              <LogoIcon className="h-7 w-7 text-[#1976D2]" />
             </div>
             <span className="lg:hidden font-display font-bold text-lg text-[#1976D2]">HomeLast Startup</span>
           </div>

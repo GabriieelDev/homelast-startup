@@ -1,4 +1,4 @@
-import { Zap, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
@@ -14,7 +14,7 @@ const TermosDeUso = () => (
           </Button>
         </Link>
         <div className="flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" />
+          <LogoIcon className="h-6 w-6 text-primary" />
           <span className="font-display font-bold text-lg text-foreground">Mercado Flash</span>
         </div>
       </div>

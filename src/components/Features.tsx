@@ -1,4 +1,5 @@
-import { Rocket, Brain, Zap, Recycle } from "lucide-react";
+import { LogoIcon } from "@/components/Logo";
+import { Rocket, Brain, Recycle } from "lucide-react";
 
 const features = [
   { icon: Rocket, title: "Entrega rápida", desc: "Receba em 30–60 minutos", color: "text-primary" },
