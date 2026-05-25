@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  LayoutDashboard, Package, ShoppingBag, Boxes, Settings, Zap, ArrowLeft,
+  LayoutDashboard, Package, ShoppingBag, Boxes, Settings, ArrowLeft,
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,

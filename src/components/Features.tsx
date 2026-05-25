@@ -4,7 +4,7 @@ import { Rocket, Brain, Recycle } from "lucide-react";
 const features = [
   { icon: Rocket, title: "Entrega rápida", desc: "Receba em 30–60 minutos", color: "text-primary" },
   { icon: Brain, title: "Sugestões do seu histórico", desc: "Baseadas nas suas compras", color: "text-accent" },
-  { icon: Zap, title: "Compra sem complicação", desc: "Adicione com 1 clique", color: "text-primary" },
+  { icon: Rocket, title: "Compra sem complicação", desc: "Adicione com 1 clique", color: "text-primary" },
   { icon: Recycle, title: "Menos desperdício", desc: "Compre só o que precisa", color: "text-accent" },
 ];
 

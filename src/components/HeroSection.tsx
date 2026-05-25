@@ -1,6 +1,5 @@
 import { useRef, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { } from "lucide-react";
 import heroImage from "@/assets/hero-groceries.png";
 
 interface HeroSectionProps {
