@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, ChefHat, Truck, CheckCircle, MapPin, Clock, Star } from "lucide-react";

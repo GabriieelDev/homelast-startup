@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useRef, MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-groceries.png";

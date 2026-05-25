@@ -1,3 +1,4 @@
+import { LogoIcon } from "@/components/Logo";
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
