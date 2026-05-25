@@ -137,7 +137,7 @@ const Auth = () => {
 
         <div className="relative z-10 flex items-center gap-2">
           <Zap className="h-7 w-7" />
-          <span className="font-display font-bold text-xl">ServBem Supermercado</span>
+          <span className="font-display font-bold text-xl">HomeLast Startup</span>
         </div>
 
         <div className="relative z-10 max-w-md space-y-10">
@@ -167,7 +167,7 @@ const Auth = () => {
           </ul>
         </div>
 
-        <p className="relative z-10 text-xs text-white/60">ServBem Supermercado © 2025</p>
+        <p className="relative z-10 text-xs text-white/60">HomeLast Startup © 2025</p>
       </aside>
 
       {/* RIGHT — FORM */}
@@ -178,7 +178,7 @@ const Auth = () => {
             <div className="w-14 h-14 rounded-2xl bg-[#1976D2]/10 flex items-center justify-center">
               <Zap className="h-7 w-7 text-[#1976D2]" />
             </div>
-            <span className="lg:hidden font-display font-bold text-lg text-[#1976D2]">ServBem Supermercado</span>
+            <span className="lg:hidden font-display font-bold text-lg text-[#1976D2]">HomeLast Startup</span>
           </div>
 
           {/* Heading */}

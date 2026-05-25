@@ -77,7 +77,7 @@ const Index = () => {
           <div className="flex items-center gap-2 shrink-0">
             <Zap className="h-6 w-6 text-primary" />
             <span className="font-display font-bold text-lg text-foreground hidden sm:inline">
-              ServBem Supermercado
+              HomeLast Startup
             </span>
           </div>
           <div className="flex-1">

@@ -52,7 +52,7 @@ const CourierLogin = () => {
             <Bike className="h-7 w-7 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Área do Entregador</h1>
-          <p className="text-sm text-muted-foreground">ServBem Supermercado</p>
+          <p className="text-sm text-muted-foreground">HomeLast Startup</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

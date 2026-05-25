@@ -80,7 +80,7 @@ tr:nth-child(even) td{background:#fafafa}
 .dot{width:14px;height:14px;border-radius:50%;background:#16a34a}
 @media print{body{padding:16px}.no-print{display:none}}
 </style></head><body>
-<div class="brand"><div class="dot"></div><strong>ServBem Supermercado</strong></div>
+<div class="brand"><div class="dot"></div><strong>HomeLast Startup</strong></div>
 <h1>${title}</h1>
 <div class="sub">${subtitle ?? ""} · Gerado em ${new Date().toLocaleString("pt-BR")}</div>
 <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>

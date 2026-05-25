@@ -406,7 +406,7 @@ const Admin = () => {
           </Button>
           <div className="flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold text-lg text-foreground">ServBem · Admin</span>
+            <span className="font-display font-bold text-lg text-foreground">HomeLast · Admin</span>
           </div>
         </div>
       </header>

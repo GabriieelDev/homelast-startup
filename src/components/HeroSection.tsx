@@ -51,7 +51,7 @@ const HeroSection = ({ onStart }: HeroSectionProps) => {
             <img
               ref={imgRef}
               src={heroImage}
-              alt="Compras frescas do ServBem Supermercado"
+              alt="Compras frescas do HomeLast Startup"
               className="w-full h-auto rounded-2xl animate-slide-up will-change-transform transition-transform duration-300 ease-out"
             />
           </div>

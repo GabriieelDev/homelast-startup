@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-6 w-6 text-primary" />
-              <span className="font-display font-bold text-xl">{settings.name || "ServBem Supermercado"}</span>
+              <span className="font-display font-bold text-xl">{settings.name || "HomeLast Startup"}</span>
             </div>
             <p className="text-sm opacity-60">
               Seu supermercado digital. Rápido, prático e confiável.
@@ -39,7 +39,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-background/10 mt-8 pt-6 text-center text-sm opacity-40">
-          © {new Date().getFullYear()} {settings.name || "ServBem Supermercado"}. Todos os direitos reservados.
+          © {new Date().getFullYear()} {settings.name || "HomeLast Startup"}. Todos os direitos reservados.
         </div>
       </div>
     </footer>
