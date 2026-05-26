@@ -12,13 +12,15 @@ import {
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
-  Instagram, Facebook, MessageCircle, Music2, GripVertical,
+  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import CategoryManager from "@/components/admin/CategoryManager";
+import NfeImporter from "@/components/admin/NfeImporter";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -27,7 +29,7 @@ import {
 import type { Product } from "@/data/products";
 import { downloadCSV, downloadExcelXML, openPrintableReport } from "@/lib/reports";
 
-type Tab = "dashboard" | "produtos" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
@@ -303,6 +305,8 @@ const Admin = () => {
   const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "produtos", label: "Produtos", icon: Package },
+    { key: "categorias", label: "Categorias", icon: Tag },
+    { key: "nfe", label: "Importar NF-e", icon: FileInput },
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
@@ -564,6 +568,10 @@ const Admin = () => {
               </div>
             </div>
           )}
+
+          {tab === "categorias" && <CategoryManager />}
+
+          {tab === "nfe" && <NfeImporter />}
 
           {tab === "pedidos" && (
             <div className="space-y-4">
