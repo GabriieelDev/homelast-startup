@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { categories } from "@/data/products";
+import { useCategories } from "@/hooks/useCategories";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CategoryFiltersProps {
@@ -10,12 +10,15 @@ interface CategoryFiltersProps {
 
 const CategoryFilters = ({ active, onChange }: CategoryFiltersProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { categories } = useCategories({ onlyActive: true });
 
   const scroll = (dir: "left" | "right") => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
     }
   };
+
+  const items = [{ id: "all", name: "Todos", icon: "🛒" }, ...categories.map((c) => ({ id: c.slug, name: c.name, icon: c.icon }))];
 
   return (
     <div className="relative group">
@@ -30,7 +33,7 @@ const CategoryFilters = ({ active, onChange }: CategoryFiltersProps) => {
         className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {categories.map((cat) => (
+        {items.map((cat) => (
           <Button
             key={cat.id}
             variant={active === cat.id ? "pill-active" : "pill"}
@@ -39,7 +42,7 @@ const CategoryFilters = ({ active, onChange }: CategoryFiltersProps) => {
             className="shrink-0 gap-1.5"
           >
             <span>{cat.icon}</span>
-            {cat.label}
+            {cat.name}
           </Button>
         ))}
       </div>
