@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           active: boolean
@@ -140,6 +176,51 @@ export type Database = {
           created_at?: string
           disabled_by?: string | null
           product_id?: string
+        }
+        Relationships: []
+      }
+      nfe_imports: {
+        Row: {
+          created_at: string
+          id: string
+          imported_by: string | null
+          method: string
+          new_count: number
+          nfe_date: string | null
+          nfe_key: string | null
+          nfe_number: string | null
+          products_count: number
+          raw_data: Json
+          supplier: string | null
+          updated_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imported_by?: string | null
+          method: string
+          new_count?: number
+          nfe_date?: string | null
+          nfe_key?: string | null
+          nfe_number?: string | null
+          products_count?: number
+          raw_data?: Json
+          supplier?: string | null
+          updated_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imported_by?: string | null
+          method?: string
+          new_count?: number
+          nfe_date?: string | null
+          nfe_key?: string | null
+          nfe_number?: string | null
+          products_count?: number
+          raw_data?: Json
+          supplier?: string | null
+          updated_count?: number
         }
         Relationships: []
       }
@@ -260,6 +341,7 @@ export type Database = {
         Row: {
           active: boolean
           category: string
+          category_id: string | null
           cost_price: number
           created_at: string
           description: string | null
@@ -275,6 +357,7 @@ export type Database = {
         Insert: {
           active?: boolean
           category?: string
+          category_id?: string | null
           cost_price?: number
           created_at?: string
           description?: string | null
@@ -290,6 +373,7 @@ export type Database = {
         Update: {
           active?: boolean
           category?: string
+          category_id?: string | null
           cost_price?: number
           created_at?: string
           description?: string | null
@@ -302,7 +386,15 @@ export type Database = {
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
