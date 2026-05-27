@@ -345,11 +345,18 @@ export type Database = {
           cost_price: number
           created_at: string
           description: string | null
+          discount_type: string
+          discount_value: number
           id: string
           image: string
           name: string
+          on_sale: boolean
           original_price: number | null
           price: number
+          sale_end: string | null
+          sale_label: string | null
+          sale_price: number | null
+          sale_start: string | null
           sections: string[]
           unit: string
           updated_at: string
@@ -361,11 +368,18 @@ export type Database = {
           cost_price?: number
           created_at?: string
           description?: string | null
+          discount_type?: string
+          discount_value?: number
           id: string
           image?: string
           name: string
+          on_sale?: boolean
           original_price?: number | null
           price?: number
+          sale_end?: string | null
+          sale_label?: string | null
+          sale_price?: number | null
+          sale_start?: string | null
           sections?: string[]
           unit?: string
           updated_at?: string
@@ -377,11 +391,18 @@ export type Database = {
           cost_price?: number
           created_at?: string
           description?: string | null
+          discount_type?: string
+          discount_value?: number
           id?: string
           image?: string
           name?: string
+          on_sale?: boolean
           original_price?: number | null
           price?: number
+          sale_end?: string | null
+          sale_label?: string | null
+          sale_price?: number | null
+          sale_start?: string | null
           sections?: string[]
           unit?: string
           updated_at?: string
@@ -420,6 +441,33 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sale_expirations_log: {
+        Row: {
+          acknowledged: boolean
+          expired_at: string
+          id: string
+          product_id: string
+          product_name: string | null
+          sale_label: string | null
+        }
+        Insert: {
+          acknowledged?: boolean
+          expired_at?: string
+          id?: string
+          product_id: string
+          product_name?: string | null
+          sale_label?: string | null
+        }
+        Update: {
+          acknowledged?: boolean
+          expired_at?: string
+          id?: string
+          product_id?: string
+          product_name?: string | null
+          sale_label?: string | null
         }
         Relationships: []
       }
@@ -518,6 +566,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      expire_product_sales: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

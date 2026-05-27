@@ -22,6 +22,7 @@ import { useOrderNotifications } from "@/hooks/useOrderNotifications";
 import { useProducts } from "@/hooks/useProducts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import { isSaleActive } from "@/lib/promotions";
 import type { Product } from "@/data/products";
 
 const Index = () => {
@@ -55,7 +56,9 @@ const Index = () => {
     if (!isAdmin) {
       list = list.filter((p) => p.active !== false && !isDisabled(p.id));
     }
-    if (category !== "all") {
+    if (category === "sale") {
+      list = list.filter((p) => isSaleActive(p));
+    } else if (category !== "all") {
       list = list.filter((p) => p.category === category);
     }
     if (search.length >= 2) {

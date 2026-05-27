@@ -1,5 +1,6 @@
 import { useSyncExternalStore, useCallback } from "react";
 import { Product } from "@/data/products";
+import { getEffectivePrice } from "@/lib/promotions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -169,7 +170,7 @@ export function useCart() {
   );
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-  const totalPrice = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => sum + getEffectivePrice(i.product) * i.quantity, 0);
 
   const clearCart = useCallback(() => setItems([], { push: true }), []);
 

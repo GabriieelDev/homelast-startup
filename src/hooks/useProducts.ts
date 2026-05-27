@@ -15,6 +15,13 @@ function fromRow(r: any): Product {
     description: r.description ?? "",
     active: r.active !== false,
     costPrice: r.cost_price ? Number(r.cost_price) : 0,
+    onSale: r.on_sale === true,
+    discountType: (r.discount_type as "percentage" | "fixed") ?? "percentage",
+    discountValue: r.discount_value ? Number(r.discount_value) : 0,
+    salePrice: r.sale_price ? Number(r.sale_price) : undefined,
+    saleStart: r.sale_start ?? null,
+    saleEnd: r.sale_end ?? null,
+    saleLabel: r.sale_label ?? null,
   } as Product;
 }
 

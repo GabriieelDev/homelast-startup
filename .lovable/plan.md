@@ -1,76 +1,81 @@
-# Plano de Implementação
+## Sistema de Promoções — HomeLast
 
-Duas funcionalidades grandes e interligadas. Sugiro implementar em **2 fases**, pois a Fase 1 (Categorias) é pré-requisito da Fase 2 (NF-e usa categorias dinâmicas).
+### 1. Banco de Dados (migration)
 
----
+Adicionar à tabela `products`:
+- `on_sale` boolean default false
+- `discount_type` text ('percentage' | 'fixed')
+- `discount_value` numeric default 0
+- `sale_price` numeric (calculado pelo trigger)
+- `sale_start` timestamptz
+- `sale_end` timestamptz (nullable)
+- `sale_label` text (nullable)
 
-## Fase 1 — Gerenciamento de Categorias
+**Trigger BEFORE INSERT/UPDATE em products** (`compute_sale_price`):
+- Calcula `sale_price` a partir de `price`, `discount_type`, `discount_value`
+- Garante `sale_price >= 0`
+- Valida `sale_end > sale_start` quando ambos definidos
 
-### Banco de dados (migração)
-- Nova tabela `public.categories`:
-  - `id uuid PK`, `name text`, `slug text unique`, `icon text`, `color text`, `display_order int`, `active bool default true`, timestamps
-- Alterar `public.products`: adicionar coluna `category_id uuid` (mantendo `category text` legado para compatibilidade durante migração)
-- Seed inicial: Hortifrúti, Mercearia, Bebidas, Limpeza, Higiene (mapeando produtos existentes pelo slug atual)
-- RLS: leitura pública (apenas `active=true` para anon/clientes via policy), escrita restrita a admin (`has_role`)
-- GRANTs corretos para anon/authenticated/service_role
+**Função `is_sale_active(p products)`** (helper): `on_sale AND sale_start <= now() AND (sale_end IS NULL OR sale_end >= now())`.
 
-### Frontend Admin
-- Nova aba "Categorias" dentro de `src/pages/Admin.tsx` (ao lado de Produtos)
-- Componente `CategoryManager.tsx`:
-  - Lista em tabela com nome, ícone (emoji ou imagem), cor (swatch), nº de produtos, status, ações
-  - Botão "Nova categoria" abre `CategoryFormDialog` com: nome, ícone (seletor emoji + upload opcional bucket `banners`), cor (color picker), slug auto-gerado/editável, ativo
-  - Editar e remover (com confirmação + opção de mover produtos para outra categoria)
-  - Reordenação drag-and-drop (usando `@dnd-kit` já presente ou alternativa leve)
-- Atualizar `src/data/products.ts` / `CategoryFilters` para buscar categorias do banco via novo hook `useCategories()` com realtime
-- Filtros da vitrine mostram apenas categorias ativas com ≥1 produto
+**Expiração automática:** view/cálculo em runtime (frontend) + cron job `pg_cron` rodando a cada 5 min que faz `UPDATE products SET on_sale = false WHERE on_sale = true AND sale_end IS NOT NULL AND sale_end < now()`. Insere alerta na nova tabela `sale_expirations_log` (id, product_id, expired_at) para o admin visualizar.
 
-### Constraint de memória
-A regra atual em mem://ux/categories limita a 4 categorias fixas. Vou **atualizar essa memória** para refletir que categorias agora são dinâmicas (gerenciadas pelo admin), removendo a restrição.
+### 2. Admin — Edição de Produto
 
----
+Atualizar `src/components/admin/ProductFormDialog.tsx`:
+- Nova seção "Promoção" com:
+  - Switch "Produto em promoção"
+  - Select tipo (% / R$ fixo)
+  - Input valor do desconto
+  - Preço promocional calculado em tempo real (verde)
+  - DatePicker início + DatePicker fim (opcional)
+  - Input label personalizado
+  - Botão "Remover promoção"
+- Validações: desconto não pode exceder preço; data fim > data início; aviso se sale_price < cost_price (margem negativa).
 
-## Fase 2 — Importação de Nota Fiscal (NF-e)
+### 3. Vitrine (Cliente)
 
-### Banco de dados
-- Nova tabela `public.nfe_imports` (histórico):
-  - `id`, `nfe_number text`, `nfe_key text`, `supplier text`, `nfe_date timestamptz`, `method text` ('xml'|'qrcode'), `imported_by uuid`, `products_count int`, `new_count int`, `updated_count int`, `raw_data jsonb`, `created_at`
-- RLS: somente admin lê/insere
+**`src/data/products.ts` / `useProducts.ts`:** mapear novos campos no `Product` type + helper `isSaleActive(product)` e `getEffectivePrice(product)`.
 
-### Frontend — `Importar Nota Fiscal`
-Nova aba no Admin com 3 sub-abas: **Upload XML | Escanear QR Code | Histórico**
+**`src/components/ProductCard.tsx`:**
+- Badge vermelho topo: label personalizado ou `-X% OFF`
+- Preço original riscado + preço promocional em verde-esmeralda
+- Borda sutil verde (`border-accent/40`)
+- Componente `<SaleCountdown end={sale_end} />` com timer hh:mm:ss (atualiza a cada 1s)
 
-**Upload XML:**
-- Dropzone aceitando `.xml`
-- Parser client-side usando `DOMParser` nativo, extraindo de `<det><prod>`: `xProd`, `cEAN`, `qCom`, `uCom`, `vUnCom`, `NCM`; do `<emit>`: nome do fornecedor; do `<ide>`: `nNF`, `dhEmi`, `chNFe`
-- Tela de prévia: tabela editável com checkbox incluir/ignorar, seletor de categoria (vindo do CategoryManager), botão "Criar nova categoria" inline
-- Confirmar → upsert em `products` por `cEAN` (atualiza `cost_price` + incrementa `product_stock`) ou cria novo; grava registro em `nfe_imports`
-- Resumo final: novos / atualizados / ignorados
+**`src/components/CategoryFilters.tsx`:** adicionar filtro virtual "Promoções 🔥" (id `sale`). Página vitrine filtra por `isSaleActive`.
 
-**Escanear QR Code:**
-- Biblioteca: `html5-qrcode` (leve, funciona em mobile, câmera traseira por padrão)
-- Guia de enquadramento + feedback ao detectar
-- QR Code do DANFE contém URL com chave de acesso → extrair chave (44 dígitos)
-- **Limitação real:** a SEFAZ NÃO oferece API pública gratuita para consulta de NF-e por chave. Cada estado tem webservice próprio com certificado digital A1/A3 obrigatório, e a "consulta pública" via site da SEFAZ retorna HTML (não JSON) e tem CAPTCHA.
+**Página de produto** (se existir; caso contrário no card expandido): preço original + promocional, badge destaque, countdown, "Economize R$ X".
 
-  **Opções a decidir:**
-  - (a) Integrar com serviço pago de terceiros (ex: Meu Danfe, NFe.io, Focus NFe, Arquivei) — requer API key, edge function como proxy
-  - (b) Após escanear o QR, exibir a URL detectada e pedir ao admin que faça upload do XML correspondente (fluxo híbrido)
-  - (c) Apenas registrar a chave e pedir importação manual dos itens
+### 4. Relatórios
 
-**Histórico:**
-- Tabela listando importações com filtros, botão "ver detalhes" abrindo modal com produtos importados (a partir de `raw_data`)
+`src/lib/reports.ts` + UI no Admin:
+- Lista de produtos atualmente em promoção
+- Histórico (`sale_expirations_log`)
+- Comparativo: somar `orders.items` cujos produtos estavam em promoção vs. preço normal (usando snapshot do preço no momento da venda — ler o `price` registrado em `items` jsonb).
 
-### Edge function (se opção `a`)
-- `nfe-lookup`: recebe chave NF-e, chama provedor escolhido, retorna JSON normalizado
-- Secret: `NFE_PROVIDER_API_KEY`
+### 5. Detalhes técnicos
 
----
+- Countdown: hook `useCountdown(endDate)` retornando `{ hours, minutes, seconds, expired }`.
+- Quando expirado no client, ocultar badge mesmo antes do cron rodar.
+- Preço usado em todo lugar (cart, checkout, productCard) passa por `getEffectivePrice(p)` para garantir consistência.
+- Cart já guarda preço unitário no snapshot — preços promocionais aplicados no momento do add.
 
-## Perguntas antes de executar
+### Arquivos novos
+- `src/lib/promotions.ts` (helpers `isSaleActive`, `getEffectivePrice`, `getDiscountPct`)
+- `src/components/SaleCountdown.tsx`
+- `src/hooks/useCountdown.ts`
+- `src/components/admin/SaleExpirationsLog.tsx`
 
-1. **QR Code da SEFAZ:** qual opção prefere? (a) serviço pago de terceiros, (b) fluxo híbrido QR→upload XML, (c) apenas registrar chave
-2. **Drag-and-drop de categorias:** posso adicionar `@dnd-kit/core` + `@dnd-kit/sortable` se ainda não estiverem instalados?
-3. **Migração de produtos existentes:** mapear `products.category` (text) para os novos `category_id` automaticamente pelo nome/slug, OK?
-4. **Implemento as duas fases nesta mesma rodada** ou prefere validar a Fase 1 antes de iniciar a Fase 2?
+### Arquivos editados
+- `src/data/products.ts` (tipo Product)
+- `src/hooks/useProducts.ts` (mapear campos)
+- `src/components/admin/ProductFormDialog.tsx` (seção promoção)
+- `src/components/ProductCard.tsx` (badge + preços + countdown + borda)
+- `src/components/CategoryFilters.tsx` (filtro Promoções)
+- `src/pages/Index.tsx` (aplicar filtro sale)
+- `src/hooks/useCart.ts` (usar preço efetivo)
+- `src/lib/reports.ts` (impacto promoções)
+- `src/pages/Admin.tsx` (sub-aba histórico de promoções nos relatórios)
 
-Aguardo suas respostas para iniciar a migração e o código.
+### Migração SQL fornecida ao final para o Supabase externo do usuário.

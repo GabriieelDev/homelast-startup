@@ -2,6 +2,7 @@ import { ShoppingCart, Trash2, X, Minus, Plus, ShoppingBag } from "lucide-react"
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
+import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerOverlay, DrawerPortal } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -111,7 +112,7 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
                             {item.product.name}
                           </p>
                           <p className="text-[13px] text-muted-foreground mt-0.5">
-                            R$ {item.product.price.toFixed(2)} un.
+                            R$ {getEffectivePrice(item.product).toFixed(2)} un.
                           </p>
                         </div>
 
@@ -137,7 +138,7 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
                             </button>
                           </div>
                           <span className="text-sm font-bold text-accent">
-                            R$ {(item.product.price * item.quantity).toFixed(2)}
+                            R$ {(getEffectivePrice(item.product) * item.quantity).toFixed(2)}
                           </span>
                           <button
                             onClick={() => {
@@ -207,11 +208,11 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{item.product.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.quantity}x R$ {item.product.price.toFixed(2)}
+                        {item.quantity}x R$ {getEffectivePrice(item.product).toFixed(2)}
                       </p>
                     </div>
                     <span className="text-xs font-semibold text-foreground shrink-0">
-                      R$ {(item.product.price * item.quantity).toFixed(2)}
+                      R$ {(getEffectivePrice(item.product) * item.quantity).toFixed(2)}
                     </span>
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button

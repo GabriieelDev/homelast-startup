@@ -2,6 +2,7 @@ import { ShoppingCart, Clock, ChevronUp, X, Trash2, MapPin, Truck } from "lucide
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
+import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,7 +98,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{item.product.name}</p>
                   <p className="text-sm text-primary font-semibold">
-                    {item.quantity}x R$ {item.product.price.toFixed(2)}
+                    {item.quantity}x R$ {getEffectivePrice(item.product).toFixed(2)}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">

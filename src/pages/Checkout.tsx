@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
 import { CartItem } from "@/hooks/useCart";
+import { getEffectivePrice } from "@/lib/promotions";
 import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
@@ -81,7 +82,7 @@ const Checkout = () => {
     const itemsPayload = items.map((i) => ({
       id: i.product.id,
       name: i.product.name,
-      price: i.product.price,
+      price: getEffectivePrice(i.product),
       quantity: i.quantity,
       image: i.product.image,
     }));
@@ -152,10 +153,10 @@ const Checkout = () => {
               <img src={item.product.image} alt={item.product.name} className="w-10 h-10 rounded-lg object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground truncate">{item.product.name}</p>
-                <p className="text-xs text-muted-foreground">{item.quantity}x R$ {item.product.price.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">{item.quantity}x R$ {getEffectivePrice(item.product).toFixed(2)}</p>
               </div>
               <span className="text-sm font-semibold text-foreground">
-                R$ {(item.product.price * item.quantity).toFixed(2)}
+                R$ {(getEffectivePrice(item.product) * item.quantity).toFixed(2)}
               </span>
             </div>
           ))}

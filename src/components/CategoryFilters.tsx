@@ -18,7 +18,11 @@ const CategoryFilters = ({ active, onChange }: CategoryFiltersProps) => {
     }
   };
 
-  const items = [{ id: "all", name: "Todos", icon: "🛒" }, ...categories.map((c) => ({ id: c.slug, name: c.name, icon: c.icon }))];
+  const items = [
+    { id: "all", name: "Todos", icon: "🛒" },
+    { id: "sale", name: "Promoções", icon: "🔥" },
+    ...categories.map((c) => ({ id: c.slug, name: c.name, icon: c.icon })),
+  ];
 
   return (
     <div className="relative group">
