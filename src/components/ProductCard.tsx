@@ -1,5 +1,7 @@
 import { Plus, Minus, AlertTriangle, Trash2 } from "lucide-react";
 import { Product } from "@/data/products";
+import { isSaleActive, getEffectivePrice, getSaleBadgeLabel, getSavings } from "@/lib/promotions";
+import SaleCountdown from "@/components/SaleCountdown";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,17 +28,28 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
   const unavailable = stock <= 0;
   const lowStock = stock > 0 && stock <= 5;
   const reachedMax = quantity >= stock;
-  const discount = product.originalPrice
+  const onSale = isSaleActive(product);
+  const effectivePrice = getEffectivePrice(product);
+  const savings = getSavings(product);
+  const legacyDiscount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
   return (
-    <div className="group relative bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-200">
-      {discount > 0 && !unavailable && (
-        <div className="absolute top-2 left-2 z-10 bg-accent text-accent-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-          -{discount}%
+    <div
+      className={`group relative bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-0.5 transition-all duration-200 ${
+        onSale ? "border-accent/50 ring-1 ring-accent/20" : "border-border"
+      }`}
+    >
+      {onSale ? (
+        <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-[11px] font-bold px-2 py-0.5 rounded-full shadow-md">
+          {getSaleBadgeLabel(product)}
         </div>
-      )}
+      ) : legacyDiscount > 0 && !unavailable ? (
+        <div className="absolute top-2 left-2 z-10 bg-accent text-accent-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+          -{legacyDiscount}%
+        </div>
+      ) : null}
       {unavailable && (
         <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
           Indisponível
@@ -89,16 +102,29 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-snug min-h-[2.5rem]">
           {product.name}
         </h3>
-        <div className="flex items-end gap-1.5">
-          <span className="text-lg font-bold text-primary">
-            R$ {product.price.toFixed(2)}
-          </span>
-          {product.originalPrice && (
-            <span className="text-xs text-muted-foreground line-through">
-              R$ {product.originalPrice.toFixed(2)}
-            </span>
+        <div className="flex items-end gap-1.5 min-h-[1.75rem]">
+          {onSale ? (
+            <>
+              <span className="text-lg font-bold text-accent">R$ {effectivePrice.toFixed(2)}</span>
+              <span className="text-xs text-muted-foreground line-through">R$ {product.price.toFixed(2)}</span>
+            </>
+          ) : (
+            <>
+              <span className="text-lg font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+              {product.originalPrice && (
+                <span className="text-xs text-muted-foreground line-through">R$ {product.originalPrice.toFixed(2)}</span>
+              )}
+            </>
           )}
         </div>
+        {onSale && (
+          <div className="space-y-0.5">
+            {savings > 0 && (
+              <p className="text-[11px] text-accent font-semibold">Economize R$ {savings.toFixed(2)}</p>
+            )}
+            {product.saleEnd && <SaleCountdown end={product.saleEnd} />}
+          </div>
+        )}
         <div className="pt-1">
           {unavailable ? (
             <button
