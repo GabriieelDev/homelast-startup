@@ -2,6 +2,7 @@ import { ShoppingCart, Clock, ChevronUp, X, Trash2, MapPin, Truck } from "lucide
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
+import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";

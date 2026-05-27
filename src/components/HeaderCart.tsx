@@ -2,6 +2,7 @@ import { ShoppingCart, Trash2, X, Minus, Plus, ShoppingBag } from "lucide-react"
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
+import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerOverlay, DrawerPortal } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
