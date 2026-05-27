@@ -14,6 +14,14 @@ export interface Product {
   description?: string;
   active?: boolean;
   costPrice?: number;
+  // Promotion fields
+  onSale?: boolean;
+  discountType?: "percentage" | "fixed";
+  discountValue?: number;
+  salePrice?: number;
+  saleStart?: string | null;
+  saleEnd?: string | null;
+  saleLabel?: string | null;
 }
 
 export const categories = [
