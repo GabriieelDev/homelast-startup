@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { categories, type Product } from "@/data/products";
 import { toast } from "sonner";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Tag, AlertTriangle } from "lucide-react";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  /** Existing product (edit mode) — when undefined, dialog creates a new one. */
   product?: Product;
 }
 
@@ -24,6 +24,15 @@ const SECTIONS = [
   { id: "recomendados", label: "Recomendados" },
   { id: "frequentes", label: "Frequentes" },
 ];
+
+// datetime-local helpers
+const toLocal = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+const fromLocal = (v: string) => (v ? new Date(v).toISOString() : null);
 
 const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [name, setName] = useState("");
@@ -38,6 +47,14 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [sections, setSections] = useState<string[]>(["mais-comprados"]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Promotion state
+  const [onSale, setOnSale] = useState(false);
+  const [discountType, setDiscountType] = useState<"percentage" | "fixed">("percentage");
+  const [discountValue, setDiscountValue] = useState("");
+  const [saleStart, setSaleStart] = useState("");
+  const [saleEnd, setSaleEnd] = useState("");
+  const [saleLabel, setSaleLabel] = useState("");
 
   const handleUpload = async (file: File) => {
     if (!file) return;
@@ -65,21 +82,57 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       setDescription(product?.description ?? "");
       setSections(product?.section?.length ? product.section : ["mais-comprados"]);
       setStock("50");
+      setOnSale(product?.onSale ?? false);
+      setDiscountType((product?.discountType as any) ?? "percentage");
+      setDiscountValue(product?.discountValue ? String(product.discountValue) : "");
+      setSaleStart(toLocal(product?.saleStart ?? null));
+      setSaleEnd(toLocal(product?.saleEnd ?? null));
+      setSaleLabel(product?.saleLabel ?? "");
     }
   }, [open, product]);
 
   const priceNum = parseFloat(price) || 0;
   const costNum = parseFloat(costPrice) || 0;
+  const discNum = parseFloat(discountValue) || 0;
   const margin = priceNum > 0 && costNum > 0 ? ((priceNum - costNum) / priceNum) * 100 : null;
+
+  const computedSalePrice = useMemo(() => {
+    if (!onSale || discNum <= 0 || priceNum <= 0) return null;
+    const sp = discountType === "percentage"
+      ? priceNum * (1 - Math.min(discNum, 100) / 100)
+      : priceNum - discNum;
+    return Math.max(0, Math.round(sp * 100) / 100);
+  }, [onSale, discNum, priceNum, discountType]);
+
+  const negativeMargin = computedSalePrice !== null && costNum > 0 && computedSalePrice < costNum;
+  const discountExceedsPrice =
+    onSale && ((discountType === "fixed" && discNum >= priceNum) || (discountType === "percentage" && discNum >= 100));
 
   const toggleSection = (id: string) => {
     setSections((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  };
+
+  const clearPromotion = () => {
+    setOnSale(false);
+    setDiscountValue("");
+    setSaleStart("");
+    setSaleEnd("");
+    setSaleLabel("");
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !price) { toast.error("Preencha nome e preço"); return; }
     if (isNaN(priceNum) || priceNum < 0) { toast.error("Preço inválido"); return; }
+
+    if (onSale) {
+      if (discNum <= 0) { toast.error("Informe um valor de desconto válido"); return; }
+      if (discountExceedsPrice) { toast.error("Desconto não pode ser maior ou igual ao preço"); return; }
+      if (saleStart && saleEnd && new Date(saleEnd) <= new Date(saleStart)) {
+        toast.error("Data de término deve ser posterior à data de início"); return;
+      }
+    }
+
     setSaving(true);
     const payload: any = {
       name: name.trim(),
@@ -92,6 +145,12 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       description: description.trim(),
       sections: sections.length ? sections : ["mais-comprados"],
       active: true,
+      on_sale: onSale,
+      discount_type: discountType,
+      discount_value: onSale ? discNum : 0,
+      sale_start: onSale ? (fromLocal(saleStart) ?? new Date().toISOString()) : null,
+      sale_end: onSale ? fromLocal(saleEnd) : null,
+      sale_label: onSale && saleLabel.trim() ? saleLabel.trim() : null,
     };
     if (product) {
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
@@ -179,6 +238,87 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
               ))}
             </div>
           </div>
+
+          {/* PROMOTION SECTION */}
+          <div className="space-y-3 p-3 rounded-lg border border-accent/30 bg-accent/5">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="flex items-center gap-2 text-foreground">
+                <Tag className="h-4 w-4 text-accent" />
+                Produto em promoção
+              </Label>
+              <Switch checked={onSale} onCheckedChange={setOnSale} />
+            </div>
+
+            {onSale && (
+              <>
+                <div className="grid grid-cols-[1fr_120px] gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Tipo de desconto</Label>
+                    <Select value={discountType} onValueChange={(v) => setDiscountType(v as any)}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentual (%)</SelectItem>
+                        <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Valor</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max={discountType === "percentage" ? 99 : undefined}
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      placeholder={discountType === "percentage" ? "20" : "5,00"}
+                    />
+                  </div>
+                </div>
+
+                {computedSalePrice !== null && (
+                  <div className={`p-2 rounded-md text-sm font-semibold flex items-center justify-between ${discountExceedsPrice ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
+                    <span>Preço promocional:</span>
+                    <span>R$ {computedSalePrice.toFixed(2)}</span>
+                  </div>
+                )}
+                {negativeMargin && (
+                  <div className="p-2 rounded-md text-xs bg-orange-500/10 text-orange-600 flex items-start gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    Atenção: o preço promocional ficou abaixo do custo (R$ {costNum.toFixed(2)}). Margem negativa.
+                  </div>
+                )}
+                {discountExceedsPrice && (
+                  <p className="text-xs text-destructive">O desconto não pode ser maior ou igual ao preço.</p>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Início</Label>
+                    <Input type="datetime-local" value={saleStart} onChange={(e) => setSaleStart(e.target.value)} className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Término (opcional)</Label>
+                    <Input type="datetime-local" value={saleEnd} onChange={(e) => setSaleEnd(e.target.value)} className="h-9" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Rótulo personalizado (opcional)</Label>
+                  <Input
+                    value={saleLabel}
+                    onChange={(e) => setSaleLabel(e.target.value)}
+                    placeholder='Ex.: "Oferta do dia", "Black Friday"'
+                  />
+                </div>
+
+                <Button type="button" variant="outline" size="sm" onClick={clearPromotion} className="w-full">
+                  Remover promoção
+                </Button>
+              </>
+            )}
+          </div>
+
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
