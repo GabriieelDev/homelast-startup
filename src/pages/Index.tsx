@@ -1,5 +1,5 @@
 import { LogoIcon } from "@/components/Logo";
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect, useTransition, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
 import SearchBar from "@/components/SearchBar";
@@ -34,6 +34,13 @@ const Index = () => {
   const { products } = useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [, startTransition] = useTransition();
+  const handleCategoryChange = useCallback((id: string) => {
+    startTransition(() => setCategory(id));
+  }, []);
+  const handleSearchChange = useCallback((v: string) => {
+    startTransition(() => setSearch(v));
+  }, []);
   const [showProductForm, setShowProductForm] = useState(false);
   const productsRef = useRef<HTMLDivElement>(null);
   const cart = useCart();
@@ -85,7 +92,7 @@ const Index = () => {
             </span>
           </div>
           <div className="flex-1">
-            <SearchBar value={search} onChange={setSearch} />
+            <SearchBar value={search} onChange={handleSearchChange} />
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
@@ -118,7 +125,7 @@ const Index = () => {
           </div>
         </div>
         <div className="container mx-auto px-4 pb-3">
-          <CategoryFilters active={category} onChange={setCategory} />
+          <CategoryFilters active={category} onChange={handleCategoryChange} />
         </div>
       </header>
 

@@ -35,14 +35,36 @@ let _suppressNextPush = false;
 
 function notify() { listeners.forEach((l) => l()); }
 
+// Defer heavy persistence (JSON.stringify + localStorage + Supabase upsert)
+// out of the click handler to keep INP low. Coalesce bursts of updates.
+let _flushScheduled = false;
+let _pendingPush = false;
+const _scheduleIdle: (cb: () => void) => void =
+  typeof window !== "undefined" && typeof (window as any).requestIdleCallback === "function"
+    ? (cb) => (window as any).requestIdleCallback(cb, { timeout: 500 })
+    : (cb) => setTimeout(cb, 0);
+
+function flushPersistence() {
+  _flushScheduled = false;
+  const snapshot = _items;
+  saveToLS(snapshot);
+  const shouldPush = _pendingPush && _serverSyncEnabled && _userId && !_suppressNextPush;
+  _pendingPush = false;
+  if (_suppressNextPush) _suppressNextPush = false;
+  if (shouldPush) void pushToServer(snapshot);
+}
+
+function schedulePersist(push: boolean) {
+  if (push) _pendingPush = true;
+  if (_flushScheduled) return;
+  _flushScheduled = true;
+  _scheduleIdle(flushPersistence);
+}
+
 function setItems(next: CartItem[], opts: { push?: boolean } = {}) {
   _items = next;
-  saveToLS(next);
   notify();
-  if (opts.push && _serverSyncEnabled && _userId && !_suppressNextPush) {
-    void pushToServer(next);
-  }
-  if (_suppressNextPush) _suppressNextPush = false;
+  schedulePersist(opts.push ?? false);
 }
 
 async function pushToServer(items: CartItem[]) {

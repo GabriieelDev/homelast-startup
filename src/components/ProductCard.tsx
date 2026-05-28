@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Plus, Minus, AlertTriangle, Trash2 } from "lucide-react";
 import { Product } from "@/data/products";
 import { isSaleActive, getEffectivePrice, getSaleBadgeLabel, getSavings } from "@/lib/promotions";
@@ -165,4 +166,10 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
   );
 };
 
-export default ProductCard;
+export default memo(ProductCard, (prev, next) =>
+  prev.product === next.product &&
+  prev.quantity === next.quantity &&
+  prev.stock === next.stock &&
+  prev.isAdmin === next.isAdmin &&
+  Boolean(prev.onDisable) === Boolean(next.onDisable)
+);
