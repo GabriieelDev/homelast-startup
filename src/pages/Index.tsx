@@ -34,6 +34,13 @@ const Index = () => {
   const { products } = useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [, startTransition] = useTransition();
+  const handleCategoryChange = useCallback((id: string) => {
+    startTransition(() => setCategory(id));
+  }, []);
+  const handleSearchChange = useCallback((v: string) => {
+    startTransition(() => setSearch(v));
+  }, []);
   const [showProductForm, setShowProductForm] = useState(false);
   const productsRef = useRef<HTMLDivElement>(null);
   const cart = useCart();
