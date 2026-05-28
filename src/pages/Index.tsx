@@ -1,5 +1,5 @@
 import { LogoIcon } from "@/components/Logo";
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect, useTransition, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/HeroSection";
 import SearchBar from "@/components/SearchBar";
