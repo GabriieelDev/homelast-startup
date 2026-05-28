@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Plus, Minus, AlertTriangle, Trash2 } from "lucide-react";
 import { Product } from "@/data/products";
 import { isSaleActive, getEffectivePrice, getSaleBadgeLabel, getSavings } from "@/lib/promotions";
