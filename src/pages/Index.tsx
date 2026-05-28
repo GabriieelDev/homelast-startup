@@ -125,7 +125,7 @@ const Index = () => {
           </div>
         </div>
         <div className="container mx-auto px-4 pb-3">
-          <CategoryFilters active={category} onChange={setCategory} />
+          <CategoryFilters active={category} onChange={handleCategoryChange} />
         </div>
       </header>
 
