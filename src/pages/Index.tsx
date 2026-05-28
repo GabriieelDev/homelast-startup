@@ -92,7 +92,7 @@ const Index = () => {
             </span>
           </div>
           <div className="flex-1">
-            <SearchBar value={search} onChange={setSearch} />
+            <SearchBar value={search} onChange={handleSearchChange} />
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
