@@ -171,7 +171,5 @@ export default memo(ProductCard, (prev, next) =>
   prev.quantity === next.quantity &&
   prev.stock === next.stock &&
   prev.isAdmin === next.isAdmin &&
-  prev.onAdd === next.onAdd &&
-  prev.onRemove === next.onRemove &&
-  prev.onDisable === next.onDisable
+  Boolean(prev.onDisable) === Boolean(next.onDisable)
 );
