@@ -166,4 +166,12 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
   );
 };
 
-export default ProductCard;
+export default memo(ProductCard, (prev, next) =>
+  prev.product === next.product &&
+  prev.quantity === next.quantity &&
+  prev.stock === next.stock &&
+  prev.isAdmin === next.isAdmin &&
+  prev.onAdd === next.onAdd &&
+  prev.onRemove === next.onRemove &&
+  prev.onDisable === next.onDisable
+);
