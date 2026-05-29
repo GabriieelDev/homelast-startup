@@ -59,7 +59,14 @@ export function useStoreSettings() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("store_settings").select("*").eq("id", "main").maybeSingle();
+    const { data } = await supabase
+      .from("store_settings")
+      .select("id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,updated_at")
+      .eq("id", "main")
+      .maybeSingle();
+    // Admin-only internal operational thresholds via security-definer RPC.
+    const { data: adminRows } = await supabase.rpc("get_admin_store_settings");
+    const admin = Array.isArray(adminRows) && adminRows[0] ? (adminRows[0] as any) : null;
     if (data) {
       const d = data as any;
       setSettings({
@@ -68,10 +75,10 @@ export function useStoreSettings() {
         min_order: Number(d.min_order ?? 0),
         min_shipping: Number(d.min_shipping ?? 5),
         max_shipping: Number(d.max_shipping ?? 15),
-        alerts_enabled: d.alerts_enabled ?? true,
-        low_stock_threshold: Number(d.low_stock_threshold ?? 5),
-        late_order_minutes: Number(d.late_order_minutes ?? 60),
-        sales_drop_pct: Number(d.sales_drop_pct ?? 30),
+        alerts_enabled: admin?.alerts_enabled ?? DEFAULTS.alerts_enabled,
+        low_stock_threshold: Number(admin?.low_stock_threshold ?? DEFAULTS.low_stock_threshold),
+        late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
+        sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
         social_links: parseSocialLinks(d.social_links),
       });
     }

@@ -567,6 +567,22 @@ export type Database = {
     }
     Functions: {
       expire_product_sales: { Args: never; Returns: undefined }
+      get_admin_product_costs: {
+        Args: never
+        Returns: {
+          cost_price: number
+          id: string
+        }[]
+      }
+      get_admin_store_settings: {
+        Args: never
+        Returns: {
+          alerts_enabled: boolean
+          late_order_minutes: number
+          low_stock_threshold: number
+          sales_drop_pct: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
