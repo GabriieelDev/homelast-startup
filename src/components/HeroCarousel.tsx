@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, TouchEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Truck, ShieldCheck, Star, Flame, Gift, Copy, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Truck, ShieldCheck, Star, Flame, Gift, Copy, Check, Package } from "lucide-react";
 import heroImage from "@/assets/hero-groceries.png";
 import { useProducts } from "@/hooks/useProducts";
 import { isSaleActive, getEffectivePrice, getDiscountPct } from "@/lib/promotions";
@@ -258,15 +258,32 @@ const ProductMini = ({ product }: { product: any }) => {
   const onSale = isSaleActive(product);
   const price = getEffectivePrice(product);
   const pct = getDiscountPct(product);
+  const [imgError, setImgError] = useState(false);
+  const hasImage = Boolean(product.image) && !imgError;
   return (
-    <div className="bg-white rounded-xl shadow-md p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-1.5 relative">
+    <div className="bg-white rounded-xl shadow-md p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[180px]">
       {onSale && pct > 0 && (
-        <span className="absolute top-1 right-1 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: "#E74C3C" }}>
+        <span className="absolute top-1 right-1 z-10 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: "#E74C3C" }}>
           -{pct}%
         </span>
       )}
-      <img src={product.image} alt={product.name} className="w-16 h-16 md:w-full md:h-20 object-cover rounded-lg" loading="lazy" />
-      <div className="flex-1 md:text-center min-w-0 w-full">
+      <div
+        className="shrink-0 w-16 h-16 md:w-full md:h-[90px] rounded-lg flex items-center justify-center overflow-hidden"
+        style={{ backgroundColor: "#F5F5F5" }}
+      >
+        {hasImage ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            onError={() => setImgError(true)}
+            className="max-w-full max-h-full object-contain"
+            loading="lazy"
+          />
+        ) : (
+          <Package className="h-8 w-8 text-muted-foreground/50" />
+        )}
+      </div>
+      <div className="flex-1 md:flex-none md:text-center min-w-0 w-full">
         <p className="text-xs md:text-sm font-medium truncate" style={{ color: "#1D2D50" }}>{product.name}</p>
         <div className="flex md:justify-center items-baseline gap-1.5 mt-0.5">
           {onSale && (
