@@ -30,8 +30,18 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("products").select("*").order("name");
-    setProducts((data ?? []).map(fromRow));
+    const { data } = await supabase
+      .from("products")
+      .select("id,name,price,original_price,image,category,category_id,sections,unit,description,active,on_sale,discount_type,discount_value,sale_price,sale_start,sale_end,sale_label")
+      .order("name");
+    let rows = (data ?? []) as any[];
+    // Admins may also fetch cost prices via a security-definer RPC.
+    const { data: costs } = await supabase.rpc("get_admin_product_costs");
+    if (Array.isArray(costs) && costs.length > 0) {
+      const map = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
+      rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));
+    }
+    setProducts(rows.map(fromRow));
     setLoading(false);
   }, []);
 
