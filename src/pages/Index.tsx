@@ -1,7 +1,7 @@
 import { LogoIcon } from "@/components/Logo";
 import { useState, useRef, useMemo, useEffect, useTransition, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import HeroSection from "@/components/HeroSection";
+import HeroCarousel from "@/components/HeroCarousel";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductSection from "@/components/ProductSection";
@@ -129,7 +129,7 @@ const Index = () => {
         </div>
       </header>
 
-      {!isFiltering && <HeroSection onStart={scrollToProducts} />}
+      {!isFiltering && <HeroCarousel onStart={scrollToProducts} />}
 
       <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-28">
         {isAdmin && (
