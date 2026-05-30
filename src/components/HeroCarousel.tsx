@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState, useCallback, TouchEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, TouchEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Truck, ShieldCheck, Star, Flame, Gift, Copy, Check, Package } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, Truck, ShieldCheck, Star, Flame, Gift, Copy, Check,
+  Package, ArrowRight, Sparkles,
+} from "lucide-react";
 import heroImage from "@/assets/hero-groceries.png";
 import { useProducts } from "@/hooks/useProducts";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useCountdown, formatCountdown } from "@/hooks/useCountdown";
 import { isSaleActive, getEffectivePrice, getDiscountPct } from "@/lib/promotions";
 import { toast } from "sonner";
 
@@ -10,29 +15,42 @@ interface HeroCarouselProps {
   onStart: () => void;
 }
 
-const SLIDE_COUNT = 3;
 const AUTOPLAY_MS = 5000;
 const RESUME_MS = 5000;
 
 const HeroCarousel = ({ onStart }: HeroCarouselProps) => {
+  const { settings } = useStoreSettings();
+  const cfg = settings.carousel_config;
+
+  // Slide 1 is always enabled; 2 and 3 are toggleable.
+  const slides = useMemo(() => {
+    const list: Array<"s1" | "s2" | "s3"> = ["s1"];
+    if (cfg.slide2.enabled) list.push("s2");
+    if (cfg.slide3.enabled) list.push("s3");
+    return list;
+  }, [cfg.slide2.enabled, cfg.slide3.enabled]);
+  const SLIDE_COUNT = slides.length;
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [copied, setCopied] = useState(false);
   const resumeTimer = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
-  const goTo = useCallback((i: number) => {
-    setIndex(((i % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT);
-  }, []);
-  const next = useCallback(() => setIndex((i) => (i + 1) % SLIDE_COUNT), []);
-  const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT), []);
-
-  // Autoplay
+  // Clamp index when slide count changes
   useEffect(() => {
-    if (paused) return;
+    if (index >= SLIDE_COUNT) setIndex(0);
+  }, [SLIDE_COUNT, index]);
+
+  const goTo = useCallback((i: number) => setIndex(((i % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
+  const next = useCallback(() => setIndex((i) => (i + 1) % SLIDE_COUNT), [SLIDE_COUNT]);
+  const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
+
+  useEffect(() => {
+    if (paused || SLIDE_COUNT < 2) return;
     const t = window.setInterval(next, AUTOPLAY_MS);
     return () => window.clearInterval(t);
-  }, [paused, next]);
+  }, [paused, next, SLIDE_COUNT]);
 
   const handleInteraction = useCallback(() => {
     setPaused(true);
@@ -40,7 +58,6 @@ const HeroCarousel = ({ onStart }: HeroCarouselProps) => {
     resumeTimer.current = window.setTimeout(() => setPaused(false), RESUME_MS);
   }, []);
 
-  // Touch swipe
   const onTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     handleInteraction();
@@ -52,21 +69,39 @@ const HeroCarousel = ({ onStart }: HeroCarouselProps) => {
     touchStartX.current = null;
   };
 
-  // Sale products for slide 2
   const { products } = useProducts();
-  const saleProducts = products.filter(isSaleActive).slice(0, 3);
-  const fallback = products.slice(0, 3);
-  const featured = saleProducts.length > 0 ? saleProducts : fallback;
+  const featured = useMemo(() => {
+    const picked = cfg.slide2.productIds
+      .map((id) => products.find((p) => p.id === id))
+      .filter(Boolean) as typeof products;
+    if (picked.length >= 1) return picked.slice(0, 3);
+    const onSale = products.filter(isSaleActive).slice(0, 3);
+    return onSale.length > 0 ? onSale : products.slice(0, 3);
+  }, [cfg.slide2.productIds, products]);
 
   const copyCoupon = async () => {
     try {
-      await navigator.clipboard.writeText("BEMVINDO10");
+      await navigator.clipboard.writeText(cfg.slide3.coupon);
       setCopied(true);
       toast.success("Cupom copiado!");
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Não foi possível copiar");
     }
+  };
+
+  // Render title with highlight word/phrase styled
+  const renderHighlighted = (text: string, highlight: string, color: string) => {
+    if (!highlight || !text.includes(highlight)) return text;
+    const [before, ...rest] = text.split(highlight);
+    const after = rest.join(highlight);
+    return (
+      <>
+        {before}
+        <span style={{ color }}>{highlight}</span>
+        {after}
+      </>
+    );
   };
 
   return (
@@ -78,182 +113,289 @@ const HeroCarousel = ({ onStart }: HeroCarouselProps) => {
       onTouchEnd={onTouchEnd}
       aria-roledescription="carousel"
     >
-      {/* Track */}
-      <div className="relative h-[280px] md:h-[420px] overflow-hidden">
+      <div className="relative h-[320px] md:h-[460px] overflow-hidden">
         <div
-          className="flex h-full transition-transform duration-700 ease-out"
-          style={{ transform: `translateX(-${index * 100}%)` }}
+          className="flex h-full transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
+          style={{ transform: `translateX(-${index * 100}%)`, transitionDuration: "850ms" }}
         >
-          {/* SLIDE 1 — Apresentação */}
-          <div
-            className="min-w-full h-full relative px-4 md:px-8"
-            style={{ background: "linear-gradient(135deg, #1D2D50 0%, #2C3E6B 100%)" }}
-            aria-roledescription="slide"
-            aria-label="Slide 1 de 3"
-          >
-            <div className="container mx-auto h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
-              <div className="flex-1 text-center md:text-left text-white space-y-3 md:space-y-5 max-w-xl">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium">
-                  <Truck className="h-3.5 w-3.5" /> Entrega em 30–60 min
-                </span>
-                <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
-                  Seu supermercado <span style={{ color: "#00B894" }}>em minutos</span>
-                </h1>
-                <p className="text-sm md:text-base text-white/80 max-w-md mx-auto md:mx-0">
-                  Compre rápido, receba rápido. Sem filas, sem complicação.
-                </p>
-                <div className="hidden md:flex gap-4 pt-1">
-                  {[
-                    { Icon: Truck, title: "Entrega expressa", text: "Receba em até 1 hora" },
-                    { Icon: ShieldCheck, title: "Compra segura", text: "Pagamento protegido" },
-                    { Icon: Star, title: "Qualidade garantida", text: "Produtos frescos" },
-                  ].map(({ Icon, title, text }) => (
-                    <div key={title} className="flex items-start gap-2">
-                      <div className="w-9 h-9 rounded-lg bg-white/95 flex items-center justify-center shrink-0">
-                        <Icon className="h-4 w-4" style={{ color: "#00B894" }} />
-                      </div>
-                      <div className="text-xs">
-                        <p className="font-semibold">{title}</p>
-                        <p className="text-white/70">{text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  size="lg"
-                  className="rounded-full font-semibold text-white shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform"
-                  style={{ backgroundColor: "#00B894" }}
-                  onClick={onStart}
-                >
-                  Começar agora
-                </Button>
-              </div>
-              <div className="hidden md:block flex-1 max-w-sm">
-                <img src={heroImage} alt="Compras frescas" className="w-full h-auto rounded-2xl shadow-2xl" />
-              </div>
-            </div>
-          </div>
-
-          {/* SLIDE 2 — Produtos em promoção */}
-          <div
-            className="min-w-full h-full relative px-4 md:px-8"
-            style={{ backgroundColor: "#F8F9FA" }}
-            aria-roledescription="slide"
-            aria-label="Slide 2 de 3"
-          >
-            <div className="container mx-auto h-full flex flex-col md:flex-row items-center gap-4 md:gap-8">
-              <div className="flex-1 text-center md:text-left space-y-2 md:space-y-4 max-w-md">
-                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-semibold text-white" style={{ backgroundColor: "#E74C3C" }}>
-                  <Flame className="h-3.5 w-3.5" /> Ofertas do dia
-                </span>
-                <h2 className="text-2xl md:text-4xl font-bold leading-tight" style={{ color: "#1D2D50" }}>
-                  Produtos com até <span style={{ color: "#00B894" }}>30% OFF</span>
-                </h2>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Aproveite as melhores ofertas antes que acabem!
-                </p>
-                <Button
-                  size="lg"
-                  className="rounded-full font-semibold text-white hover:scale-[1.03] active:scale-[0.97] transition-transform w-full md:w-auto"
-                  style={{ backgroundColor: "#1D2D50" }}
-                  onClick={onStart}
-                >
-                  Ver todas as ofertas
-                </Button>
-              </div>
-              <div className="flex-1 w-full">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
-                  {featured.slice(0, 1).map((p) => (
-                    <ProductMini key={p.id} product={p} />
-                  ))}
-                  {featured.slice(1, 3).map((p) => (
-                    <div key={p.id} className="hidden md:block">
-                      <ProductMini product={p} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SLIDE 3 — Cupom */}
-          <div
-            className="min-w-full h-full relative px-4 md:px-8"
-            style={{ background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
-            aria-roledescription="slide"
-            aria-label="Slide 3 de 3"
-          >
-            <div className="container mx-auto h-full flex flex-col items-center justify-center text-center text-white gap-3 md:gap-5 max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium">
-                <Gift className="h-3.5 w-3.5" /> Oferta especial
-              </span>
-              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                Primeira compra com 10% OFF
-              </h2>
-              <p className="text-sm md:text-base text-white/90 max-w-md">
-                Use o cupom <strong>BEMVINDO10</strong> e ganhe desconto na sua primeira compra
-              </p>
-              <div className="flex items-center gap-2 bg-white rounded-full p-1 pl-4 shadow-xl">
-                <span className="font-mono font-bold text-base md:text-lg tracking-wider" style={{ color: "#00765F" }}>
-                  BEMVINDO10
-                </span>
-                <button
-                  onClick={copyCoupon}
-                  className="flex items-center gap-1.5 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold text-white hover:scale-[1.03] active:scale-[0.97] transition-transform"
-                  style={{ backgroundColor: "#1D2D50" }}
-                >
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? "Copiado" : "Copiar"}
-                </button>
-              </div>
-              <p className="text-xs text-white/75">Válido para novos clientes. Pedido mínimo R$ 50.</p>
-              <Button
-                size="lg"
-                className="rounded-full font-semibold bg-white hover:bg-white hover:scale-[1.03] active:scale-[0.97] transition-transform w-full md:w-auto max-w-xs"
-                style={{ color: "#00765F" }}
-                onClick={onStart}
-              >
-                Aproveitar agora
-              </Button>
-            </div>
-          </div>
+          {slides.map((key) => {
+            if (key === "s1") return <Slide1 key="s1" cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
+            if (key === "s2") return <Slide2 key="s2" cfg={cfg.slide2} featured={featured} onStart={onStart} renderHighlighted={renderHighlighted} />;
+            return <Slide3 key="s3" cfg={cfg.slide3} copied={copied} onCopy={copyCoupon} onStart={onStart} />;
+          })}
         </div>
 
-        {/* Arrows (desktop) */}
-        <button
-          onClick={() => { handleInteraction(); prev(); }}
-          aria-label="Slide anterior"
-          className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/85 hover:bg-white shadow-lg items-center justify-center hover:scale-[1.03] active:scale-[0.97] transition-transform z-10"
-        >
-          <ChevronLeft className="h-5 w-5 text-foreground" />
-        </button>
-        <button
-          onClick={() => { handleInteraction(); next(); }}
-          aria-label="Próximo slide"
-          className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/85 hover:bg-white shadow-lg items-center justify-center hover:scale-[1.03] active:scale-[0.97] transition-transform z-10"
-        >
-          <ChevronRight className="h-5 w-5 text-foreground" />
-        </button>
-
-        {/* Dots */}
-        <div className="absolute bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
-          {Array.from({ length: SLIDE_COUNT }).map((_, i) => (
+        {SLIDE_COUNT > 1 && (
+          <>
             <button
-              key={i}
-              onClick={() => { handleInteraction(); goTo(i); }}
-              aria-label={`Ir para slide ${i + 1}`}
-              aria-current={index === i}
-              className={`h-2 rounded-full transition-all ${
-                index === i ? "w-7 bg-white" : "w-2 bg-white/55 hover:bg-white/80"
-              }`}
-            />
-          ))}
-        </div>
+              onClick={() => { handleInteraction(); prev(); }}
+              aria-label="Slide anterior"
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-10"
+            >
+              <ChevronLeft className="h-5 w-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => { handleInteraction(); next(); }}
+              aria-label="Próximo slide"
+              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-10"
+            >
+              <ChevronRight className="h-5 w-5 text-foreground" />
+            </button>
+
+            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-10">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { handleInteraction(); goTo(i); }}
+                  aria-label={`Ir para slide ${i + 1}`}
+                  aria-current={index === i}
+                  className={`h-2.5 rounded-full transition-all duration-500 ring-1 ring-white/30 ${
+                    index === i ? "w-10 bg-white shadow-lg" : "w-2.5 bg-white/50 hover:bg-white/80 hover:scale-125"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
 };
 
+/* ============================ SLIDE 1 ============================ */
+const Slide1 = ({
+  cfg, onStart, renderHighlighted,
+}: {
+  cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide1"];
+  onStart: () => void;
+  renderHighlighted: (t: string, h: string, c: string) => React.ReactNode;
+}) => {
+  const features = [
+    { Icon: Truck, title: cfg.feature1Title, text: cfg.feature1Text },
+    { Icon: ShieldCheck, title: cfg.feature2Title, text: cfg.feature2Text },
+    { Icon: Star, title: cfg.feature3Title, text: cfg.feature3Text },
+  ];
+  return (
+    <div
+      className="min-w-full h-full relative px-4 md:px-8"
+      style={{ background: "linear-gradient(135deg, #1D2D50 0%, #2C3E6B 100%)" }}
+      aria-roledescription="slide"
+    >
+      <div className="container mx-auto h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
+        <div className="flex-1 text-center md:text-left text-white space-y-3 md:space-y-5 max-w-xl">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium">
+            <Truck className="h-3.5 w-3.5" /> {cfg.badge}
+          </span>
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
+            {renderHighlighted(cfg.title, cfg.highlight, "#00B894")}
+          </h1>
+          <p className="text-sm md:text-base text-white/80 max-w-md mx-auto md:mx-0">
+            {cfg.subtitle}
+          </p>
+          <div className="hidden md:flex gap-4 pt-1">
+            {features.map(({ Icon, title, text }) => (
+              <div key={title} className="flex items-start gap-2">
+                <div className="w-9 h-9 rounded-lg bg-white/95 flex items-center justify-center shrink-0">
+                  <Icon className="h-4 w-4" style={{ color: "#00B894" }} />
+                </div>
+                <div className="text-xs">
+                  <p className="font-semibold">{title}</p>
+                  <p className="text-white/70">{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button
+            size="lg"
+            className="rounded-full font-semibold text-white shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform"
+            style={{ backgroundColor: "#00B894" }}
+            onClick={onStart}
+          >
+            {cfg.ctaText}
+          </Button>
+        </div>
+        {/* Product image card with hover lift & gradient border */}
+        <div className="hidden md:block flex-1 max-w-sm group">
+          <div
+            className="relative p-[2px] rounded-2xl transition-all duration-300 group-hover:-translate-y-2 group-hover:rotate-[2deg]"
+            style={{ background: "linear-gradient(135deg, #1D2D50, #00B894)" }}
+          >
+            <div
+              className="rounded-2xl p-4 transition-shadow duration-300 group-hover:shadow-[0_25px_50px_-12px_rgba(0,184,148,0.45)]"
+              style={{ background: "linear-gradient(135deg, #FAFBFC 0%, #F2F4F7 100%)" }}
+            >
+              <img
+                src={cfg.image || heroImage}
+                alt="Compras frescas"
+                className="w-full h-auto rounded-xl"
+                onError={(e) => { (e.target as HTMLImageElement).src = heroImage; }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ============================ SLIDE 2 ============================ */
+const Slide2 = ({
+  cfg, featured, onStart, renderHighlighted,
+}: {
+  cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide2"];
+  featured: any[];
+  onStart: () => void;
+  renderHighlighted: (t: string, h: string, c: string) => React.ReactNode;
+}) => {
+  const countdown = useCountdown(cfg.countdownEnd);
+  return (
+    <div
+      className="min-w-full h-full relative px-4 md:px-8 overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
+      aria-roledescription="slide"
+    >
+      {/* Decorative confetti / shapes */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full opacity-30 blur-3xl" style={{ background: "#FF8A4C" }} />
+        <div className="absolute top-1/3 right-10 w-28 h-28 rounded-full opacity-25 blur-2xl" style={{ background: "#E53E3E" }} />
+        <div className="absolute bottom-6 left-1/3 w-24 h-24 rotate-45 opacity-20" style={{ background: "linear-gradient(135deg,#FFB87A,#FF8A4C)" }} />
+        {[
+          { left: "8%", delay: "0s",   dur: "5s",   color: "#E53E3E" },
+          { left: "22%", delay: "1.2s", dur: "6s",  color: "#FF8A4C" },
+          { left: "38%", delay: "0.4s", dur: "5.5s",color: "#FFB87A" },
+          { left: "55%", delay: "2s",   dur: "6.5s",color: "#E53E3E" },
+          { left: "72%", delay: "0.8s", dur: "5s",  color: "#FF8A4C" },
+          { left: "88%", delay: "1.6s", dur: "6s",  color: "#FFB87A" },
+        ].map((c, i) => (
+          <span
+            key={i}
+            className="absolute top-0 w-2 h-3 rounded-sm animate-confetti-fall"
+            style={{ left: c.left, backgroundColor: c.color, animationDelay: c.delay, animationDuration: c.dur }}
+          />
+        ))}
+      </div>
+
+      <div className="container mx-auto h-full flex flex-col md:flex-row items-center gap-4 md:gap-8 relative">
+        <div className="flex-1 text-center md:text-left space-y-2 md:space-y-4 max-w-md">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-semibold text-white shadow-lg animate-pulse"
+            style={{ backgroundColor: "#E53E3E" }}
+          >
+            <Flame className="h-3.5 w-3.5 animate-bounce" /> {cfg.badge}
+          </span>
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight" style={{ color: "#1D2D50" }}>
+            {renderHighlighted(cfg.title, cfg.highlight, "#E53E3E")}
+          </h2>
+          {countdown.enabled && !countdown.expired && (
+            <div className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 font-mono font-bold text-sm md:text-base shadow-sm"
+              style={{ backgroundColor: "rgba(229,62,62,0.1)", color: "#E53E3E" }}>
+              <Sparkles className="h-4 w-4" />
+              Termina em: <span className="tabular-nums">{formatCountdown(countdown)}</span>
+            </div>
+          )}
+          <p className="text-sm md:text-base text-muted-foreground">{cfg.subtitle}</p>
+          <Button
+            size="lg"
+            className="rounded-full font-semibold text-white shadow-lg hover:shadow-xl hover:scale-[1.05] active:scale-[0.97] transition-all w-full md:w-auto gap-2 group"
+            style={{ backgroundColor: "#E53E3E" }}
+            onClick={onStart}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#C53030")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#E53E3E")}
+          >
+            {cfg.ctaText}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
+        </div>
+        <div className="flex-1 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
+            {featured.slice(0, 1).map((p) => (<ProductMini key={p.id} product={p} />))}
+            {featured.slice(1, 3).map((p) => (
+              <div key={p.id} className="hidden md:block"><ProductMini product={p} /></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ============================ SLIDE 3 ============================ */
+const Slide3 = ({
+  cfg, copied, onCopy, onStart,
+}: {
+  cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide3"];
+  copied: boolean;
+  onCopy: () => void;
+  onStart: () => void;
+}) => {
+  return (
+    <div
+      className="min-w-full h-full relative px-4 md:px-8 overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
+      aria-roledescription="slide"
+    >
+      {/* Decorative circles */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full" style={{ background: "rgba(0,118,95,0.35)" }} />
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full" style={{ background: "rgba(0,118,95,0.25)" }} />
+        <div className="absolute top-12 left-10 w-16 h-16 rounded-full border-2 border-white/20" />
+        <div className="absolute bottom-16 right-16 w-10 h-10 rotate-45 border-2 border-white/20" />
+        {[
+          { top: "15%", left: "20%", delay: "0s" },
+          { top: "30%", left: "75%", delay: "0.8s" },
+          { top: "70%", left: "15%", delay: "1.4s" },
+          { top: "60%", left: "82%", delay: "0.4s" },
+          { top: "20%", left: "55%", delay: "1.8s" },
+        ].map((s, i) => (
+          <Star
+            key={i}
+            className="absolute h-4 w-4 text-white/60 fill-white/40 animate-float-slow"
+            style={{ top: s.top, left: s.left, animationDelay: s.delay }}
+          />
+        ))}
+      </div>
+
+      <div className="container mx-auto h-full flex flex-col items-center justify-center text-center text-white gap-3 md:gap-5 max-w-2xl relative">
+        <Gift className="h-7 w-7 md:h-8 md:w-8 text-white drop-shadow-md animate-float-slow" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium border border-white/30">
+          <Sparkles className="h-3.5 w-3.5" /> {cfg.badge}
+        </span>
+        <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight drop-shadow-md">
+          {cfg.title}
+        </h2>
+        <p className="text-sm md:text-base text-white/90 max-w-md">
+          Use o cupom <strong>{cfg.coupon}</strong> e ganhe desconto na sua primeira compra
+        </p>
+        <div className="flex items-center gap-2 bg-white rounded-full p-1 pl-4 shadow-2xl relative overflow-hidden">
+          {/* Shimmer */}
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/80 to-transparent animate-shimmer" />
+          <span className="font-mono font-bold text-base md:text-lg tracking-wider relative" style={{ color: "#00765F" }}>
+            {cfg.coupon}
+          </span>
+          <button
+            onClick={onCopy}
+            className="flex items-center gap-1.5 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold text-white hover:scale-105 active:scale-95 transition-transform relative"
+            style={{ backgroundColor: copied ? "#00B894" : "#1D2D50" }}
+          >
+            {copied ? <Check className="h-3.5 w-3.5 animate-badge-pop" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? "Copiado!" : "Copiar"}
+          </button>
+        </div>
+        <p className="text-xs text-white/75">{cfg.conditions}</p>
+        <Button
+          size="lg"
+          className="rounded-full font-semibold bg-white hover:bg-white hover:scale-[1.05] hover:shadow-2xl active:scale-[0.97] transition-all w-full md:w-auto max-w-xs"
+          style={{ color: "#00765F" }}
+          onClick={onStart}
+        >
+          {cfg.ctaText}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+/* ============================ ProductMini ============================ */
 const ProductMini = ({ product }: { product: any }) => {
   const onSale = isSaleActive(product);
   const price = getEffectivePrice(product);
@@ -261,14 +403,19 @@ const ProductMini = ({ product }: { product: any }) => {
   const [imgError, setImgError] = useState(false);
   const hasImage = Boolean(product.image) && !imgError;
   return (
-    <div className="bg-white rounded-xl shadow-md p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[180px]">
-      {onSale && pct > 0 && (
-        <span className="absolute top-1 right-1 z-10 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: "#E74C3C" }}>
+    <div
+      className="group bg-white rounded-xl shadow-md hover:shadow-2xl p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[200px] border-2 border-transparent hover:border-orange-300 hover:-translate-y-1 transition-all duration-300"
+    >
+      {(onSale && pct > 0) && (
+        <span
+          className="absolute -top-2 -right-2 z-10 text-[10px] font-bold text-white px-2 py-1 rounded-full shadow-lg animate-badge-pop"
+          style={{ backgroundColor: "#E53E3E" }}
+        >
           -{pct}%
         </span>
       )}
       <div
-        className="shrink-0 w-16 h-16 md:w-full md:h-[90px] rounded-lg flex items-center justify-center overflow-hidden"
+        className="shrink-0 w-16 h-16 md:w-full md:h-[100px] rounded-lg flex items-center justify-center overflow-hidden"
         style={{ backgroundColor: "#F5F5F5" }}
       >
         {hasImage ? (
@@ -276,7 +423,7 @@ const ProductMini = ({ product }: { product: any }) => {
             src={product.image}
             alt={product.name}
             onError={() => setImgError(true)}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-110"
             loading="lazy"
           />
         ) : (
@@ -291,7 +438,7 @@ const ProductMini = ({ product }: { product: any }) => {
               R$ {product.price.toFixed(2)}
             </span>
           )}
-          <span className="text-sm md:text-base font-bold" style={{ color: "#00B894" }}>
+          <span className="text-sm md:text-base font-extrabold" style={{ color: "#00B894" }}>
             R$ {price.toFixed(2)}
           </span>
         </div>
