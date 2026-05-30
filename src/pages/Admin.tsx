@@ -22,6 +22,7 @@ import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import CategoryManager from "@/components/admin/CategoryManager";
 import NfeImporter from "@/components/admin/NfeImporter";
 import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
+import CarouselManager from "@/components/admin/CarouselManager";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -971,6 +972,12 @@ const Admin = () => {
 
               <Button type="submit" className="w-full">Salvar configurações</Button>
             </form>
+          )}
+
+          {tab === "configuracoes" && (
+            <div className="mt-8 pt-8 border-t border-border">
+              <CarouselManager />
+            </div>
           )}
         </main>
       </div>
