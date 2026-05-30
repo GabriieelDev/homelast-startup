@@ -10,6 +10,81 @@ export interface SocialLink {
   order: number;
 }
 
+export interface CarouselSlide1 {
+  enabled: boolean;
+  badge: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  ctaText: string;
+  feature1Title: string;
+  feature1Text: string;
+  feature2Title: string;
+  feature2Text: string;
+  feature3Title: string;
+  feature3Text: string;
+  image: string;
+}
+export interface CarouselSlide2 {
+  enabled: boolean;
+  badge: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  ctaText: string;
+  productIds: string[];
+  countdownEnd: string | null;
+}
+export interface CarouselSlide3 {
+  enabled: boolean;
+  badge: string;
+  title: string;
+  coupon: string;
+  conditions: string;
+  ctaText: string;
+}
+export interface CarouselConfig {
+  slide1: CarouselSlide1;
+  slide2: CarouselSlide2;
+  slide3: CarouselSlide3;
+}
+
+export const DEFAULT_CAROUSEL: CarouselConfig = {
+  slide1: {
+    enabled: true,
+    badge: "Entrega em 30–60 min",
+    title: "Seu supermercado em minutos",
+    highlight: "em minutos",
+    subtitle: "Compre rápido, receba rápido. Sem filas, sem complicação.",
+    ctaText: "Começar agora",
+    feature1Title: "Entrega expressa",
+    feature1Text: "Receba em até 1 hora",
+    feature2Title: "Compra segura",
+    feature2Text: "Pagamento protegido",
+    feature3Title: "Qualidade garantida",
+    feature3Text: "Produtos frescos",
+    image: "",
+  },
+  slide2: {
+    enabled: true,
+    badge: "Ofertas do dia",
+    title: "Produtos com até 30% OFF",
+    highlight: "30% OFF",
+    subtitle: "Aproveite as melhores ofertas antes que acabem!",
+    ctaText: "Ver todas as ofertas",
+    productIds: [],
+    countdownEnd: null,
+  },
+  slide3: {
+    enabled: true,
+    badge: "Oferta especial",
+    title: "Primeira compra com 10% OFF",
+    coupon: "BEMVINDO10",
+    conditions: "Válido para novos clientes. Pedido mínimo R$ 50.",
+    ctaText: "Aproveitar agora",
+  },
+};
+
 export interface StoreSettings {
   id: string;
   name: string;
@@ -24,6 +99,7 @@ export interface StoreSettings {
   late_order_minutes: number;
   sales_drop_pct: number;
   social_links: SocialLink[];
+  carousel_config: CarouselConfig;
 }
 
 const DEFAULTS: StoreSettings = {
@@ -40,6 +116,7 @@ const DEFAULTS: StoreSettings = {
   late_order_minutes: 60,
   sales_drop_pct: 30,
   social_links: [],
+  carousel_config: DEFAULT_CAROUSEL,
 };
 
 function parseSocialLinks(raw: unknown): SocialLink[] {
@@ -54,6 +131,19 @@ function parseSocialLinks(raw: unknown): SocialLink[] {
     }));
 }
 
+function parseCarousel(raw: unknown): CarouselConfig {
+  const r = (raw && typeof raw === "object" ? raw : {}) as any;
+  return {
+    slide1: { ...DEFAULT_CAROUSEL.slide1, ...(r.slide1 ?? {}), enabled: true },
+    slide2: {
+      ...DEFAULT_CAROUSEL.slide2,
+      ...(r.slide2 ?? {}),
+      productIds: Array.isArray(r.slide2?.productIds) ? r.slide2.productIds : [],
+    },
+    slide3: { ...DEFAULT_CAROUSEL.slide3, ...(r.slide3 ?? {}) },
+  };
+}
+
 export function useStoreSettings() {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -61,10 +151,9 @@ export function useStoreSettings() {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("store_settings")
-      .select("id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,updated_at")
+      .select("id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at")
       .eq("id", "main")
       .maybeSingle();
-    // Admin-only internal operational thresholds via security-definer RPC.
     const { data: adminRows } = await supabase.rpc("get_admin_store_settings");
     const admin = Array.isArray(adminRows) && adminRows[0] ? (adminRows[0] as any) : null;
     if (data) {
@@ -80,6 +169,7 @@ export function useStoreSettings() {
         late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
         sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
         social_links: parseSocialLinks(d.social_links),
+        carousel_config: parseCarousel(d.carousel_config),
       });
     }
     setLoading(false);
