@@ -88,6 +88,24 @@ export default {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.2)" },
         },
+        shimmer: {
+          "0%": { transform: "translateX(-150%) skewX(-12deg)" },
+          "100%": { transform: "translateX(250%) skewX(-12deg)" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "confetti-fall": {
+          "0%": { transform: "translateY(-10px) rotate(0deg)", opacity: "0" },
+          "20%": { opacity: "1" },
+          "100%": { transform: "translateY(440px) rotate(360deg)", opacity: "0" },
+        },
+        "badge-pop": {
+          "0%": { transform: "scale(0) rotate(-15deg)", opacity: "0" },
+          "60%": { transform: "scale(1.15) rotate(5deg)", opacity: "1" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -95,6 +113,10 @@ export default {
         "pop-in": "pop-in 0.2s ease-out",
         "slide-up": "slide-up 0.3s ease-out",
         "cart-bounce": "cart-bounce 0.3s ease-out",
+        shimmer: "shimmer 2.4s ease-in-out infinite",
+        "float-slow": "float-slow 4s ease-in-out infinite",
+        "confetti-fall": "confetti-fall linear infinite",
+        "badge-pop": "badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },

@@ -475,6 +475,7 @@ export type Database = {
         Row: {
           address: string | null
           alerts_enabled: boolean
+          carousel_config: Json
           hours: string | null
           id: string
           late_order_minutes: number
@@ -491,6 +492,7 @@ export type Database = {
         Insert: {
           address?: string | null
           alerts_enabled?: boolean
+          carousel_config?: Json
           hours?: string | null
           id: string
           late_order_minutes?: number
@@ -507,6 +509,7 @@ export type Database = {
         Update: {
           address?: string | null
           alerts_enabled?: boolean
+          carousel_config?: Json
           hours?: string | null
           id?: string
           late_order_minutes?: number
