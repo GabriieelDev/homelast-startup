@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useDeferredValue, useCallback } from "react";
 import { Search, X } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 
@@ -10,13 +10,22 @@ interface SearchBarProps {
 const SearchBar = ({ value, onChange }: SearchBarProps) => {
   const [focused, setFocused] = useState(false);
   const { products } = useProducts();
+  // Defer the heavy suggestion filtering off the input's critical path (better INP).
+  const deferredValue = useDeferredValue(value);
 
   const suggestions = useMemo(() => {
-    if (value.length < 2) return [];
+    if (deferredValue.length < 2) return [];
+    const q = deferredValue.toLowerCase();
     return products
-      .filter((p) => p.active !== false && p.name.toLowerCase().includes(value.toLowerCase()))
+      .filter((p) => p.active !== false && p.name.toLowerCase().includes(q))
       .slice(0, 5);
-  }, [value, products]);
+  }, [deferredValue, products]);
+
+  const handleClear = useCallback(() => onChange(""), [onChange]);
+  const handleBlur = useCallback(() => {
+    // rAF avoids blocking the click target resolution on suggestion mousedown.
+    requestAnimationFrame(() => setFocused(false));
+  }, []);
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
