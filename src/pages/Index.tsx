@@ -41,6 +41,10 @@ const Index = () => {
   const handleSearchChange = useCallback((v: string) => {
     startTransition(() => setSearch(v));
   }, []);
+  const go = useCallback((path: string) => {
+    // Deferred route change keeps the click responsive (better INP).
+    startTransition(() => navigate(path));
+  }, [navigate]);
   const [showProductForm, setShowProductForm] = useState(false);
   const productsRef = useRef<HTMLDivElement>(null);
   const cart = useCart();
