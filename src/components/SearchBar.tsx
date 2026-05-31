@@ -41,11 +41,11 @@ const SearchBar = ({ value, onChange }: SearchBarProps) => {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 200)}
+          onBlur={handleBlur}
           className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground font-body"
         />
         {value && (
-          <button onClick={() => onChange("")} className="text-muted-foreground hover:text-foreground">
+          <button onClick={handleClear} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         )}
