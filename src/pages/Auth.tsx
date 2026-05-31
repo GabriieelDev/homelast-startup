@@ -34,6 +34,13 @@ const Auth = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const emailRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [, startTransition] = useTransition();
+  // Defer mode swap & password-strength recompute so keystrokes/clicks stay <200ms (INP).
+  const switchMode = useCallback((next: Mode) => {
+    setErrors({});
+    startTransition(() => setMode(next));
+  }, []);
+  const deferredPassword = useDeferredValue(password);
 
   useEffect(() => {
     emailRef.current?.focus();
