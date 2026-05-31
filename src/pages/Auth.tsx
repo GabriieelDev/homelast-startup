@@ -125,7 +125,7 @@ const Auth = () => {
   const FieldError = ({ field }: { field: string }) =>
     errors[field] ? <p className="text-xs text-destructive mt-1">{errors[field]}</p> : null;
 
-  const strength = getPasswordStrength(password);
+  const strength = getPasswordStrength(deferredPassword);
   const strengthLabels = ["Muito fraca", "Fraca", "Razoável", "Boa", "Forte"];
   const strengthColors = ["bg-red-400", "bg-orange-400", "bg-yellow-400", "bg-lime-500", "bg-green-500"];
 
