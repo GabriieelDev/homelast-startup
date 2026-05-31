@@ -576,6 +576,47 @@ const Admin = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Disabled products section — items removed via storefront "trash" action */}
+              {(() => {
+                const disabledList = products.filter((p) => disabledIds.has(p.id));
+                if (disabledList.length === 0) return null;
+                return (
+                  <div className="mt-8 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <PowerOff className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-bold text-foreground">
+                        Produtos desativados ({disabledList.length})
+                      </h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Estes produtos foram removidos do catálogo. Reative para voltar à vitrine imediatamente.
+                    </p>
+                    <div className="divide-y divide-border border border-dashed border-border rounded-lg">
+                      {disabledList.map((p) => (
+                        <div key={p.id} className="flex items-center gap-3 py-2.5 px-3 opacity-60 hover:opacity-100 transition-opacity">
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-10 h-10 rounded-lg object-cover bg-white grayscale"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
+                              {p.name}
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase">Inativo</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground">{p.category} · R$ {p.price.toFixed(2)}</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => enableProduct(p.id)}>
+                            <Power className="h-3.5 w-3.5 text-primary" /> Reativar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
