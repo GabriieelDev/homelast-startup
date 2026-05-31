@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
+import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import CategoryManager from "@/components/admin/CategoryManager";
