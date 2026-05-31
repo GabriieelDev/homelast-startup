@@ -1,5 +1,5 @@
 import { LogoIcon } from "@/components/Logo";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition, useCallback } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
+import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import CategoryManager from "@/components/admin/CategoryManager";
@@ -43,6 +44,11 @@ const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [, startTabTransition] = useTransition();
+  const handleTabChange = useCallback((key: Tab) => {
+    // Defer heavy panel render so the click feels instant (better INP).
+    startTabTransition(() => setTab(key));
+  }, []);
   const [orders, setOrders] = useState<any[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
@@ -52,6 +58,7 @@ const Admin = () => {
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
   const { products } = useProducts();
+  const { disabledIds, enableProduct } = useDisabledProducts();
   const { settings, save: saveSettings } = useStoreSettings();
   const [draftSettings, setDraftSettings] = useState(settings);
   useEffect(() => { setDraftSettings(settings); }, [settings]);
@@ -424,7 +431,7 @@ const Admin = () => {
           {tabs.map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => handleTabChange(key)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium btn-press transition-all ${
                 tab === key ? "bg-primary text-primary-foreground shadow" : "text-foreground hover:bg-secondary"
               }`}
@@ -569,6 +576,47 @@ const Admin = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Disabled products section — items removed via storefront "trash" action */}
+              {(() => {
+                const disabledList = products.filter((p) => disabledIds.has(p.id));
+                if (disabledList.length === 0) return null;
+                return (
+                  <div className="mt-8 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <PowerOff className="h-5 w-5 text-muted-foreground" />
+                      <h3 className="text-lg font-bold text-foreground">
+                        Produtos desativados ({disabledList.length})
+                      </h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Estes produtos foram removidos do catálogo. Reative para voltar à vitrine imediatamente.
+                    </p>
+                    <div className="divide-y divide-border border border-dashed border-border rounded-lg">
+                      {disabledList.map((p) => (
+                        <div key={p.id} className="flex items-center gap-3 py-2.5 px-3 opacity-60 hover:opacity-100 transition-opacity">
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-10 h-10 rounded-lg object-cover bg-white grayscale"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
+                              {p.name}
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase">Inativo</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground">{p.category} · R$ {p.price.toFixed(2)}</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => enableProduct(p.id)}>
+                            <Power className="h-3.5 w-3.5 text-primary" /> Reativar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useDeferredValue, useTransition, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,13 @@ const Auth = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const emailRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [, startTransition] = useTransition();
+  // Defer mode swap & password-strength recompute so keystrokes/clicks stay <200ms (INP).
+  const switchMode = useCallback((next: Mode) => {
+    setErrors({});
+    startTransition(() => setMode(next));
+  }, []);
+  const deferredPassword = useDeferredValue(password);
 
   useEffect(() => {
     emailRef.current?.focus();
@@ -118,7 +125,7 @@ const Auth = () => {
   const FieldError = ({ field }: { field: string }) =>
     errors[field] ? <p className="text-xs text-destructive mt-1">{errors[field]}</p> : null;
 
-  const strength = getPasswordStrength(password);
+  const strength = getPasswordStrength(deferredPassword);
   const strengthLabels = ["Muito fraca", "Fraca", "Razoável", "Boa", "Forte"];
   const strengthColors = ["bg-red-400", "bg-orange-400", "bg-yellow-400", "bg-lime-500", "bg-green-500"];
 
@@ -232,7 +239,7 @@ const Auth = () => {
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
 
-              <button type="button" onClick={() => { setMode("forgot"); clearErrors(); }} className="block mx-auto text-sm text-[#1D2D50] hover:underline">
+              <button type="button" onClick={() => switchMode("forgot")} className="block mx-auto text-sm text-[#1D2D50] hover:underline">
                 Esqueci minha senha
               </button>
 
@@ -243,7 +250,7 @@ const Auth = () => {
 
               <p className="text-center text-sm text-[#616161]">
                 Não tem conta?{" "}
-                <button type="button" onClick={() => { setMode("signup"); clearErrors(); }} className="text-[#00B894] hover:text-[#E65100] font-bold">
+                <button type="button" onClick={() => switchMode("signup")} className="text-[#00B894] hover:text-[#E65100] font-bold">
                   Criar conta
                 </button>
               </p>
@@ -307,7 +314,7 @@ const Auth = () => {
 
               <p className="text-center text-sm text-[#616161]">
                 Já tem conta?{" "}
-                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1D2D50] hover:underline font-medium">
+                <button type="button" onClick={() => switchMode("login")} className="text-[#1D2D50] hover:underline font-medium">
                   Entrar
                 </button>
               </p>
@@ -330,7 +337,7 @@ const Auth = () => {
               </Button>
               <p className="text-center text-sm text-[#616161]">
                 Lembrou a senha?{" "}
-                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1D2D50] hover:underline font-medium">
+                <button type="button" onClick={() => switchMode("login")} className="text-[#1D2D50] hover:underline font-medium">
                   Voltar ao login
                 </button>
               </p>
