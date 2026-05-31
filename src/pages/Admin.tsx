@@ -431,7 +431,7 @@ const Admin = () => {
           {tabs.map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => handleTabChange(key)}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium btn-press transition-all ${
                 tab === key ? "bg-primary text-primary-foreground shadow" : "text-foreground hover:bg-secondary"
               }`}
