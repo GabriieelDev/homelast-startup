@@ -101,7 +101,7 @@ const Index = () => {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <HeaderCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
             {isAdmin && (
-              <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => navigate("/admin")}>
+              <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" onClick={() => go("/admin")}>
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Admin</span>
               </Button>
@@ -116,10 +116,10 @@ const Index = () => {
               <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
                 <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/perfil")}><UserIcon className="h-4 w-4 mr-2" /> Meu perfil</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/pedidos")}><Package className="h-4 w-4 mr-2" /> Meus pedidos</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/historico")}><History className="h-4 w-4 mr-2" /> Histórico</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/enderecos")}><MapPin className="h-4 w-4 mr-2" /> Endereços</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => go("/perfil")}><UserIcon className="h-4 w-4 mr-2" /> Meu perfil</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => go("/pedidos")}><Package className="h-4 w-4 mr-2" /> Meus pedidos</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => go("/historico")}><History className="h-4 w-4 mr-2" /> Histórico</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => go("/enderecos")}><MapPin className="h-4 w-4 mr-2" /> Endereços</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4 mr-2" /> Sair
