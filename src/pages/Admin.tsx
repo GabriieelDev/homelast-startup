@@ -44,6 +44,11 @@ const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [, startTabTransition] = useTransition();
+  const handleTabChange = useCallback((key: Tab) => {
+    // Defer heavy panel render so the click feels instant (better INP).
+    startTabTransition(() => setTab(key));
+  }, []);
   const [orders, setOrders] = useState<any[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
