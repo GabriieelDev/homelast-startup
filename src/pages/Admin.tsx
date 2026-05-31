@@ -58,6 +58,7 @@ const Admin = () => {
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
   const { products } = useProducts();
+  const { disabledIds, enableProduct } = useDisabledProducts();
   const { settings, save: saveSettings } = useStoreSettings();
   const [draftSettings, setDraftSettings] = useState(settings);
   useEffect(() => { setDraftSettings(settings); }, [settings]);
