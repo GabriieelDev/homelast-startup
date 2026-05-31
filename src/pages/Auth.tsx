@@ -239,7 +239,7 @@ const Auth = () => {
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
 
-              <button type="button" onClick={() => { setMode("forgot"); clearErrors(); }} className="block mx-auto text-sm text-[#1D2D50] hover:underline">
+              <button type="button" onClick={() => switchMode("forgot")} className="block mx-auto text-sm text-[#1D2D50] hover:underline">
                 Esqueci minha senha
               </button>
 
@@ -250,7 +250,7 @@ const Auth = () => {
 
               <p className="text-center text-sm text-[#616161]">
                 Não tem conta?{" "}
-                <button type="button" onClick={() => { setMode("signup"); clearErrors(); }} className="text-[#00B894] hover:text-[#E65100] font-bold">
+                <button type="button" onClick={() => switchMode("signup")} className="text-[#00B894] hover:text-[#E65100] font-bold">
                   Criar conta
                 </button>
               </p>
@@ -314,7 +314,7 @@ const Auth = () => {
 
               <p className="text-center text-sm text-[#616161]">
                 Já tem conta?{" "}
-                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1D2D50] hover:underline font-medium">
+                <button type="button" onClick={() => switchMode("login")} className="text-[#1D2D50] hover:underline font-medium">
                   Entrar
                 </button>
               </p>
@@ -337,7 +337,7 @@ const Auth = () => {
               </Button>
               <p className="text-center text-sm text-[#616161]">
                 Lembrou a senha?{" "}
-                <button type="button" onClick={() => { setMode("login"); clearErrors(); }} className="text-[#1D2D50] hover:underline font-medium">
+                <button type="button" onClick={() => switchMode("login")} className="text-[#1D2D50] hover:underline font-medium">
                   Voltar ao login
                 </button>
               </p>
