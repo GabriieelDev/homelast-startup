@@ -113,6 +113,26 @@ const Perfil = () => {
           </div>
         </button>
 
+        <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+          <h3 className="font-semibold text-foreground">Preferências</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Moon className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium text-foreground">🌙 Modo escuro</p>
+                <p className="text-xs text-muted-foreground">Ativar tema escuro em todo o app</p>
+              </div>
+            </div>
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={(v) => { toggleTheme(); toast.success(v ? "Modo escuro ativado 🌙" : "Modo claro ativado ☀️", { duration: 1500 }); }}
+              aria-label="Alternar modo escuro"
+            />
+          </div>
+        </div>
+
+
+
         <form onSubmit={changePassword} className="bg-card border border-border rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-primary" />
