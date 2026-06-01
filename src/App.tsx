@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CartSyncProvider from "@/components/CartSyncProvider";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -29,6 +30,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
     <AuthProvider>
       <CartSyncProvider>
         <TooltipProvider>
@@ -59,6 +61,7 @@ const App = () => (
         </TooltipProvider>
       </CartSyncProvider>
     </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
