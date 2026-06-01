@@ -20,8 +20,12 @@ import { useStock } from "@/hooks/useStock";
 import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useOrderNotifications } from "@/hooks/useOrderNotifications";
 import { useProducts } from "@/hooks/useProducts";
+import { useTopSellers } from "@/hooks/useTopSellers";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import ProductDetailDialog from "@/components/ProductDetailDialog";
+import HorizontalProductRow from "@/components/HorizontalProductRow";
 import { isSaleActive } from "@/lib/promotions";
 import type { Product } from "@/data/products";
 
@@ -46,6 +50,13 @@ const Index = () => {
     startTransition(() => navigate(path));
   }, [navigate]);
   const [showProductForm, setShowProductForm] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const { topIds } = useTopSellers(6);
+  const { ids: recentIds } = useRecentlyViewed();
+  const openProductDetail = useCallback((id: string) => {
+    const p = products.find((pp) => pp.id === id);
+    if (p) setDetailProduct(p);
+  }, [products]);
   const productsRef = useRef<HTMLDivElement>(null);
   const cart = useCart();
   const { items, removeItem, getQuantity, totalItems, totalPrice } = cart;
