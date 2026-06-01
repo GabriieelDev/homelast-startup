@@ -96,6 +96,21 @@ const Index = () => {
   const recomendados = useMemo(() => filtered.filter((p) => p.section.includes("recomendados")), [filtered]);
   const frequentes = useMemo(() => filtered.filter((p) => p.section.includes("frequentes")), [filtered]);
 
+  const visibleProducts = useMemo(
+    () => products.filter((p) => p.active !== false && !isDisabled(p.id)),
+    [products, isDisabled]
+  );
+  const topSellersProducts = useMemo(() => {
+    return topIds
+      .map((id) => visibleProducts.find((p) => p.id === id))
+      .filter(Boolean) as Product[];
+  }, [topIds, visibleProducts]);
+  const recentlyViewedProducts = useMemo(() => {
+    return recentIds
+      .map((id) => visibleProducts.find((p) => p.id === id))
+      .filter(Boolean) as Product[];
+  }, [recentIds, visibleProducts]);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
