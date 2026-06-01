@@ -159,7 +159,34 @@ const Index = () => {
         </div>
       </header>
 
-      {!isFiltering && <HeroCarousel onStart={scrollToProducts} />}
+      {!isFiltering && <HeroCarousel onStart={scrollToProducts} onProductClick={openProductDetail} />}
+
+      {!isFiltering && (
+        <div className="container mx-auto px-4 pt-6 space-y-8">
+          {topSellersProducts.length > 0 && (
+            <HorizontalProductRow
+              title="Mais vendidos"
+              emoji="🔥"
+              products={topSellersProducts}
+              getQuantity={getQuantity}
+              getStock={getStock}
+              onAdd={addItem}
+              onRemove={removeItem}
+            />
+          )}
+          {user && recentlyViewedProducts.length > 0 && (
+            <HorizontalProductRow
+              title="Vistos recentemente"
+              emoji="👁️"
+              products={recentlyViewedProducts}
+              getQuantity={getQuantity}
+              getStock={getStock}
+              onAdd={addItem}
+              onRemove={removeItem}
+            />
+          )}
+        </div>
+      )}
 
       <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-28">
         {isAdmin && (
@@ -213,6 +240,16 @@ const Index = () => {
       {isAdmin && (
         <ProductFormDialog open={showProductForm} onOpenChange={setShowProductForm} />
       )}
+
+      <ProductDetailDialog
+        product={detailProduct}
+        open={Boolean(detailProduct)}
+        onOpenChange={(o) => { if (!o) setDetailProduct(null); }}
+        stock={detailProduct ? getStock(detailProduct.id) : 0}
+        quantity={detailProduct ? getQuantity(detailProduct.id) : 0}
+        onAdd={() => { if (detailProduct) addItem(detailProduct); }}
+        onRemove={() => { if (detailProduct) removeItem(detailProduct.id); }}
+      />
     </div>
   );
 };
