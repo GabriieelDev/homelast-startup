@@ -6,12 +6,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, LogOut, KeyRound, User } from "lucide-react";
+import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 
 const Perfil = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [newPassword, setNewPassword] = useState("");
