@@ -137,5 +137,15 @@
   a[role="button"]:active {
     transform: scale(0.97);
     transition-duration: 100ms;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
 }
