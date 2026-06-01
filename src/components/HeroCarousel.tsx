@@ -445,11 +445,11 @@ const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string
           )}
           <span className="text-sm md:text-base font-extrabold" style={{ color: "#00B894" }}>
             R$ {price.toFixed(2)}
+          </span>
         </div>
       </div>
     </button>
   );
-};
 };
 
 export default HeroCarousel;
