@@ -171,7 +171,10 @@ export function useCart() {
       if (maxStock <= 0) { toast.error("Produto indisponível"); return; }
       setItems([..._items, { product, quantity: 1 }], { push: true });
     }
-    toast.success("Produto adicionado ao carrinho 🛒", { duration: 1500 });
+    toast.success("✅ Produto adicionado ao carrinho!", {
+      duration: 2000,
+      style: { background: "#00B894", color: "#FFFFFF", border: "none" },
+    });
   }, []);
 
   const removeItem = useCallback((productId: string) => {

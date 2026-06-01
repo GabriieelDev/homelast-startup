@@ -13,12 +13,13 @@ import { toast } from "sonner";
 
 interface HeroCarouselProps {
   onStart: () => void;
+  onProductClick?: (productId: string) => void;
 }
 
 const AUTOPLAY_MS = 5000;
 const RESUME_MS = 5000;
 
-const HeroCarousel = ({ onStart }: HeroCarouselProps) => {
+const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const { settings } = useStoreSettings();
   const cfg = settings.carousel_config;
 
@@ -120,7 +121,7 @@ const HeroCarousel = ({ onStart }: HeroCarouselProps) => {
         >
           {slides.map((key) => {
             if (key === "s1") return <Slide1 key="s1" cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
-            if (key === "s2") return <Slide2 key="s2" cfg={cfg.slide2} featured={featured} onStart={onStart} renderHighlighted={renderHighlighted} />;
+            if (key === "s2") return <Slide2 key="s2" cfg={cfg.slide2} featured={featured} onStart={onStart} renderHighlighted={renderHighlighted} onProductClick={onProductClick} />;
             return <Slide3 key="s3" cfg={cfg.slide3} copied={copied} onCopy={copyCoupon} onStart={onStart} />;
           })}
         </div>
@@ -171,9 +172,9 @@ const Slide1 = ({
   renderHighlighted: (t: string, h: string, c: string) => React.ReactNode;
 }) => {
   const features = [
-    { Icon: Truck, title: cfg.feature1Title, text: cfg.feature1Text },
-    { Icon: ShieldCheck, title: cfg.feature2Title, text: cfg.feature2Text },
-    { Icon: Star, title: cfg.feature3Title, text: cfg.feature3Text },
+    { Icon: Truck, title: cfg.feature1Title, text: cfg.feature1Text, color: "#00B894" },
+    { Icon: ShieldCheck, title: cfg.feature2Title, text: cfg.feature2Text, color: "#1D2D50" },
+    { Icon: Star, title: cfg.feature3Title, text: cfg.feature3Text, color: "#F59E0B" },
   ];
   return (
     <div
@@ -193,10 +194,10 @@ const Slide1 = ({
             {cfg.subtitle}
           </p>
           <div className="hidden md:flex gap-4 pt-1">
-            {features.map(({ Icon, title, text }) => (
+            {features.map(({ Icon, title, text, color }) => (
               <div key={title} className="flex items-start gap-2">
                 <div className="w-9 h-9 rounded-lg bg-white/95 flex items-center justify-center shrink-0">
-                  <Icon className="h-4 w-4" style={{ color: "#00B894" }} />
+                  <Icon className="h-4 w-4" style={{ color }} />
                 </div>
                 <div className="text-xs">
                   <p className="font-semibold">{title}</p>
@@ -240,12 +241,13 @@ const Slide1 = ({
 
 /* ============================ SLIDE 2 ============================ */
 const Slide2 = ({
-  cfg, featured, onStart, renderHighlighted,
+  cfg, featured, onStart, renderHighlighted, onProductClick,
 }: {
   cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide2"];
   featured: any[];
   onStart: () => void;
   renderHighlighted: (t: string, h: string, c: string) => React.ReactNode;
+  onProductClick?: (id: string) => void;
 }) => {
   const countdown = useCountdown(cfg.countdownEnd);
   return (
@@ -308,9 +310,9 @@ const Slide2 = ({
         </div>
         <div className="flex-1 w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
-            {featured.slice(0, 1).map((p) => (<ProductMini key={p.id} product={p} />))}
+            {featured.slice(0, 1).map((p) => (<ProductMini key={p.id} product={p} onClick={onProductClick} />))}
             {featured.slice(1, 3).map((p) => (
-              <div key={p.id} className="hidden md:block"><ProductMini product={p} /></div>
+              <div key={p.id} className="hidden md:block"><ProductMini product={p} onClick={onProductClick} /></div>
             ))}
           </div>
         </div>
@@ -396,15 +398,18 @@ const Slide3 = ({
 };
 
 /* ============================ ProductMini ============================ */
-const ProductMini = ({ product }: { product: any }) => {
+const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string) => void }) => {
   const onSale = isSaleActive(product);
   const price = getEffectivePrice(product);
   const pct = getDiscountPct(product);
   const [imgError, setImgError] = useState(false);
   const hasImage = Boolean(product.image) && !imgError;
+  const clickable = Boolean(onClick);
   return (
-    <div
-      className="group bg-white rounded-xl shadow-md hover:shadow-2xl p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[200px] border-2 border-transparent hover:border-orange-300 hover:-translate-y-1 transition-all duration-300"
+    <button
+      type="button"
+      onClick={clickable ? () => onClick!(product.id) : undefined}
+      className={`group bg-white rounded-xl shadow-md hover:shadow-2xl p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[200px] border-2 border-transparent hover:border-orange-300 hover:-translate-y-1 active:scale-95 transition-all duration-300 text-left w-full ${clickable ? "cursor-pointer" : "cursor-default"}`}
     >
       {(onSale && pct > 0) && (
         <span
@@ -443,7 +448,7 @@ const ProductMini = ({ product }: { product: any }) => {
           </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 };
 

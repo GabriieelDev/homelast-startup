@@ -20,8 +20,12 @@ import { useStock } from "@/hooks/useStock";
 import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useOrderNotifications } from "@/hooks/useOrderNotifications";
 import { useProducts } from "@/hooks/useProducts";
+import { useTopSellers } from "@/hooks/useTopSellers";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import ProductDetailDialog from "@/components/ProductDetailDialog";
+import HorizontalProductRow from "@/components/HorizontalProductRow";
 import { isSaleActive } from "@/lib/promotions";
 import type { Product } from "@/data/products";
 
@@ -46,6 +50,13 @@ const Index = () => {
     startTransition(() => navigate(path));
   }, [navigate]);
   const [showProductForm, setShowProductForm] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const { topIds } = useTopSellers(6);
+  const { ids: recentIds } = useRecentlyViewed();
+  const openProductDetail = useCallback((id: string) => {
+    const p = products.find((pp) => pp.id === id);
+    if (p) setDetailProduct(p);
+  }, [products]);
   const productsRef = useRef<HTMLDivElement>(null);
   const cart = useCart();
   const { items, removeItem, getQuantity, totalItems, totalPrice } = cart;
@@ -84,6 +95,21 @@ const Index = () => {
   const promocoes = useMemo(() => filtered.filter((p) => p.section.includes("promocoes")), [filtered]);
   const recomendados = useMemo(() => filtered.filter((p) => p.section.includes("recomendados")), [filtered]);
   const frequentes = useMemo(() => filtered.filter((p) => p.section.includes("frequentes")), [filtered]);
+
+  const visibleProducts = useMemo(
+    () => products.filter((p) => p.active !== false && !isDisabled(p.id)),
+    [products, isDisabled]
+  );
+  const topSellersProducts = useMemo(() => {
+    return topIds
+      .map((id) => visibleProducts.find((p) => p.id === id))
+      .filter(Boolean) as Product[];
+  }, [topIds, visibleProducts]);
+  const recentlyViewedProducts = useMemo(() => {
+    return recentIds
+      .map((id) => visibleProducts.find((p) => p.id === id))
+      .filter(Boolean) as Product[];
+  }, [recentIds, visibleProducts]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +159,34 @@ const Index = () => {
         </div>
       </header>
 
-      {!isFiltering && <HeroCarousel onStart={scrollToProducts} />}
+      {!isFiltering && <HeroCarousel onStart={scrollToProducts} onProductClick={openProductDetail} />}
+
+      {!isFiltering && (
+        <div className="container mx-auto px-4 pt-6 space-y-8">
+          {topSellersProducts.length > 0 && (
+            <HorizontalProductRow
+              title="Mais vendidos"
+              emoji="🔥"
+              products={topSellersProducts}
+              getQuantity={getQuantity}
+              getStock={getStock}
+              onAdd={addItem}
+              onRemove={removeItem}
+            />
+          )}
+          {user && recentlyViewedProducts.length > 0 && (
+            <HorizontalProductRow
+              title="Vistos recentemente"
+              emoji="👁️"
+              products={recentlyViewedProducts}
+              getQuantity={getQuantity}
+              getStock={getStock}
+              onAdd={addItem}
+              onRemove={removeItem}
+            />
+          )}
+        </div>
+      )}
 
       <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-28">
         {isAdmin && (
@@ -187,6 +240,16 @@ const Index = () => {
       {isAdmin && (
         <ProductFormDialog open={showProductForm} onOpenChange={setShowProductForm} />
       )}
+
+      <ProductDetailDialog
+        product={detailProduct}
+        open={Boolean(detailProduct)}
+        onOpenChange={(o) => { if (!o) setDetailProduct(null); }}
+        stock={detailProduct ? getStock(detailProduct.id) : 0}
+        quantity={detailProduct ? getQuantity(detailProduct.id) : 0}
+        onAdd={() => { if (detailProduct) addItem(detailProduct); }}
+        onRemove={() => { if (detailProduct) removeItem(detailProduct.id); }}
+      />
     </div>
   );
 };
