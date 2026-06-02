@@ -991,7 +991,12 @@ const Admin = () => {
                   const Icon = platform === "instagram" ? Instagram : platform === "facebook" ? Facebook : platform === "whatsapp" ? MessageCircle : Music2;
                   const placeholder = platform === "whatsapp" ? "(11) 99999-9999 ou wa.me/55..." : `https://${platform}.com/seuperfil`;
                   const update = (patch: Partial<typeof link>) => {
-                    const next = [...links.filter((l) => l.platform !== platform), { ...link, ...patch }];
+                    const merged = { ...link, ...patch };
+                    // Auto-enable when a URL is provided; auto-disable when cleared
+                    if (patch.url !== undefined) {
+                      merged.enabled = !!patch.url.trim();
+                    }
+                    const next = [...links.filter((l) => l.platform !== platform), merged];
                     setDraftSettings({ ...draftSettings, social_links: next.map((l, i) => ({ ...l, order: i })) });
                   };
                   return (
@@ -1008,6 +1013,7 @@ const Admin = () => {
                         size="sm"
                         variant={link.enabled ? "default" : "outline"}
                         className="gap-1.5 shrink-0"
+                        disabled={!link.url?.trim()}
                         onClick={() => update({ enabled: !link.enabled })}
                       >
                         {link.enabled ? <><Power className="h-3.5 w-3.5" /> Ativo</> : <><PowerOff className="h-3.5 w-3.5" /> Inativo</>}
@@ -1015,7 +1021,8 @@ const Admin = () => {
                     </div>
                   );
                 })}
-                <p className="text-[11px] text-muted-foreground">Se nenhuma rede estiver ativa com link válido, a seção fica oculta para o cliente.</p>
+                <p className="text-[11px] text-muted-foreground">Preencha a URL e o ícone aparecerá automaticamente no rodapé.</p>
+
               </div>
 
               <Button type="submit" className="w-full">Salvar configurações</Button>
