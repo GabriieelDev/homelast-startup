@@ -59,9 +59,11 @@ const Admin = () => {
 
   const { products } = useProducts();
   const { disabledIds, enableProduct } = useDisabledProducts();
-  const { settings, save: saveSettings } = useStoreSettings();
+  const { settings, loading: settingsLoading, save: saveSettings } = useStoreSettings();
   const [draftSettings, setDraftSettings] = useState(settings);
-  useEffect(() => { setDraftSettings(settings); }, [settings]);
+  useEffect(() => {
+    if (!settingsLoading) setDraftSettings(settings);
+  }, [settings, settingsLoading]);
 
   const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
   const STATUS_LABELS: Record<string, string> = {
@@ -929,6 +931,11 @@ const Admin = () => {
           )}
 
           {tab === "configuracoes" && (
+            settingsLoading ? (
+              <div className="rounded-lg border border-border p-4 text-sm text-muted-foreground">
+                Carregando configurações salvas...
+              </div>
+            ) : (
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -1033,6 +1040,7 @@ const Admin = () => {
 
               <Button type="submit" className="w-full">Salvar configurações</Button>
             </form>
+            )
           )}
 
           {tab === "configuracoes" && (
