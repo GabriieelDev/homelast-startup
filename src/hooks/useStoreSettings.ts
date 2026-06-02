@@ -149,11 +149,16 @@ export function useStoreSettings() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("store_settings")
       .select("id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at")
       .eq("id", "main")
       .maybeSingle();
+    if (error) {
+      console.error("Erro ao carregar configurações da loja", error);
+      setLoading(false);
+      return;
+    }
     const { data: adminRows } = await supabase.rpc("get_admin_store_settings");
     const admin = Array.isArray(adminRows) && adminRows[0] ? (adminRows[0] as any) : null;
     if (data) {
