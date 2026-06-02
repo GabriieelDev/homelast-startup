@@ -185,12 +185,17 @@ export function useStoreSettings() {
   }, [load]);
 
   const save = useCallback(async (patch: Partial<StoreSettings>) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("store_settings")
       .update(patch as any)
-      .eq("id", "main");
-    if (!error) await load();
-    return error;
+      .eq("id", "main")
+      .select("id");
+    if (error) return error;
+    if (!data || data.length === 0) {
+      return { message: "Nenhuma linha foi atualizada. Verifique suas permissões de admin." } as any;
+    }
+    await load();
+    return null;
   }, [load]);
 
   return { settings, loading, save };
