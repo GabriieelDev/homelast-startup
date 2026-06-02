@@ -936,16 +936,21 @@ const Admin = () => {
                 const maxS = Number(draftSettings.max_shipping);
                 if (maxS < minS) { toast.error("Frete máximo deve ser maior que o mínimo"); return; }
                 // Validate social URLs
+                const PLATFORM_LABEL: Record<string, string> = { instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp", tiktok: "TikTok" };
                 const invalid = (draftSettings.social_links || []).find((l) => {
-                  if (!l.enabled || !l.url?.trim()) return false;
-                  if (l.platform === "whatsapp") return !/^\+?\d[\d\s().-]{7,}$/.test(l.url) && !/^https?:\/\/(wa\.me|api\.whatsapp\.com)/i.test(l.url);
+                  if (!l.url?.trim()) return false;
+                  if (l.platform === "whatsapp") {
+                    const isPhone = /^\+?\d[\d\s().-]{7,}$/.test(l.url.trim());
+                    const isLink = /^https?:\/\/(wa\.me|api\.whatsapp\.com)/i.test(l.url.trim());
+                    return !isPhone && !isLink;
+                  }
                   try {
                     const u = /^https?:\/\//i.test(l.url) ? l.url : `https://${l.url}`;
                     new URL(u);
                     return false;
                   } catch { return true; }
                 });
-                if (invalid) { toast.error(`URL inválida para ${invalid.platform}`); return; }
+                if (invalid) { toast.error(`Link inválido para ${PLATFORM_LABEL[invalid.platform] ?? invalid.platform}`); return; }
 
                 const err = await saveSettings({
                   name: draftSettings.name,
@@ -957,7 +962,8 @@ const Admin = () => {
                   max_shipping: maxS,
                   social_links: (draftSettings.social_links || []).map((l, i) => ({ ...l, order: i })),
                 } as any);
-                if (err) toast.error("Erro ao salvar"); else toast.success("Configurações salvas ✅");
+                if (err) toast.error(err.message || "Erro ao salvar"); else toast.success("Configurações salvas ✅");
+
               }}
               className="space-y-4 max-w-xl"
             >
