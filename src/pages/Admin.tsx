@@ -936,16 +936,21 @@ const Admin = () => {
                 const maxS = Number(draftSettings.max_shipping);
                 if (maxS < minS) { toast.error("Frete máximo deve ser maior que o mínimo"); return; }
                 // Validate social URLs
+                const PLATFORM_LABEL: Record<string, string> = { instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp", tiktok: "TikTok" };
                 const invalid = (draftSettings.social_links || []).find((l) => {
-                  if (!l.enabled || !l.url?.trim()) return false;
-                  if (l.platform === "whatsapp") return !/^\+?\d[\d\s().-]{7,}$/.test(l.url) && !/^https?:\/\/(wa\.me|api\.whatsapp\.com)/i.test(l.url);
+                  if (!l.url?.trim()) return false;
+                  if (l.platform === "whatsapp") {
+                    const isPhone = /^\+?\d[\d\s().-]{7,}$/.test(l.url.trim());
+                    const isLink = /^https?:\/\/(wa\.me|api\.whatsapp\.com)/i.test(l.url.trim());
+                    return !isPhone && !isLink;
+                  }
                   try {
                     const u = /^https?:\/\//i.test(l.url) ? l.url : `https://${l.url}`;
                     new URL(u);
                     return false;
                   } catch { return true; }
                 });
-                if (invalid) { toast.error(`URL inválida para ${invalid.platform}`); return; }
+                if (invalid) { toast.error(`Link inválido para ${PLATFORM_LABEL[invalid.platform] ?? invalid.platform}`); return; }
 
                 const err = await saveSettings({
                   name: draftSettings.name,
@@ -957,7 +962,8 @@ const Admin = () => {
                   max_shipping: maxS,
                   social_links: (draftSettings.social_links || []).map((l, i) => ({ ...l, order: i })),
                 } as any);
-                if (err) toast.error("Erro ao salvar"); else toast.success("Configurações salvas ✅");
+                if (err) toast.error(err.message || "Erro ao salvar"); else toast.success("Configurações salvas ✅");
+
               }}
               className="space-y-4 max-w-xl"
             >
@@ -991,7 +997,12 @@ const Admin = () => {
                   const Icon = platform === "instagram" ? Instagram : platform === "facebook" ? Facebook : platform === "whatsapp" ? MessageCircle : Music2;
                   const placeholder = platform === "whatsapp" ? "(11) 99999-9999 ou wa.me/55..." : `https://${platform}.com/seuperfil`;
                   const update = (patch: Partial<typeof link>) => {
-                    const next = [...links.filter((l) => l.platform !== platform), { ...link, ...patch }];
+                    const merged = { ...link, ...patch };
+                    // Auto-enable when a URL is provided; auto-disable when cleared
+                    if (patch.url !== undefined) {
+                      merged.enabled = !!patch.url.trim();
+                    }
+                    const next = [...links.filter((l) => l.platform !== platform), merged];
                     setDraftSettings({ ...draftSettings, social_links: next.map((l, i) => ({ ...l, order: i })) });
                   };
                   return (
@@ -1008,6 +1019,7 @@ const Admin = () => {
                         size="sm"
                         variant={link.enabled ? "default" : "outline"}
                         className="gap-1.5 shrink-0"
+                        disabled={!link.url?.trim()}
                         onClick={() => update({ enabled: !link.enabled })}
                       >
                         {link.enabled ? <><Power className="h-3.5 w-3.5" /> Ativo</> : <><PowerOff className="h-3.5 w-3.5" /> Inativo</>}
@@ -1015,7 +1027,8 @@ const Admin = () => {
                     </div>
                   );
                 })}
-                <p className="text-[11px] text-muted-foreground">Se nenhuma rede estiver ativa com link válido, a seção fica oculta para o cliente.</p>
+                <p className="text-[11px] text-muted-foreground">Preencha a URL e o ícone aparecerá automaticamente no rodapé.</p>
+
               </div>
 
               <Button type="submit" className="w-full">Salvar configurações</Button>
