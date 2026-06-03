@@ -165,15 +165,18 @@ function parseSocialLinks(raw: unknown): SocialLink[] {
 }
 
 function parseCarousel(raw: unknown): CarouselConfig {
-  const r = (raw && typeof raw === "object" ? raw : {}) as any;
+  const r = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  const slide1 = r.slide1 && typeof r.slide1 === "object" ? r.slide1 as Partial<CarouselSlide1> : {};
+  const slide2 = r.slide2 && typeof r.slide2 === "object" ? r.slide2 as Partial<CarouselSlide2> : {};
+  const slide3 = r.slide3 && typeof r.slide3 === "object" ? r.slide3 as Partial<CarouselSlide3> : {};
   return {
-    slide1: { ...DEFAULT_CAROUSEL.slide1, ...(r.slide1 ?? {}), enabled: true },
+    slide1: { ...DEFAULT_CAROUSEL.slide1, ...slide1, enabled: true },
     slide2: {
       ...DEFAULT_CAROUSEL.slide2,
-      ...(r.slide2 ?? {}),
-      productIds: Array.isArray(r.slide2?.productIds) ? r.slide2.productIds : [],
+      ...slide2,
+      productIds: Array.isArray(slide2.productIds) ? slide2.productIds : [],
     },
-    slide3: { ...DEFAULT_CAROUSEL.slide3, ...(r.slide3 ?? {}) },
+    slide3: { ...DEFAULT_CAROUSEL.slide3, ...slide3 },
   };
 }
 
@@ -193,9 +196,9 @@ export function useStoreSettings() {
       return;
     }
     const { data: adminRows } = await supabase.rpc("get_admin_store_settings");
-    const admin = Array.isArray(adminRows) && adminRows[0] ? (adminRows[0] as any) : null;
+    const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;
     if (data) {
-      const d = data as any;
+      const d = data as Record<string, unknown>;
       const hasSocialLinks = Object.prototype.hasOwnProperty.call(d, "social_links");
       const parsedSocialLinks = hasSocialLinks ? parseSocialLinks(d.social_links) : null;
       setSettings((current) => ({
@@ -230,12 +233,12 @@ export function useStoreSettings() {
   const save = useCallback(async (patch: Partial<StoreSettings>) => {
     const { data, error } = await supabase
       .from("store_settings")
-      .update(patch as any)
+      .update(patch as Record<string, unknown>)
       .eq("id", "main")
       .select("id");
     if (error) return error;
     if (!data || data.length === 0) {
-      return { message: "Nenhuma linha foi atualizada. Verifique suas permissões de admin." } as any;
+      return { message: "Nenhuma linha foi atualizada. Verifique suas permissões de admin." };
     }
     await load();
     return null;
