@@ -119,16 +119,45 @@ const DEFAULTS: StoreSettings = {
   carousel_config: DEFAULT_CAROUSEL,
 };
 
-function parseSocialLinks(raw: unknown): SocialLink[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((l): l is Record<string, unknown> => !!l && typeof l === "object")
-    .map((l, i) => ({
-      platform: (l.platform as SocialPlatform) ?? "instagram",
-      url: typeof l.url === "string" ? l.url : "",
-      enabled: l.enabled !== false,
-      order: typeof l.order === "number" ? l.order : i,
+const SOCIAL_PLATFORMS: SocialPlatform[] = ["instagram", "facebook", "whatsapp", "tiktok"];
+
+function isSocialPlatform(value: unknown): value is SocialPlatform {
+  return typeof value === "string" && SOCIAL_PLATFORMS.includes(value as SocialPlatform);
+}
+
+function readJsonArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error("Erro ao parsear social_links", error);
+      return [];
+    }
+  }
+  if (raw && typeof raw === "object") {
+    return Object.entries(raw as Record<string, unknown>).map(([platform, value]) => ({
+      platform,
+      ...(value && typeof value === "object" ? value : { url: value }),
     }));
+  }
+  return [];
+}
+
+function parseSocialLinks(raw: unknown): SocialLink[] {
+  return readJsonArray(raw)
+    .filter((l): l is Record<string, unknown> => !!l && typeof l === "object" && isSocialPlatform(l.platform))
+    .map((l, i) => {
+      const url = typeof l.url === "string" ? l.url : "";
+      return {
+        platform: l.platform,
+        url,
+        enabled: typeof l.enabled === "boolean" ? l.enabled : !!url.trim(),
+        order: typeof l.order === "number" ? l.order : i,
+      };
+    })
+    .sort((a, b) => a.order - b.order);
 }
 
 function parseCarousel(raw: unknown): CarouselConfig {
@@ -163,8 +192,9 @@ export function useStoreSettings() {
     const admin = Array.isArray(adminRows) && adminRows[0] ? (adminRows[0] as any) : null;
     if (data) {
       const d = data as any;
-      setSettings({
+      setSettings((current) => ({
         ...DEFAULTS,
+        ...current,
         ...d,
         min_order: Number(d.min_order ?? 0),
         min_shipping: Number(d.min_shipping ?? 5),
@@ -173,9 +203,11 @@ export function useStoreSettings() {
         low_stock_threshold: Number(admin?.low_stock_threshold ?? DEFAULTS.low_stock_threshold),
         late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
         sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
-        social_links: parseSocialLinks(d.social_links),
+        social_links: Object.prototype.hasOwnProperty.call(d, "social_links")
+          ? parseSocialLinks(d.social_links)
+          : current.social_links,
         carousel_config: parseCarousel(d.carousel_config),
-      });
+      }));
     }
     setLoading(false);
   }, []);
