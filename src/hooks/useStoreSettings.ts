@@ -125,6 +125,10 @@ function isSocialPlatform(value: unknown): value is SocialPlatform {
   return typeof value === "string" && SOCIAL_PLATFORMS.includes(value as SocialPlatform);
 }
 
+function isSocialLinkRecord(value: unknown): value is Record<string, unknown> & { platform: SocialPlatform } {
+  return !!value && typeof value === "object" && isSocialPlatform((value as Record<string, unknown>).platform);
+}
+
 function readJsonArray(raw: unknown): unknown[] {
   if (Array.isArray(raw)) return raw;
   if (typeof raw === "string" && raw.trim()) {
@@ -147,7 +151,7 @@ function readJsonArray(raw: unknown): unknown[] {
 
 function parseSocialLinks(raw: unknown): SocialLink[] {
   return readJsonArray(raw)
-    .filter((l): l is Record<string, unknown> => !!l && typeof l === "object" && isSocialPlatform(l.platform))
+    .filter(isSocialLinkRecord)
     .map((l, i) => {
       const url = typeof l.url === "string" ? l.url : "";
       return {
