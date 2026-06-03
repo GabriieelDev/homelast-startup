@@ -196,6 +196,8 @@ export function useStoreSettings() {
     const admin = Array.isArray(adminRows) && adminRows[0] ? (adminRows[0] as any) : null;
     if (data) {
       const d = data as any;
+      const hasSocialLinks = Object.prototype.hasOwnProperty.call(d, "social_links");
+      const parsedSocialLinks = hasSocialLinks ? parseSocialLinks(d.social_links) : null;
       setSettings((current) => ({
         ...DEFAULTS,
         ...current,
@@ -207,8 +209,8 @@ export function useStoreSettings() {
         low_stock_threshold: Number(admin?.low_stock_threshold ?? DEFAULTS.low_stock_threshold),
         late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
         sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
-        social_links: Object.prototype.hasOwnProperty.call(d, "social_links")
-          ? parseSocialLinks(d.social_links)
+        social_links: hasSocialLinks && parsedSocialLinks
+          ? parsedSocialLinks
           : current.social_links,
         carousel_config: parseCarousel(d.carousel_config),
       }));
