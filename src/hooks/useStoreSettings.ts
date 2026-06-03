@@ -202,13 +202,16 @@ export function useStoreSettings() {
       const hasSocialLinks = Object.prototype.hasOwnProperty.call(d, "social_links");
       const parsedSocialLinks = hasSocialLinks ? parseSocialLinks(d.social_links) : null;
       setSettings((current) => ({
-        ...DEFAULTS,
         ...current,
-        ...d,
+        id: typeof d.id === "string" ? d.id : current.id,
+        name: typeof d.name === "string" ? d.name : current.name,
+        phone: typeof d.phone === "string" ? d.phone : current.phone,
+        address: typeof d.address === "string" ? d.address : current.address,
+        hours: typeof d.hours === "string" ? d.hours : current.hours,
         min_order: Number(d.min_order ?? 0),
         min_shipping: Number(d.min_shipping ?? 5),
         max_shipping: Number(d.max_shipping ?? 15),
-        alerts_enabled: admin?.alerts_enabled ?? DEFAULTS.alerts_enabled,
+        alerts_enabled: typeof admin?.alerts_enabled === "boolean" ? admin.alerts_enabled : DEFAULTS.alerts_enabled,
         low_stock_threshold: Number(admin?.low_stock_threshold ?? DEFAULTS.low_stock_threshold),
         late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
         sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
