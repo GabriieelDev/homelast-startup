@@ -285,12 +285,14 @@ export function useStoreSettings() {
       .from("store_settings")
       .update(patch as Record<string, unknown>)
       .eq("id", "main")
-      .select("id");
+      .select(STORE_SETTINGS_SELECT);
     if (error) return error;
     if (!data || data.length === 0) {
       return { message: "Nenhuma linha foi atualizada. Verifique suas permissões de admin." };
     }
-    await load();
+    settingsLoadPromise = null;
+    const confirmed = await load();
+    if (!confirmed) return { message: "Salvo, mas não foi possível confirmar a leitura no banco." };
     return null;
   }, [load]);
 
