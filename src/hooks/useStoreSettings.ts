@@ -198,6 +198,61 @@ function parseCarousel(raw: unknown): CarouselConfig {
   };
 }
 
+function mapStoreSettingsRow(
+  row: Record<string, unknown>,
+  admin: Record<string, unknown> | null,
+  previous: StoreSettings,
+): StoreSettings {
+  const socialLinks = hasField(row, "social_links")
+    ? parseSocialLinks(row.social_links)
+    : previous.social_links;
+  const carouselConfig = hasField(row, "carousel_config")
+    ? parseCarousel(row.carousel_config)
+    : previous.carousel_config;
+
+  return {
+    ...previous,
+    id: typeof row.id === "string" ? row.id : previous.id,
+    name: typeof row.name === "string" ? row.name : previous.name,
+    phone: typeof row.phone === "string" ? row.phone : previous.phone,
+    address: typeof row.address === "string" ? row.address : previous.address,
+    hours: typeof row.hours === "string" ? row.hours : previous.hours,
+    min_order: Number(row.min_order ?? previous.min_order),
+    min_shipping: Number(row.min_shipping ?? previous.min_shipping),
+    max_shipping: Number(row.max_shipping ?? previous.max_shipping),
+    alerts_enabled: typeof admin?.alerts_enabled === "boolean" ? admin.alerts_enabled : previous.alerts_enabled,
+    low_stock_threshold: Number(admin?.low_stock_threshold ?? previous.low_stock_threshold),
+    late_order_minutes: Number(admin?.late_order_minutes ?? previous.late_order_minutes),
+    sales_drop_pct: Number(admin?.sales_drop_pct ?? previous.sales_drop_pct),
+    social_links: socialLinks,
+    carousel_config: carouselConfig,
+  };
+}
+
+async function fetchStoreSettingsFromDb(): Promise<StoreSettings | null> {
+  const token = ++settingsReadToken;
+  const [{ data, error }, { data: adminRows, error: adminError }] = await Promise.all([
+    supabase
+      .from("store_settings")
+      .select(STORE_SETTINGS_SELECT)
+      .eq("id", "main")
+      .maybeSingle(),
+    supabase.rpc("get_admin_store_settings"),
+  ]);
+
+  if (error) {
+    console.error("Erro ao carregar configurações da loja", error);
+    return null;
+  }
+  if (adminError) {
+    console.info("Configurações administrativas indisponíveis para este usuário", adminError.message);
+  }
+  if (!data || token !== settingsReadToken) return null;
+
+  const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;
+  return mapStoreSettingsRow(data as Record<string, unknown>, admin, cachedSettings);
+}
+
 export function useStoreSettings() {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
