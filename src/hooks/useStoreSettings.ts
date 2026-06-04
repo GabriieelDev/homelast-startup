@@ -254,56 +254,30 @@ async function fetchStoreSettingsFromDb(): Promise<StoreSettings | null> {
 }
 
 export function useStoreSettings() {
-  const [settings, setSettings] = useState<StoreSettings>(DEFAULTS);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<StoreSettings>(cachedSettings);
+  const [loading, setLoading] = useState(!hasLoadedSettings);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("store_settings")
-      .select("id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at")
-      .eq("id", "main")
-      .maybeSingle();
-    if (error) {
-      console.error("Erro ao carregar configurações da loja", error);
-      setLoading(false);
-      return;
-    }
-    const { data: adminRows } = await supabase.rpc("get_admin_store_settings");
-    const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;
-    if (data) {
-      const d = data as Record<string, unknown>;
-      const hasSocialLinks = Object.prototype.hasOwnProperty.call(d, "social_links");
-      const parsedSocialLinks = hasSocialLinks ? parseSocialLinks(d.social_links) : null;
-      setSettings((current) => ({
-        ...current,
-        id: typeof d.id === "string" ? d.id : current.id,
-        name: typeof d.name === "string" ? d.name : current.name,
-        phone: typeof d.phone === "string" ? d.phone : current.phone,
-        address: typeof d.address === "string" ? d.address : current.address,
-        hours: typeof d.hours === "string" ? d.hours : current.hours,
-        min_order: Number(d.min_order ?? 0),
-        min_shipping: Number(d.min_shipping ?? 5),
-        max_shipping: Number(d.max_shipping ?? 15),
-        alerts_enabled: typeof admin?.alerts_enabled === "boolean" ? admin.alerts_enabled : DEFAULTS.alerts_enabled,
-        low_stock_threshold: Number(admin?.low_stock_threshold ?? DEFAULTS.low_stock_threshold),
-        late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
-        sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
-        social_links: hasSocialLinks && parsedSocialLinks
-          ? parsedSocialLinks
-          : current.social_links,
-        carousel_config: parseCarousel(d.carousel_config),
-      }));
-    }
+    settingsLoadPromise ??= fetchStoreSettingsFromDb().finally(() => {
+      settingsLoadPromise = null;
+    });
+    const next = await settingsLoadPromise;
+    if (next) publishSettings(next);
     setLoading(false);
+    return next;
   }, []);
 
   useEffect(() => {
+    settingsListeners.add(setSettings);
     load();
     const channel = supabase
       .channel(`store-settings-feed-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "store_settings" }, load)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      settingsListeners.delete(setSettings);
+      supabase.removeChannel(channel);
+    };
   }, [load]);
 
   const save = useCallback(async (patch: Partial<StoreSettings>) => {
