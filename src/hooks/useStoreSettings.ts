@@ -119,6 +119,24 @@ const DEFAULTS: StoreSettings = {
   carousel_config: DEFAULT_CAROUSEL,
 };
 
+const STORE_SETTINGS_SELECT = "id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at";
+
+let cachedSettings: StoreSettings = DEFAULTS;
+let hasLoadedSettings = false;
+let settingsLoadPromise: Promise<StoreSettings | null> | null = null;
+let settingsReadToken = 0;
+const settingsListeners = new Set<(settings: StoreSettings) => void>();
+
+function publishSettings(next: StoreSettings) {
+  cachedSettings = next;
+  hasLoadedSettings = true;
+  settingsListeners.forEach((listener) => listener(next));
+}
+
+function hasField(row: Record<string, unknown>, field: string) {
+  return Object.prototype.hasOwnProperty.call(row, field);
+}
+
 const SOCIAL_PLATFORMS: SocialPlatform[] = ["instagram", "facebook", "whatsapp", "tiktok"];
 
 function isSocialPlatform(value: unknown): value is SocialPlatform {
