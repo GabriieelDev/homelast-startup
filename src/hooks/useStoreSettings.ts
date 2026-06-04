@@ -119,6 +119,24 @@ const DEFAULTS: StoreSettings = {
   carousel_config: DEFAULT_CAROUSEL,
 };
 
+const STORE_SETTINGS_SELECT = "id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at";
+
+let cachedSettings: StoreSettings = DEFAULTS;
+let hasLoadedSettings = false;
+let settingsLoadPromise: Promise<StoreSettings | null> | null = null;
+let settingsReadToken = 0;
+const settingsListeners = new Set<(settings: StoreSettings) => void>();
+
+function publishSettings(next: StoreSettings) {
+  cachedSettings = next;
+  hasLoadedSettings = true;
+  settingsListeners.forEach((listener) => listener(next));
+}
+
+function hasField(row: Record<string, unknown>, field: string) {
+  return Object.prototype.hasOwnProperty.call(row, field);
+}
+
 const SOCIAL_PLATFORMS: SocialPlatform[] = ["instagram", "facebook", "whatsapp", "tiktok"];
 
 function isSocialPlatform(value: unknown): value is SocialPlatform {
@@ -180,57 +198,86 @@ function parseCarousel(raw: unknown): CarouselConfig {
   };
 }
 
+function mapStoreSettingsRow(
+  row: Record<string, unknown>,
+  admin: Record<string, unknown> | null,
+  previous: StoreSettings,
+): StoreSettings {
+  const socialLinks = hasField(row, "social_links")
+    ? parseSocialLinks(row.social_links)
+    : previous.social_links;
+  const carouselConfig = hasField(row, "carousel_config")
+    ? parseCarousel(row.carousel_config)
+    : previous.carousel_config;
+
+  return {
+    ...previous,
+    id: typeof row.id === "string" ? row.id : previous.id,
+    name: typeof row.name === "string" ? row.name : previous.name,
+    phone: typeof row.phone === "string" ? row.phone : previous.phone,
+    address: typeof row.address === "string" ? row.address : previous.address,
+    hours: typeof row.hours === "string" ? row.hours : previous.hours,
+    min_order: Number(row.min_order ?? previous.min_order),
+    min_shipping: Number(row.min_shipping ?? previous.min_shipping),
+    max_shipping: Number(row.max_shipping ?? previous.max_shipping),
+    alerts_enabled: typeof admin?.alerts_enabled === "boolean" ? admin.alerts_enabled : previous.alerts_enabled,
+    low_stock_threshold: Number(admin?.low_stock_threshold ?? previous.low_stock_threshold),
+    late_order_minutes: Number(admin?.late_order_minutes ?? previous.late_order_minutes),
+    sales_drop_pct: Number(admin?.sales_drop_pct ?? previous.sales_drop_pct),
+    social_links: socialLinks,
+    carousel_config: carouselConfig,
+  };
+}
+
+async function fetchStoreSettingsFromDb(): Promise<StoreSettings | null> {
+  const token = ++settingsReadToken;
+  const [{ data, error }, { data: adminRows, error: adminError }] = await Promise.all([
+    supabase
+      .from("store_settings")
+      .select(STORE_SETTINGS_SELECT)
+      .eq("id", "main")
+      .maybeSingle(),
+    supabase.rpc("get_admin_store_settings"),
+  ]);
+
+  if (error) {
+    console.error("Erro ao carregar configurações da loja", error);
+    return null;
+  }
+  if (adminError) {
+    console.info("Configurações administrativas indisponíveis para este usuário", adminError.message);
+  }
+  if (!data || token !== settingsReadToken) return null;
+
+  const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;
+  return mapStoreSettingsRow(data as Record<string, unknown>, admin, cachedSettings);
+}
+
 export function useStoreSettings() {
-  const [settings, setSettings] = useState<StoreSettings>(DEFAULTS);
-  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<StoreSettings>(cachedSettings);
+  const [loading, setLoading] = useState(!hasLoadedSettings);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("store_settings")
-      .select("id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at")
-      .eq("id", "main")
-      .maybeSingle();
-    if (error) {
-      console.error("Erro ao carregar configurações da loja", error);
-      setLoading(false);
-      return;
-    }
-    const { data: adminRows } = await supabase.rpc("get_admin_store_settings");
-    const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;
-    if (data) {
-      const d = data as Record<string, unknown>;
-      const hasSocialLinks = Object.prototype.hasOwnProperty.call(d, "social_links");
-      const parsedSocialLinks = hasSocialLinks ? parseSocialLinks(d.social_links) : null;
-      setSettings((current) => ({
-        ...current,
-        id: typeof d.id === "string" ? d.id : current.id,
-        name: typeof d.name === "string" ? d.name : current.name,
-        phone: typeof d.phone === "string" ? d.phone : current.phone,
-        address: typeof d.address === "string" ? d.address : current.address,
-        hours: typeof d.hours === "string" ? d.hours : current.hours,
-        min_order: Number(d.min_order ?? 0),
-        min_shipping: Number(d.min_shipping ?? 5),
-        max_shipping: Number(d.max_shipping ?? 15),
-        alerts_enabled: typeof admin?.alerts_enabled === "boolean" ? admin.alerts_enabled : DEFAULTS.alerts_enabled,
-        low_stock_threshold: Number(admin?.low_stock_threshold ?? DEFAULTS.low_stock_threshold),
-        late_order_minutes: Number(admin?.late_order_minutes ?? DEFAULTS.late_order_minutes),
-        sales_drop_pct: Number(admin?.sales_drop_pct ?? DEFAULTS.sales_drop_pct),
-        social_links: hasSocialLinks && parsedSocialLinks
-          ? parsedSocialLinks
-          : current.social_links,
-        carousel_config: parseCarousel(d.carousel_config),
-      }));
-    }
+    settingsLoadPromise ??= fetchStoreSettingsFromDb().finally(() => {
+      settingsLoadPromise = null;
+    });
+    const next = await settingsLoadPromise;
+    if (next) publishSettings(next);
     setLoading(false);
+    return next;
   }, []);
 
   useEffect(() => {
+    settingsListeners.add(setSettings);
     load();
     const channel = supabase
       .channel(`store-settings-feed-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "store_settings" }, load)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      settingsListeners.delete(setSettings);
+      supabase.removeChannel(channel);
+    };
   }, [load]);
 
   const save = useCallback(async (patch: Partial<StoreSettings>) => {
@@ -238,12 +285,14 @@ export function useStoreSettings() {
       .from("store_settings")
       .update(patch as Record<string, unknown>)
       .eq("id", "main")
-      .select("id");
+      .select(STORE_SETTINGS_SELECT);
     if (error) return error;
     if (!data || data.length === 0) {
       return { message: "Nenhuma linha foi atualizada. Verifique suas permissões de admin." };
     }
-    await load();
+    settingsLoadPromise = null;
+    const confirmed = await load();
+    if (!confirmed) return { message: "Salvo, mas não foi possível confirmar a leitura no banco." };
     return null;
   }, [load]);
 
