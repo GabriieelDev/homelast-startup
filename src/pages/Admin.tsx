@@ -51,7 +51,10 @@ const Admin = () => {
   }, []);
   const [orders, setOrders] = useState<any[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+  const [emailsMap, setEmailsMap] = useState<Record<string, string>>({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteDays, setBulkDeleteDays] = useState<string>("30");
   const [editingStock, setEditingStock] = useState<Record<string, string>>({});
   const [period, setPeriod] = useState<Period>("month");
   const [productFormOpen, setProductFormOpen] = useState(false);
@@ -77,12 +80,16 @@ const Admin = () => {
       const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
       const list = data ?? [];
       setOrders(list);
-      const userIds = Array.from(new Set(list.map((o: any) => o.user_id)));
+      const userIds = Array.from(new Set(list.map((o: any) => o.user_id).filter(Boolean)));
       if (userIds.length) {
         const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
         const map: Record<string, string> = {};
-        (profs ?? []).forEach((p: any) => { map[p.user_id] = p.full_name; });
+        (profs ?? []).forEach((p: any) => { if (p.full_name) map[p.user_id] = p.full_name; });
         setProfilesMap(map);
+        const { data: emails } = await supabase.rpc("get_user_emails", { _user_ids: userIds });
+        const em: Record<string, string> = {};
+        (emails ?? []).forEach((r: any) => { if (r.email) em[r.user_id] = r.email; });
+        setEmailsMap(em);
       }
     };
     const loadStock = async () => {
@@ -99,6 +106,26 @@ const Admin = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
+
+  const customerLabel = useCallback((userId: string) => {
+    return profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
+  }, [profilesMap, emailsMap]);
+
+  const deleteOrder = async (orderId: string) => {
+    const { error } = await supabase.from("orders").delete().eq("id", orderId);
+    if (error) { toast.error("Erro ao excluir pedido"); return; }
+    toast.success("Pedido excluído");
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  };
+
+  const bulkDeleteOldOrders = async () => {
+    const days = parseInt(bulkDeleteDays, 10);
+    if (isNaN(days) || days < 0) { toast.error("Informe um número válido de dias"); return; }
+    const { data, error } = await supabase.rpc("admin_delete_old_orders", { _days: days });
+    if (error) { toast.error("Erro ao excluir pedidos antigos"); return; }
+    toast.success(`${data ?? 0} pedido(s) excluído(s)`);
+    setBulkDeleteOpen(false);
+  };
 
   const updateStock = async (productId: string, newStock: number) => {
     if (isNaN(newStock) || newStock < 0) { toast.error("Quantidade inválida"); return; }
