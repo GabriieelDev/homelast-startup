@@ -51,7 +51,10 @@ const Admin = () => {
   }, []);
   const [orders, setOrders] = useState<any[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+  const [emailsMap, setEmailsMap] = useState<Record<string, string>>({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteDays, setBulkDeleteDays] = useState<string>("30");
   const [editingStock, setEditingStock] = useState<Record<string, string>>({});
   const [period, setPeriod] = useState<Period>("month");
   const [productFormOpen, setProductFormOpen] = useState(false);
@@ -77,12 +80,16 @@ const Admin = () => {
       const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
       const list = data ?? [];
       setOrders(list);
-      const userIds = Array.from(new Set(list.map((o: any) => o.user_id)));
+      const userIds = Array.from(new Set(list.map((o: any) => o.user_id).filter(Boolean)));
       if (userIds.length) {
         const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
         const map: Record<string, string> = {};
-        (profs ?? []).forEach((p: any) => { map[p.user_id] = p.full_name; });
+        (profs ?? []).forEach((p: any) => { if (p.full_name) map[p.user_id] = p.full_name; });
         setProfilesMap(map);
+        const { data: emails } = await supabase.rpc("get_user_emails", { _user_ids: userIds });
+        const em: Record<string, string> = {};
+        (emails ?? []).forEach((r: any) => { if (r.email) em[r.user_id] = r.email; });
+        setEmailsMap(em);
       }
     };
     const loadStock = async () => {
@@ -99,6 +106,26 @@ const Admin = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
+
+  const customerLabel = useCallback((userId: string) => {
+    return profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
+  }, [profilesMap, emailsMap]);
+
+  const deleteOrder = async (orderId: string) => {
+    const { error } = await supabase.from("orders").delete().eq("id", orderId);
+    if (error) { toast.error("Erro ao excluir pedido"); return; }
+    toast.success("Pedido excluído");
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  };
+
+  const bulkDeleteOldOrders = async () => {
+    const days = parseInt(bulkDeleteDays, 10);
+    if (isNaN(days) || days < 0) { toast.error("Informe um número válido de dias"); return; }
+    const { data, error } = await supabase.rpc("admin_delete_old_orders", { _days: days });
+    if (error) { toast.error("Erro ao excluir pedidos antigos"); return; }
+    toast.success(`${data ?? 0} pedido(s) excluído(s)`);
+    setBulkDeleteOpen(false);
+  };
 
   const updateStock = async (productId: string, newStock: number) => {
     if (isNaN(newStock) || newStock < 0) { toast.error("Quantidade inválida"); return; }
@@ -393,7 +420,7 @@ const Admin = () => {
     const map: Record<string, { name: string; orders: number; total: number }> = {};
     orders.forEach((o) => {
       const id = o.user_id;
-      if (!map[id]) map[id] = { name: profilesMap[id] || "—", orders: 0, total: 0 };
+      if (!map[id]) map[id] = { name: customerLabel(id), orders: 0, total: 0 };
       map[id].orders += 1;
       map[id].total += Number(o.total);
     });
@@ -630,10 +657,51 @@ const Admin = () => {
 
           {tab === "pedidos" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h2 className="text-2xl font-bold text-foreground">Pedidos em tempo real</h2>
-                <span className="text-xs text-muted-foreground">{orders.length} pedido(s)</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">{orders.length} pedido(s)</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-destructive hover:text-destructive"
+                    onClick={() => setBulkDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir pedidos antigos
+                  </Button>
+                </div>
               </div>
+
+              <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir pedidos antigos</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Serão excluídos permanentemente os pedidos com status <b>entregue</b> ou <b>cancelado</b> criados há mais que o número de dias informado.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk-days">Dias</Label>
+                    <Input
+                      id="bulk-days"
+                      type="number"
+                      min={0}
+                      value={bulkDeleteDays}
+                      onChange={(e) => setBulkDeleteDays(e.target.value)}
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={bulkDeleteOldOrders}
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
               {orders.length === 0 ? (
                 <p className="text-muted-foreground text-sm">Nenhum pedido recente.</p>
               ) : (
@@ -642,19 +710,51 @@ const Admin = () => {
                     const idx = STATUS_FLOW.indexOf(o.status);
                     const next = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
                     const items = Array.isArray(o.items) ? o.items : [];
+                    const canDelete = o.status === "entregue" || o.status === "cancelado";
                     return (
                       <div key={o.id} className="border border-border rounded-xl p-4 space-y-3 bg-card hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between flex-wrap gap-2">
                           <div>
                             <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
                             <p className="text-xs text-muted-foreground">
-                              {profilesMap[o.user_id] || "Cliente"} ·{" "}
+                              {customerLabel(o.user_id)} ·{" "}
                               {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">{STATUS_LABELS[o.status]}</span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">{STATUS_LABELS[o.status] ?? o.status}</span>
                             <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
+                            {canDelete && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    aria-label="Excluir pedido"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir pedido #{o.order_number}?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação é permanente e não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => deleteOrder(o.id)}
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">

@@ -569,6 +569,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_old_orders: { Args: { _days: number }; Returns: number }
       expire_product_sales: { Args: never; Returns: undefined }
       get_admin_product_costs: {
         Args: never
@@ -584,6 +585,13 @@ export type Database = {
           late_order_minutes: number
           low_stock_threshold: number
           sales_drop_pct: number
+        }[]
+      }
+      get_user_emails: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          email: string
+          user_id: string
         }[]
       }
       has_role: {
