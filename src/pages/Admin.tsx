@@ -420,7 +420,7 @@ const Admin = () => {
     const map: Record<string, { name: string; orders: number; total: number }> = {};
     orders.forEach((o) => {
       const id = o.user_id;
-      if (!map[id]) map[id] = { name: profilesMap[id] || "—", orders: 0, total: 0 };
+      if (!map[id]) map[id] = { name: customerLabel(id), orders: 0, total: 0 };
       map[id].orders += 1;
       map[id].total += Number(o.total);
     });
