@@ -657,10 +657,51 @@ const Admin = () => {
 
           {tab === "pedidos" && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h2 className="text-2xl font-bold text-foreground">Pedidos em tempo real</h2>
-                <span className="text-xs text-muted-foreground">{orders.length} pedido(s)</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">{orders.length} pedido(s)</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-destructive hover:text-destructive"
+                    onClick={() => setBulkDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir pedidos antigos
+                  </Button>
+                </div>
               </div>
+
+              <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir pedidos antigos</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Serão excluídos permanentemente os pedidos com status <b>entregue</b> ou <b>cancelado</b> criados há mais que o número de dias informado.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk-days">Dias</Label>
+                    <Input
+                      id="bulk-days"
+                      type="number"
+                      min={0}
+                      value={bulkDeleteDays}
+                      onChange={(e) => setBulkDeleteDays(e.target.value)}
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={bulkDeleteOldOrders}
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
               {orders.length === 0 ? (
                 <p className="text-muted-foreground text-sm">Nenhum pedido recente.</p>
               ) : (
@@ -669,19 +710,51 @@ const Admin = () => {
                     const idx = STATUS_FLOW.indexOf(o.status);
                     const next = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
                     const items = Array.isArray(o.items) ? o.items : [];
+                    const canDelete = o.status === "entregue" || o.status === "cancelado";
                     return (
                       <div key={o.id} className="border border-border rounded-xl p-4 space-y-3 bg-card hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between flex-wrap gap-2">
                           <div>
                             <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
                             <p className="text-xs text-muted-foreground">
-                              {profilesMap[o.user_id] || "Cliente"} ·{" "}
+                              {customerLabel(o.user_id)} ·{" "}
                               {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">{STATUS_LABELS[o.status]}</span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">{STATUS_LABELS[o.status] ?? o.status}</span>
                             <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
+                            {canDelete && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    aria-label="Excluir pedido"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir pedido #{o.order_number}?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação é permanente e não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => deleteOrder(o.id)}
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">
