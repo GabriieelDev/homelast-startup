@@ -178,11 +178,11 @@ const Slide1 = ({
   ];
   return (
     <div
-      className="min-w-full h-full relative px-4 md:px-8"
+      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0"
       style={{ background: "linear-gradient(135deg, #1D2D50 0%, #2C3E6B 100%)" }}
       aria-roledescription="slide"
     >
-      <div className="container mx-auto h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
+      <div className="container mx-auto md:h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
         <div className="flex-1 text-center md:text-left text-white space-y-3 md:space-y-5 max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium">
             <Truck className="h-3.5 w-3.5" /> {cfg.badge}
