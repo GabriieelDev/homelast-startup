@@ -76,21 +76,35 @@ const Admin = () => {
 
   useEffect(() => {
     if (!isAdmin) return;
+
+    const loadProfilesFor = async (userIds: string[]) => {
+      const ids = Array.from(new Set(userIds.filter(Boolean)));
+      if (!ids.length) return;
+      const [{ data: profs }, { data: emails }] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name").in("user_id", ids),
+        supabase.rpc("get_user_emails", { _user_ids: ids }),
+      ]);
+      if (profs?.length) {
+        setProfilesMap((prev) => {
+          const next = { ...prev };
+          profs.forEach((p: any) => { if (p.full_name) next[p.user_id] = p.full_name; });
+          return next;
+        });
+      }
+      if (emails?.length) {
+        setEmailsMap((prev) => {
+          const next = { ...prev };
+          (emails as any[]).forEach((r: any) => { if (r.email) next[r.user_id] = r.email; });
+          return next;
+        });
+      }
+    };
+
     const load = async () => {
       const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
       const list = data ?? [];
       setOrders(list);
-      const userIds = Array.from(new Set(list.map((o: any) => o.user_id).filter(Boolean)));
-      if (userIds.length) {
-        const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds);
-        const map: Record<string, string> = {};
-        (profs ?? []).forEach((p: any) => { if (p.full_name) map[p.user_id] = p.full_name; });
-        setProfilesMap(map);
-        const { data: emails } = await supabase.rpc("get_user_emails", { _user_ids: userIds });
-        const em: Record<string, string> = {};
-        (emails ?? []).forEach((r: any) => { if (r.email) em[r.user_id] = r.email; });
-        setEmailsMap(em);
-      }
+      loadProfilesFor(list.map((o: any) => o.user_id));
     };
     const loadStock = async () => {
       const { data } = await supabase.from("product_stock").select("product_id, stock");
@@ -99,9 +113,25 @@ const Admin = () => {
       setStockMap(map);
     };
     load(); loadStock();
+
     const channel = supabase
       .channel("admin-orders")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        const row: any = payload.new;
+        if (!row) return;
+        setOrders((prev) => prev.some((o) => o.id === row.id) ? prev : [row, ...prev]);
+        if (row.user_id) loadProfilesFor([row.user_id]);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, (payload) => {
+        const row: any = payload.new;
+        if (!row) return;
+        setOrders((prev) => prev.map((o) => (o.id === row.id ? { ...o, ...row } : o)));
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "orders" }, (payload) => {
+        const row: any = payload.old;
+        if (!row?.id) return;
+        setOrders((prev) => prev.filter((o) => o.id !== row.id));
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "product_stock" }, loadStock)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
