@@ -265,6 +265,7 @@ export type Database = {
           coupon_code: string | null
           courier_id: string | null
           created_at: string
+          customer_name: string | null
           discount: number | null
           estimated_time: string | null
           id: string
@@ -284,6 +285,7 @@ export type Database = {
           coupon_code?: string | null
           courier_id?: string | null
           created_at?: string
+          customer_name?: string | null
           discount?: number | null
           estimated_time?: string | null
           id?: string
@@ -303,6 +305,7 @@ export type Database = {
           coupon_code?: string | null
           courier_id?: string | null
           created_at?: string
+          customer_name?: string | null
           discount?: number | null
           estimated_time?: string | null
           id?: string
