@@ -747,7 +747,7 @@ const Admin = () => {
                           <div>
                             <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
                             <p className="text-xs text-muted-foreground">
-                              {customerLabel(o.user_id)} ·{" "}
+                              {customerLabel(o.user_id, (o as any).customer_name)} ·{" "}
                               {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                             </p>
                           </div>
