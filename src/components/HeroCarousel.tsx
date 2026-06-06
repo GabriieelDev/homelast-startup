@@ -252,7 +252,7 @@ const Slide2 = ({
   const countdown = useCountdown(cfg.countdownEnd);
   return (
     <div
-      className="min-w-full h-full relative px-4 md:px-8 overflow-hidden"
+      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0 overflow-hidden"
       style={{ background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
       aria-roledescription="slide"
     >
