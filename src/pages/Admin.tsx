@@ -137,8 +137,8 @@ const Admin = () => {
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
 
-  const customerLabel = useCallback((userId: string) => {
-    return profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
+  const customerLabel = useCallback((userId: string, customerName?: string | null) => {
+    return customerName?.trim() || profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
   }, [profilesMap, emailsMap]);
 
   const deleteOrder = async (orderId: string) => {
