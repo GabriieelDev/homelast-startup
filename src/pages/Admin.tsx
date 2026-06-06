@@ -137,8 +137,8 @@ const Admin = () => {
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
 
-  const customerLabel = useCallback((userId: string) => {
-    return profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
+  const customerLabel = useCallback((userId: string, customerName?: string | null) => {
+    return customerName?.trim() || profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
   }, [profilesMap, emailsMap]);
 
   const deleteOrder = async (orderId: string) => {
@@ -747,7 +747,7 @@ const Admin = () => {
                           <div>
                             <p className="font-bold text-foreground">Pedido #{o.order_number}</p>
                             <p className="text-xs text-muted-foreground">
-                              {customerLabel(o.user_id)} ·{" "}
+                              {customerLabel(o.user_id, (o as any).customer_name)} ·{" "}
                               {new Date(o.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                             </p>
                           </div>

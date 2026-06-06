@@ -86,11 +86,18 @@ const Checkout = () => {
       quantity: i.quantity,
       image: i.product.image,
     }));
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const customerName = profile?.full_name?.trim() || user.email || null;
     const { data, error } = await supabase
       .from("orders")
       .insert({
         user_id: user.id,
         order_number: orderNumber,
+        customer_name: customerName,
         items: itemsPayload,
         subtotal: totalPrice,
         shipping: effectiveShipping,
