@@ -357,7 +357,7 @@ const Slide3 = ({
         ))}
       </div>
 
-      <div className="container mx-auto h-full flex flex-col items-center justify-center text-center text-white gap-3 md:gap-5 max-w-2xl relative">
+      <div className="container mx-auto md:h-full flex flex-col items-center justify-center text-center text-white gap-3 md:gap-5 max-w-2xl relative">
         <Gift className="h-7 w-7 md:h-8 md:w-8 text-white drop-shadow-md animate-float-slow" />
         <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium border border-white/30">
           <Sparkles className="h-3.5 w-3.5" /> {cfg.badge}
