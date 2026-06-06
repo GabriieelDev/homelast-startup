@@ -114,9 +114,9 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
       onTouchEnd={onTouchEnd}
       aria-roledescription="carousel"
     >
-      <div className="relative h-[320px] md:h-[460px] overflow-hidden">
+      <div className="relative md:h-[460px] overflow-hidden">
         <div
-          className="flex h-full transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
+          className="flex md:h-full items-stretch transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
           style={{ transform: `translateX(-${index * 100}%)`, transitionDuration: "850ms" }}
         >
           {slides.map((key) => {
@@ -178,11 +178,11 @@ const Slide1 = ({
   ];
   return (
     <div
-      className="min-w-full h-full relative px-4 md:px-8"
+      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0"
       style={{ background: "linear-gradient(135deg, #1D2D50 0%, #2C3E6B 100%)" }}
       aria-roledescription="slide"
     >
-      <div className="container mx-auto h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
+      <div className="container mx-auto md:h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
         <div className="flex-1 text-center md:text-left text-white space-y-3 md:space-y-5 max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium">
             <Truck className="h-3.5 w-3.5" /> {cfg.badge}
@@ -252,7 +252,7 @@ const Slide2 = ({
   const countdown = useCountdown(cfg.countdownEnd);
   return (
     <div
-      className="min-w-full h-full relative px-4 md:px-8 overflow-hidden"
+      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0 overflow-hidden"
       style={{ background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
       aria-roledescription="slide"
     >
@@ -277,7 +277,7 @@ const Slide2 = ({
         ))}
       </div>
 
-      <div className="container mx-auto h-full flex flex-col md:flex-row items-center gap-4 md:gap-8 relative">
+      <div className="container mx-auto md:h-full flex flex-col md:flex-row items-center gap-4 md:gap-8 relative">
         <div className="flex-1 text-center md:text-left space-y-2 md:space-y-4 max-w-md">
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-semibold text-white shadow-lg animate-pulse"
@@ -332,7 +332,7 @@ const Slide3 = ({
 }) => {
   return (
     <div
-      className="min-w-full h-full relative px-4 md:px-8 overflow-hidden"
+      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0 overflow-hidden"
       style={{ background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
       aria-roledescription="slide"
     >
@@ -357,7 +357,7 @@ const Slide3 = ({
         ))}
       </div>
 
-      <div className="container mx-auto h-full flex flex-col items-center justify-center text-center text-white gap-3 md:gap-5 max-w-2xl relative">
+      <div className="container mx-auto md:h-full flex flex-col items-center justify-center text-center text-white gap-3 md:gap-5 max-w-2xl relative">
         <Gift className="h-7 w-7 md:h-8 md:w-8 text-white drop-shadow-md animate-float-slow" />
         <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium border border-white/30">
           <Sparkles className="h-3.5 w-3.5" /> {cfg.badge}

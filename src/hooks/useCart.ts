@@ -77,7 +77,7 @@ async function pushToServer(items: CartItem[]) {
 
 /** Called by CartSyncProvider when auth state changes. */
 export const cartSync = {
-  async onLogin(userId: string, onMergeNeeded: (local: CartItem[], server: CartItem[]) => Promise<"merge" | "replace">) {
+  async onLogin(userId: string) {
     _userId = userId;
     _serverSyncEnabled = true;
 
@@ -107,18 +107,12 @@ export const cartSync = {
       toast.success("Seus itens foram salvos no carrinho");
       return;
     }
-    // Both have items → ask the user
-    const choice = await onMergeNeeded(local, server);
-    if (choice === "replace") {
-      _suppressNextPush = true;
-      setItems(server);
-      toast.success("Carrinho salvo restaurado");
-    } else {
-      const merged = mergeCarts(local, server);
-      setItems(merged, { push: true });
-      toast.success("Carrinhos mesclados com sucesso 🛒");
-    }
+    // Both have items → silently merge
+    const merged = mergeCarts(local, server);
+    setItems(merged, { push: true });
+    toast.success("Carrinhos mesclados 🛒");
   },
+
 
   onLogout() {
     _userId = null;
