@@ -277,7 +277,7 @@ const Slide2 = ({
         ))}
       </div>
 
-      <div className="container mx-auto h-full flex flex-col md:flex-row items-center gap-4 md:gap-8 relative">
+      <div className="container mx-auto md:h-full flex flex-col md:flex-row items-center gap-4 md:gap-8 relative">
         <div className="flex-1 text-center md:text-left space-y-2 md:space-y-4 max-w-md">
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs md:text-sm font-semibold text-white shadow-lg animate-pulse"
