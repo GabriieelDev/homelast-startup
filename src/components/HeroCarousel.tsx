@@ -114,7 +114,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
       onTouchEnd={onTouchEnd}
       aria-roledescription="carousel"
     >
-      <div className="relative h-[320px] md:h-[460px] overflow-hidden">
+      <div className="relative h-auto min-h-[260px] md:h-[460px] overflow-hidden">
         <div
           className="flex h-full transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
           style={{ transform: `translateX(-${index * 100}%)`, transitionDuration: "850ms" }}
