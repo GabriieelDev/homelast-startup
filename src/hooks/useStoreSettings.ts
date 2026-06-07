@@ -245,8 +245,9 @@ async function fetchStoreSettingsFromDb(): Promise<StoreSettings | null> {
     return null;
   }
   if (adminError) {
-    console.info("Configurações administrativas indisponíveis para este usuário", adminError.message);
+    // adminError esperado para usuários não-admin — silenciar para não vazar contexto
   }
+
   if (!data || token !== settingsReadToken) return null;
 
   const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;

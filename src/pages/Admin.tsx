@@ -357,18 +357,8 @@ const Admin = () => {
     );
   }
   if (!user) return <Navigate to="/auth" replace />;
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="max-w-md text-center space-y-4 bg-card border border-border rounded-xl p-8 shadow-sm">
-          <ShieldAlert className="h-12 w-12 text-destructive mx-auto" />
-          <h1 className="text-2xl font-bold text-foreground">Acesso restrito a administradores</h1>
-          <p className="text-muted-foreground">Sua conta não tem permissão para acessar este painel.</p>
-          <Button onClick={() => navigate("/")}>Voltar para a loja</Button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAdmin) return <Navigate to="/" replace />;
+
 
   const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
