@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CartSyncProvider from "@/components/CartSyncProvider";
+import SessionTimeoutProvider from "@/components/SessionTimeoutProvider";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 import Index from "./pages/Index.tsx";
@@ -37,26 +38,27 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/enderecos" element={<ProtectedRoute><Addresses /></ProtectedRoute>} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/confirmacao" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
-            <Route path="/rastreamento" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
-            <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-            <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
-            <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-            <Route path="/entregador/login" element={<CourierLogin />} />
-            <Route path="/entregador" element={<ProtectedRoute><Courier /></ProtectedRoute>} />
-            <Route path="/sobre" element={<SobreNos />} />
-            <Route path="/termos" element={<TermosDeUso />} />
-            <Route path="/privacidade" element={<PoliticaPrivacidade />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          
+            <SessionTimeoutProvider>
+              <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/enderecos" element={<ProtectedRoute><Addresses /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/confirmacao" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+              <Route path="/rastreamento" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
+              <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+              <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
+              <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/entregador/login" element={<CourierLogin />} />
+              <Route path="/entregador" element={<ProtectedRoute><Courier /></ProtectedRoute>} />
+              <Route path="/sobre" element={<SobreNos />} />
+              <Route path="/termos" element={<TermosDeUso />} />
+              <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            </SessionTimeoutProvider>
           </BrowserRouter>
         </TooltipProvider>
       </CartSyncProvider>
