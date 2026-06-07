@@ -164,76 +164,153 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
 };
 
 /* ============================ SLIDE 1 ============================ */
+const ParticlesCanvas = () => {
+  const ref = useRef<HTMLCanvasElement | null>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    let raf = 0;
+    let particles: Array<{ x: number; y: number; r: number; vx: number; vy: number; c: string; a: number }> = [];
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const area = w * h;
+      const count = Math.max(28, Math.min(90, Math.floor(area / 12000)));
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 1 + Math.random() * 1.8,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        c: Math.random() < 0.55 ? "#00B894" : "#FFFFFF",
+        a: 0.25 + Math.random() * 0.5,
+      }));
+    };
+    resize();
+    const onResize = () => resize();
+    window.addEventListener("resize", onResize);
+
+    const tick = () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < -5) p.x = w + 5;
+        if (p.x > w + 5) p.x = -5;
+        if (p.y < -5) p.y = h + 5;
+        if (p.y > h + 5) p.y = -5;
+        ctx.globalAlpha = p.a;
+        ctx.fillStyle = p.c;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+  return <canvas ref={ref} aria-hidden className="absolute inset-0 w-full h-full pointer-events-none" />;
+};
+
+const fadeUpStyle = (delay: number): React.CSSProperties => ({
+  animation: "heroFadeUp 0.7s ease-out both",
+  animationDelay: `${delay}s`,
+});
+
 const Slide1 = ({
-  cfg, onStart, renderHighlighted,
+  cfg, onStart,
 }: {
   cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide1"];
   onStart: () => void;
   renderHighlighted: (t: string, h: string, c: string) => React.ReactNode;
 }) => {
-  const features = [
-    { Icon: Truck, title: cfg.feature1Title, text: cfg.feature1Text, color: "#00B894" },
-    { Icon: ShieldCheck, title: cfg.feature2Title, text: cfg.feature2Text, color: "#1D2D50" },
-    { Icon: Star, title: cfg.feature3Title, text: cfg.feature3Text, color: "#F59E0B" },
-  ];
   return (
     <div
-      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0"
-      style={{ background: "linear-gradient(135deg, #1D2D50 0%, #2C3E6B 100%)" }}
+      className="min-w-full md:h-full relative px-4 md:px-8 py-12 md:py-0 overflow-hidden"
+      style={{ backgroundColor: "#1D2D50" }}
       aria-roledescription="slide"
     >
-      <div className="container mx-auto md:h-full flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
-        <div className="flex-1 text-center md:text-left text-white space-y-3 md:space-y-5 max-w-xl">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs md:text-sm font-medium">
-            <Truck className="h-3.5 w-3.5" /> {cfg.badge}
-          </span>
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
-            {renderHighlighted(cfg.title, cfg.highlight, "#00B894")}
-          </h1>
-          <p className="text-sm md:text-base text-white/80 max-w-md mx-auto md:mx-0">
-            {cfg.subtitle}
-          </p>
-          <div className="hidden md:flex gap-4 pt-1">
-            {features.map(({ Icon, title, text, color }) => (
-              <div key={title} className="flex items-start gap-2">
-                <div className="w-9 h-9 rounded-lg bg-white/95 flex items-center justify-center shrink-0">
-                  <Icon className="h-4 w-4" style={{ color }} />
-                </div>
-                <div className="text-xs">
-                  <p className="font-semibold">{title}</p>
-                  <p className="text-white/70">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button
-            size="lg"
-            className="rounded-full font-semibold text-white shadow-lg hover:scale-[1.03] active:scale-[0.97] transition-transform"
-            style={{ backgroundColor: "#00B894" }}
-            onClick={onStart}
-          >
-            {cfg.ctaText}
-          </Button>
+      <style>{`@keyframes heroFadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <ParticlesCanvas />
+      <div className="container mx-auto md:h-full flex flex-col items-center justify-center text-center gap-4 md:gap-5 relative">
+        <span
+          className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs md:text-sm font-medium"
+          style={{
+            backgroundColor: "rgba(0,184,148,0.18)",
+            border: "1px solid rgba(0,184,148,0.35)",
+            color: "#00B894",
+            ...fadeUpStyle(0.1),
+          }}
+        >
+          🚀 Tecnologia que entrega
+        </span>
+
+        <h1
+          className="font-bold tracking-tight text-white leading-none"
+          style={{ fontSize: "42px", ...fadeUpStyle(0.35) }}
+        >
+          Home<span style={{ color: "#00B894" }}>Last</span>
+        </h1>
+
+        <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "15px", ...fadeUpStyle(0.55) }}>
+          Inovação que transforma negócios
+        </p>
+
+        <div
+          style={{
+            width: "48px",
+            height: "2px",
+            backgroundColor: "#00B894",
+            borderRadius: "2px",
+            ...fadeUpStyle(0.7),
+          }}
+        />
+
+        <div
+          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
+          style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", ...fadeUpStyle(0.85) }}
+        >
+          <span>🌐 Multi-negócios</span>
+          <span>·</span>
+          <span>📈 Escalável</span>
+          <span>·</span>
+          <span>⚙️ Automatizado</span>
         </div>
-        {/* Product image card with hover lift & gradient border */}
-        <div className="hidden md:block flex-1 max-w-sm group">
-          <div
-            className="relative p-[2px] rounded-2xl transition-all duration-300 group-hover:-translate-y-2 group-hover:rotate-[2deg]"
-            style={{ background: "linear-gradient(135deg, #1D2D50, #00B894)" }}
-          >
-            <div
-              className="rounded-2xl p-4 transition-shadow duration-300 group-hover:shadow-[0_25px_50px_-12px_rgba(0,184,148,0.45)]"
-              style={{ background: "linear-gradient(135deg, #FAFBFC 0%, #F2F4F7 100%)" }}
-            >
-              <img
-                src={cfg.image || heroImage}
-                alt="Compras frescas"
-                className="w-full h-auto rounded-xl"
-                onError={(e) => { (e.target as HTMLImageElement).src = heroImage; }}
-              />
-            </div>
-          </div>
-        </div>
+
+        <Button
+          onClick={onStart}
+          className="font-semibold text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+          style={{
+            backgroundColor: "#00B894",
+            borderRadius: "24px",
+            padding: "12px 28px",
+            ...fadeUpStyle(1.05),
+          }}
+        >
+          {cfg.ctaText || "Começar agora"}
+        </Button>
+
+        <p style={{ color: "rgba(255,255,255,0.28)", fontSize: "11px", ...fadeUpStyle(1.3) }}>
+          homelast.com.br · Entrega em 30–60 min
+        </p>
       </div>
     </div>
   );
