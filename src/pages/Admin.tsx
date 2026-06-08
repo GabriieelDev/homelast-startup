@@ -31,6 +31,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Product } from "@/data/products";
 import { downloadCSV, downloadExcelXML, openPrintableReport } from "@/lib/reports";
+import {
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip as RTooltip, PieChart, Pie, Cell, Legend,
+} from "recharts";
+
+const STATUS_COLORS: Record<string, string> = {
+  recebido: "#3498DB",
+  preparo: "#F39C12",
+  caminho: "#6C63FF",
+  entregue: "#00B894",
+  cancelado: "#E74C3C",
+};
 
 type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
@@ -57,6 +69,7 @@ const Admin = () => {
   const [bulkDeleteDays, setBulkDeleteDays] = useState<string>("30");
   const [editingStock, setEditingStock] = useState<Record<string, string>>({});
   const [period, setPeriod] = useState<Period>("month");
+  const [chartType, setChartType] = useState<"bar" | "line">("bar");
   const [productFormOpen, setProductFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
@@ -70,7 +83,7 @@ const Admin = () => {
 
   const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
   const STATUS_LABELS: Record<string, string> = {
-    recebido: "Pedido recebido", preparo: "Em preparo", caminho: "A caminho", entregue: "Entregue",
+    recebido: "Pedido recebido", preparo: "Em preparo", caminho: "A caminho", entregue: "Entregue", cancelado: "Cancelado",
   };
   const STATUS_ICONS: Record<string, any> = { recebido: Package, preparo: ChefHat, caminho: Truck, entregue: CheckCircle };
 
@@ -205,28 +218,54 @@ const Admin = () => {
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5)
       .map(([id, qty]) => ({ id, qty, name: products.find((p) => p.id === id)?.name ?? id }));
 
-    const deliveredAll = orders.filter((o) => o.status === "entregue" && o.created_at && o.updated_at);
-    const avgMins = deliveredAll.length
-      ? Math.round(deliveredAll.reduce((s, o) => s + (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000, 0) / deliveredAll.length)
-      : 0;
+    // Tempo médio de entrega — apenas pedidos entregues no período, com diff válido (>0 e <=48h)
+    const deliveredDiffs = delivered
+      .filter((o) => o.created_at && o.updated_at)
+      .map((o) => (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000)
+      .filter((m) => m > 0 && m <= 48 * 60);
+    const avgMins = deliveredDiffs.length
+      ? Math.round(deliveredDiffs.reduce((s, m) => s + m, 0) / deliveredDiffs.length)
+      : null;
 
     const lowStock = products.filter((p) => (stockMap[p.id] ?? 99) > 0 && (stockMap[p.id] ?? 99) <= 5);
     const outOfStock = products.filter((p) => (stockMap[p.id] ?? 99) === 0);
 
     const variation = previousRevenue > 0 ? ((revenue - previousRevenue) / previousRevenue) * 100 : null;
 
-    // Simple revenue chart (per bucket)
+    // Revenue chart (per bucket)
     const buckets = period === "day" ? 24 : period === "week" ? 7 : period === "month" ? 30 : period === "semester" ? 26 : 12;
     const bucketSize = (Date.now() - periodStart.getTime()) / buckets;
-    const series = Array.from({ length: buckets }, () => 0);
+    const fmtLabel = (d: Date) =>
+      period === "day"
+        ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        : period === "year" || period === "semester"
+        ? d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" })
+        : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    const chartData = Array.from({ length: buckets }, (_, i) => ({
+      label: fmtLabel(new Date(periodStart.getTime() + i * bucketSize)),
+      value: 0,
+    }));
     delivered.forEach((o) => {
       const idx = Math.min(buckets - 1, Math.floor((new Date(o.created_at).getTime() - periodStart.getTime()) / bucketSize));
-      if (idx >= 0) series[idx] += Number(o.total);
+      if (idx >= 0) chartData[idx].value += Number(o.total);
     });
-    const seriesMax = Math.max(1, ...series);
 
-    return { revenue, ordersCount, avgTicket, top, avgMins, lowStock, outOfStock, variation, series, seriesMax };
+    // Distribuição por status no período
+    const statusKeys = ["recebido", "preparo", "caminho", "entregue", "cancelado"] as const;
+    const statusData = statusKeys
+      .map((k) => ({ name: STATUS_LABELS[k] ?? k, key: k, value: inPeriod.filter((o) => o.status === k).length }))
+      .filter((s) => s.value > 0);
+
+    return { revenue, ordersCount, avgTicket, top, avgMins, lowStock, outOfStock, variation, chartData, statusData };
   }, [orders, stockMap, products, periodStart, previousStart, period]);
+
+  const formatDuration = (mins: number | null) => {
+    if (mins === null || mins === undefined) return "—";
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m === 0 ? `${h}h` : `${h}h ${m}min`;
+  };
 
   const advanceStatus = async (order: any) => {
     const idx = STATUS_FLOW.indexOf(order.status);
@@ -512,8 +551,11 @@ const Admin = () => {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Faturamento</p>
+                <div className="p-4 rounded-lg bg-secondary border-l-4" style={{ borderLeftColor: "#00B894" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <DollarSign className="h-4 w-4" style={{ color: "#00B894" }} />
+                    <p className="text-xs text-muted-foreground">Faturamento</p>
+                  </div>
                   <p className="text-2xl font-bold text-foreground">R$ {metrics.revenue.toFixed(2)}</p>
                   {metrics.variation !== null && (
                     <p className={`text-xs font-semibold ${metrics.variation >= 0 ? "text-primary" : "text-destructive"}`}>
@@ -521,27 +563,85 @@ const Admin = () => {
                     </p>
                   )}
                 </div>
-                <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Pedidos</p>
+                <div className="p-4 rounded-lg bg-secondary border-l-4" style={{ borderLeftColor: "#1D2D50" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShoppingBag className="h-4 w-4" style={{ color: "#1D2D50" }} />
+                    <p className="text-xs text-muted-foreground">Pedidos</p>
+                  </div>
                   <p className="text-2xl font-bold text-foreground">{metrics.ordersCount}</p>
                 </div>
-                <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Ticket médio</p>
+                <div className="p-4 rounded-lg bg-secondary border-l-4" style={{ borderLeftColor: "#6C63FF" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <TrendingUp className="h-4 w-4" style={{ color: "#6C63FF" }} />
+                    <p className="text-xs text-muted-foreground">Ticket médio</p>
+                  </div>
                   <p className="text-2xl font-bold text-foreground">R$ {metrics.avgTicket.toFixed(2)}</p>
                 </div>
-                <div className="p-4 rounded-lg bg-secondary">
-                  <p className="text-xs text-muted-foreground">Tempo médio entrega</p>
-                  <p className="text-2xl font-bold text-foreground">{metrics.avgMins || "—"} min</p>
+                <div className="p-4 rounded-lg bg-secondary border-l-4" style={{ borderLeftColor: "#F39C12" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="h-4 w-4" style={{ color: "#F39C12" }} />
+                    <p className="text-xs text-muted-foreground">Tempo médio entrega</p>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">{formatDuration(metrics.avgMins)}</p>
                 </div>
               </div>
 
               <div className="p-4 rounded-lg border border-border">
-                <h3 className="font-semibold text-foreground mb-3">Faturamento ({PERIOD_LABEL[period]})</h3>
-                <div className="flex items-end gap-1 h-32">
-                  {metrics.series.map((v, i) => (
-                    <div key={i} className="flex-1 bg-primary/80 rounded-t hover:bg-primary transition-colors" style={{ height: `${(v / metrics.seriesMax) * 100}%`, minHeight: v > 0 ? "4px" : "1px" }} title={`R$ ${v.toFixed(2)}`} />
-                  ))}
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <h3 className="font-semibold text-foreground">Faturamento ({PERIOD_LABEL[period]})</h3>
+                  <div className="flex rounded-md border border-border overflow-hidden text-xs">
+                    <button
+                      onClick={() => setChartType("bar")}
+                      className={`px-3 py-1 transition-colors ${chartType === "bar" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"}`}
+                    >Barras</button>
+                    <button
+                      onClick={() => setChartType("line")}
+                      className={`px-3 py-1 transition-colors ${chartType === "line" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"}`}
+                    >Linha</button>
+                  </div>
                 </div>
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    {chartType === "bar" ? (
+                      <BarChart data={metrics.chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `R$ ${v}`} />
+                        <RTooltip formatter={(v: number) => [`R$ ${Number(v).toFixed(2)}`, "Faturamento"]} labelStyle={{ color: "#1D2D50" }} />
+                        <Bar dataKey="value" fill="#00B894" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    ) : (
+                      <LineChart data={metrics.chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `R$ ${v}`} />
+                        <RTooltip formatter={(v: number) => [`R$ ${Number(v).toFixed(2)}`, "Faturamento"]} labelStyle={{ color: "#1D2D50" }} />
+                        <Line type="monotone" dataKey="value" stroke="#00B894" strokeWidth={2} dot={{ r: 3, fill: "#00B894" }} activeDot={{ r: 5 }} />
+                      </LineChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground mb-3">Pedidos por status ({PERIOD_LABEL[period]})</h3>
+                {metrics.statusData.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sem pedidos no período.</p>
+                ) : (
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={metrics.statusData} dataKey="value" nameKey="name" cx="40%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2}>
+                          {metrics.statusData.map((s) => (
+                            <Cell key={s.key} fill={STATUS_COLORS[s.key]} />
+                          ))}
+                        </Pie>
+                        <RTooltip formatter={(v: number, n: string) => [`${v} pedido${v === 1 ? "" : "s"}`, n]} />
+                        <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
