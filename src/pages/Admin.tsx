@@ -24,6 +24,7 @@ import CategoryManager from "@/components/admin/CategoryManager";
 import NfeImporter from "@/components/admin/NfeImporter";
 import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
 import CarouselManager from "@/components/admin/CarouselManager";
+import CouponManager from "@/components/admin/CouponManager";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -44,7 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelado: "#E74C3C",
 };
 
-type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "cupons" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
@@ -405,6 +406,7 @@ const Admin = () => {
     { key: "categorias", label: "Categorias", icon: Tag },
     { key: "nfe", label: "Importar NF-e", icon: FileInput },
     { key: "promocoes", label: "Promoções", icon: Tag },
+    { key: "cupons", label: "Cupons", icon: Tag },
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
@@ -774,6 +776,8 @@ const Admin = () => {
           {tab === "nfe" && <NfeImporter />}
 
           {tab === "promocoes" && <SalePromotionsPanel />}
+
+          {tab === "cupons" && <CouponManager />}
 
           {tab === "pedidos" && (
             <div className="space-y-4">

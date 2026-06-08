@@ -102,8 +102,10 @@ export type Database = {
           discount_value: number
           expires_at: string | null
           id: string
+          max_uses: number | null
           min_order: number | null
           updated_at: string
+          used_count: number
         }
         Insert: {
           active?: boolean
@@ -114,8 +116,10 @@ export type Database = {
           discount_value?: number
           expires_at?: string | null
           id?: string
+          max_uses?: number | null
           min_order?: number | null
           updated_at?: string
+          used_count?: number
         }
         Update: {
           active?: boolean
@@ -126,8 +130,10 @@ export type Database = {
           discount_value?: number
           expires_at?: string | null
           id?: string
+          max_uses?: number | null
           min_order?: number | null
           updated_at?: string
+          used_count?: number
         }
         Relationships: []
       }
@@ -604,6 +610,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coupon_usage: { Args: { _code: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "cliente" | "entregador"
