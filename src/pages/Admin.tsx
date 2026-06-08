@@ -205,28 +205,54 @@ const Admin = () => {
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5)
       .map(([id, qty]) => ({ id, qty, name: products.find((p) => p.id === id)?.name ?? id }));
 
-    const deliveredAll = orders.filter((o) => o.status === "entregue" && o.created_at && o.updated_at);
-    const avgMins = deliveredAll.length
-      ? Math.round(deliveredAll.reduce((s, o) => s + (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000, 0) / deliveredAll.length)
-      : 0;
+    // Tempo médio de entrega — apenas pedidos entregues no período, com diff válido (>0 e <=48h)
+    const deliveredDiffs = delivered
+      .filter((o) => o.created_at && o.updated_at)
+      .map((o) => (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000)
+      .filter((m) => m > 0 && m <= 48 * 60);
+    const avgMins = deliveredDiffs.length
+      ? Math.round(deliveredDiffs.reduce((s, m) => s + m, 0) / deliveredDiffs.length)
+      : null;
 
     const lowStock = products.filter((p) => (stockMap[p.id] ?? 99) > 0 && (stockMap[p.id] ?? 99) <= 5);
     const outOfStock = products.filter((p) => (stockMap[p.id] ?? 99) === 0);
 
     const variation = previousRevenue > 0 ? ((revenue - previousRevenue) / previousRevenue) * 100 : null;
 
-    // Simple revenue chart (per bucket)
+    // Revenue chart (per bucket)
     const buckets = period === "day" ? 24 : period === "week" ? 7 : period === "month" ? 30 : period === "semester" ? 26 : 12;
     const bucketSize = (Date.now() - periodStart.getTime()) / buckets;
-    const series = Array.from({ length: buckets }, () => 0);
+    const fmtLabel = (d: Date) =>
+      period === "day"
+        ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        : period === "year" || period === "semester"
+        ? d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" })
+        : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    const chartData = Array.from({ length: buckets }, (_, i) => ({
+      label: fmtLabel(new Date(periodStart.getTime() + i * bucketSize)),
+      value: 0,
+    }));
     delivered.forEach((o) => {
       const idx = Math.min(buckets - 1, Math.floor((new Date(o.created_at).getTime() - periodStart.getTime()) / bucketSize));
-      if (idx >= 0) series[idx] += Number(o.total);
+      if (idx >= 0) chartData[idx].value += Number(o.total);
     });
-    const seriesMax = Math.max(1, ...series);
 
-    return { revenue, ordersCount, avgTicket, top, avgMins, lowStock, outOfStock, variation, series, seriesMax };
+    // Distribuição por status no período
+    const statusKeys = ["recebido", "preparo", "caminho", "entregue", "cancelado"] as const;
+    const statusData = statusKeys
+      .map((k) => ({ name: STATUS_LABELS[k] ?? k, key: k, value: inPeriod.filter((o) => o.status === k).length }))
+      .filter((s) => s.value > 0);
+
+    return { revenue, ordersCount, avgTicket, top, avgMins, lowStock, outOfStock, variation, chartData, statusData };
   }, [orders, stockMap, products, periodStart, previousStart, period]);
+
+  const formatDuration = (mins: number | null) => {
+    if (mins === null || mins === undefined) return "—";
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m === 0 ? `${h}h` : `${h}h ${m}min`;
+  };
 
   const advanceStatus = async (order: any) => {
     const idx = STATUS_FLOW.indexOf(order.status);
