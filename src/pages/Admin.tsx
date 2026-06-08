@@ -777,6 +777,8 @@ const Admin = () => {
 
           {tab === "promocoes" && <SalePromotionsPanel />}
 
+          {tab === "cupons" && <CouponManager />}
+
           {tab === "pedidos" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
