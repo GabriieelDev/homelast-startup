@@ -57,6 +57,7 @@ const Admin = () => {
   const [bulkDeleteDays, setBulkDeleteDays] = useState<string>("30");
   const [editingStock, setEditingStock] = useState<Record<string, string>>({});
   const [period, setPeriod] = useState<Period>("month");
+  const [chartType, setChartType] = useState<"bar" | "line">("bar");
   const [productFormOpen, setProductFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
