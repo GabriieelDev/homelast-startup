@@ -53,6 +53,11 @@ export function useCoupon() {
         setCoupon(null);
         return false;
       }
+      if ((data as any).max_uses != null && Number((data as any).used_count ?? 0) >= Number((data as any).max_uses)) {
+        setError("Este cupom atingiu o limite de usos.");
+        setCoupon(null);
+        return false;
+      }
       if (subtotal < Number(data.min_order || 0)) {
         setError(`Pedido mínimo de R$ ${Number(data.min_order).toFixed(2)} para usar este cupom.`);
         setCoupon(null);
