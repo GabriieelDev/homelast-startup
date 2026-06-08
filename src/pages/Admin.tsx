@@ -83,7 +83,7 @@ const Admin = () => {
 
   const STATUS_FLOW = ["recebido", "preparo", "caminho", "entregue"] as const;
   const STATUS_LABELS: Record<string, string> = {
-    recebido: "Pedido recebido", preparo: "Em preparo", caminho: "A caminho", entregue: "Entregue",
+    recebido: "Pedido recebido", preparo: "Em preparo", caminho: "A caminho", entregue: "Entregue", cancelado: "Cancelado",
   };
   const STATUS_ICONS: Record<string, any> = { recebido: Package, preparo: ChefHat, caminho: Truck, entregue: CheckCircle };
 
