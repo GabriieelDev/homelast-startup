@@ -45,7 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelado: "#E74C3C",
 };
 
-type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "cupons" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
