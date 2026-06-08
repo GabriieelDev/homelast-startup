@@ -31,6 +31,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Product } from "@/data/products";
 import { downloadCSV, downloadExcelXML, openPrintableReport } from "@/lib/reports";
+import {
+  ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip as RTooltip, PieChart, Pie, Cell, Legend,
+} from "recharts";
+
+const STATUS_COLORS: Record<string, string> = {
+  recebido: "#3498DB",
+  preparo: "#F39C12",
+  caminho: "#6C63FF",
+  entregue: "#00B894",
+  cancelado: "#E74C3C",
+};
 
 type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
