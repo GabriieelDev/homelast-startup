@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
@@ -15,14 +16,15 @@ import {
 import { Plus, Power, PowerOff, Trash2, Tag } from "lucide-react";
 import { toast } from "sonner";
 
+type DiscountType = "percentage" | "fixed" | "free_shipping" | "first_order";
+
 interface Coupon {
   id: string;
   code: string;
+  description: string | null;
   discount_type: string;
   discount_value: number;
   min_order: number | null;
-  max_uses: number | null;
-  used_count: number;
   expires_at: string | null;
   active: boolean;
   created_at: string;
@@ -30,12 +32,18 @@ interface Coupon {
 
 const emptyForm = {
   code: "",
-  discount_type: "percentage" as "percentage" | "fixed",
+  description: "",
+  discount_type: "percentage" as DiscountType,
   discount_value: "",
   min_order: "0",
-  max_uses: "",
   expires_at: "",
 };
+
+const typeLabel = (t: string) =>
+  t === "percentage" ? "Percentual" :
+  t === "fixed" ? "Valor fixo" :
+  t === "free_shipping" ? "Frete grátis" :
+  t === "first_order" ? "1ª compra" : t;
 
 const CouponManager = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -48,7 +56,7 @@ const CouponManager = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("coupons")
-      .select("*")
+      .select("id,code,description,discount_type,discount_value,min_order,expires_at,active,created_at")
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar cupons");
     setCoupons((data as any) ?? []);
@@ -61,20 +69,24 @@ const CouponManager = () => {
     const code = form.code.trim().toUpperCase();
     const value = Number(form.discount_value);
     if (!code) return toast.error("Código é obrigatório");
-    if (!value || value <= 0) return toast.error("Valor do desconto inválido");
-    if (form.discount_type === "percentage" && value > 100) return toast.error("Percentual máximo: 100%");
+    if (form.discount_type !== "free_shipping" && (!value || value <= 0)) {
+      return toast.error("Valor do desconto inválido");
+    }
+    if (form.discount_type === "percentage" && value > 100) {
+      return toast.error("Percentual máximo: 100%");
+    }
 
     setSaving(true);
-    const payload: any = {
+    const payload = {
       code,
+      description: form.description.trim() || null,
       discount_type: form.discount_type,
-      discount_value: value,
+      discount_value: form.discount_type === "free_shipping" ? 0 : value,
       min_order: Number(form.min_order) || 0,
-      max_uses: form.max_uses ? Number(form.max_uses) : null,
       expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
       active: true,
     };
-    const { error } = await supabase.from("coupons").insert(payload);
+    const { error } = await supabase.from("coupons").insert(payload as any);
     setSaving(false);
     if (error) {
       toast.error(error.code === "23505" ? "Já existe um cupom com esse código" : "Erro ao criar cupom");
@@ -103,10 +115,8 @@ const CouponManager = () => {
   const formatValue = (c: Coupon) =>
     c.discount_type === "percentage" ? `${c.discount_value}%` :
     c.discount_type === "fixed" ? `R$ ${Number(c.discount_value).toFixed(2)}` :
-    c.discount_type === "free_shipping" ? "Frete grátis" : "1ª compra";
-
-  const remaining = (c: Coupon) =>
-    c.max_uses == null ? "Ilimitado" : Math.max(0, c.max_uses - c.used_count);
+    c.discount_type === "free_shipping" ? "Frete grátis" :
+    c.discount_type === "first_order" ? `${c.discount_value}% (1ª compra)` : "—";
 
   return (
     <div className="space-y-4">
@@ -135,14 +145,25 @@ const CouponManager = () => {
                   className="uppercase font-mono"
                 />
               </div>
+              <div>
+                <Label>Descrição</Label>
+                <Textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Ex: 10% de desconto em toda a loja"
+                  rows={2}
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Tipo</Label>
-                  <Select value={form.discount_type} onValueChange={(v: any) => setForm({ ...form, discount_type: v })}>
+                  <Select value={form.discount_type} onValueChange={(v: DiscountType) => setForm({ ...form, discount_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="percentage">Percentual (%)</SelectItem>
                       <SelectItem value="fixed">Valor fixo (R$)</SelectItem>
+                      <SelectItem value="free_shipping">Frete grátis</SelectItem>
+                      <SelectItem value="first_order">1ª compra (%)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -152,7 +173,8 @@ const CouponManager = () => {
                     type="number" min="0" step="0.01"
                     value={form.discount_value}
                     onChange={(e) => setForm({ ...form, discount_value: e.target.value })}
-                    placeholder={form.discount_type === "percentage" ? "10" : "5.00"}
+                    placeholder={form.discount_type === "percentage" || form.discount_type === "first_order" ? "10" : "5.00"}
+                    disabled={form.discount_type === "free_shipping"}
                   />
                 </div>
               </div>
@@ -166,24 +188,15 @@ const CouponManager = () => {
                   />
                 </div>
                 <div>
-                  <Label>Limite de usos</Label>
+                  <Label>Data de validade</Label>
                   <Input
-                    type="number" min="1"
-                    value={form.max_uses}
-                    onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
-                    placeholder="Ilimitado"
+                    type="datetime-local"
+                    value={form.expires_at}
+                    onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
                   />
                 </div>
               </div>
-              <div>
-                <Label>Data de validade</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.expires_at}
-                  onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground mt-1">Deixe em branco para não expirar</p>
-              </div>
+              <p className="text-xs text-muted-foreground">Deixe a validade em branco para não expirar.</p>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
@@ -198,11 +211,11 @@ const CouponManager = () => {
           <thead className="bg-muted/40">
             <tr className="text-left">
               <th className="p-3">Código</th>
+              <th className="p-3">Descrição</th>
               <th className="p-3">Tipo</th>
               <th className="p-3">Valor</th>
               <th className="p-3">Mín. pedido</th>
               <th className="p-3">Validade</th>
-              <th className="p-3">Usos restantes</th>
               <th className="p-3">Status</th>
               <th className="p-3 text-right">Ações</th>
             </tr>
@@ -214,23 +227,17 @@ const CouponManager = () => {
               <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Nenhum cupom cadastrado</td></tr>
             ) : coupons.map((c) => {
               const expired = c.expires_at && new Date(c.expires_at) < new Date();
-              const exhausted = c.max_uses != null && c.used_count >= c.max_uses;
               return (
                 <tr key={c.id} className="border-t border-border">
                   <td className="p-3 font-mono font-semibold">{c.code}</td>
-                  <td className="p-3 capitalize">
-                    {c.discount_type === "percentage" ? "Percentual" :
-                     c.discount_type === "fixed" ? "Fixo" :
-                     c.discount_type === "free_shipping" ? "Frete grátis" : "1ª compra"}
-                  </td>
+                  <td className="p-3 max-w-[220px] truncate text-muted-foreground">{c.description || "—"}</td>
+                  <td className="p-3">{typeLabel(c.discount_type)}</td>
                   <td className="p-3">{formatValue(c)}</td>
                   <td className="p-3">R$ {Number(c.min_order ?? 0).toFixed(2)}</td>
                   <td className="p-3">{c.expires_at ? new Date(c.expires_at).toLocaleString("pt-BR") : "—"}</td>
-                  <td className="p-3">{remaining(c)} {c.max_uses != null && <span className="text-xs text-muted-foreground">({c.used_count}/{c.max_uses})</span>}</td>
                   <td className="p-3">
                     {!c.active ? <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">Inativo</span>
                      : expired ? <span className="text-xs px-2 py-1 rounded-full bg-destructive/10 text-destructive">Expirado</span>
-                     : exhausted ? <span className="text-xs px-2 py-1 rounded-full bg-destructive/10 text-destructive">Esgotado</span>
                      : <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">Ativo</span>}
                   </td>
                   <td className="p-3 text-right">

@@ -112,9 +112,6 @@ const Checkout = () => {
       .single();
     setLoading(false);
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
-    if (coupon?.code) {
-      await supabase.rpc("increment_coupon_usage", { _code: coupon.code });
-    }
     try { localStorage.removeItem("servbem.cart.v2"); } catch { /* ignore */ }
     toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
