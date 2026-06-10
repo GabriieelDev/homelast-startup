@@ -78,7 +78,13 @@ const Checkout = () => {
     setLoading(true);
     const itemCount = items.reduce((s, i) => s + i.quantity, 0);
     const { label: estimatedTime } = estimateDeliveryMinutes(itemCount, address);
-    const orderNumber = Math.floor(100000 + Math.random() * 900000);
+    const sanitizedAddress = {
+      street: address.street ?? null,
+      number: address.number ?? null,
+      neighborhood: address.neighborhood ?? null,
+      city: address.city ?? null,
+      zip: address.zip ?? address.zip_code ?? null,
+    };
     const itemsPayload = items.map((i) => ({
       id: i.product.id,
       name: i.product.name,
@@ -96,7 +102,6 @@ const Checkout = () => {
       .from("orders")
       .insert({
         user_id: user.id,
-        order_number: orderNumber,
         customer_name: customerName,
         items: itemsPayload,
         subtotal: totalPrice,
@@ -105,10 +110,10 @@ const Checkout = () => {
         coupon_code: coupon?.code ?? null,
         total,
         payment_method: selectedPayment,
-        address,
+        address: sanitizedAddress,
         estimated_time: estimatedTime,
       })
-      .select("id")
+      .select("id, order_number")
       .single();
     setLoading(false);
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
