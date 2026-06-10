@@ -282,7 +282,7 @@ const Auth = () => {
                 <Label htmlFor="signupPassword" className={labelBase}>Senha</Label>
                 <div className={fieldWrapper}>
                   <Lock className={iconLeft} />
-                  <Input id="signupPassword" type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputBase} pr-10`} />
+                  <Input id="signupPassword" type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres, com 1 número" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputBase} pr-10`} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className={iconRight}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
