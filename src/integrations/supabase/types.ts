@@ -296,7 +296,7 @@ export type Database = {
           estimated_time?: string | null
           id?: string
           items: Json
-          order_number: number
+          order_number?: number
           payment_method: string
           pickup_address?: Json | null
           shipping: number

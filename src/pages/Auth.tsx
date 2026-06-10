@@ -79,7 +79,7 @@ const Auth = () => {
     if (!email) newErrors.email = "Informe seu e-mail.";
     if (!phone) newErrors.phone = "Informe seu telefone.";
     if (!password) newErrors.password = "Informe uma senha.";
-    if (password.length > 0 && password.length < 6) newErrors.password = "A senha deve ter pelo menos 6 caracteres.";
+    if (password.length > 0 && (password.length < 8 || !/\d/.test(password))) newErrors.password = "A senha deve ter pelo menos 8 caracteres e conter ao menos 1 número.";
     if (password !== confirmPassword) newErrors.confirmPassword = "As senhas não coincidem.";
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
 
@@ -282,7 +282,7 @@ const Auth = () => {
                 <Label htmlFor="signupPassword" className={labelBase}>Senha</Label>
                 <div className={fieldWrapper}>
                   <Lock className={iconLeft} />
-                  <Input id="signupPassword" type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputBase} pr-10`} />
+                  <Input id="signupPassword" type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres, com 1 número" value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputBase} pr-10`} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className={iconRight}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
