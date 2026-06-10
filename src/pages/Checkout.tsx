@@ -238,9 +238,7 @@ const Checkout = () => {
                 </Button>
               </div>
               {couponError && <p className="text-xs text-destructive">{couponError}</p>}
-              <p className="text-xs text-muted-foreground">
-                Experimente: <span className="font-mono">BEMVINDO10</span>, <span className="font-mono">FRETEGRATIS</span>
-              </p>
+
             </>
           )}
         </div>
