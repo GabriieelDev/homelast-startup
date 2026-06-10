@@ -120,7 +120,7 @@ const Checkout = () => {
     try { localStorage.removeItem("servbem.cart.v2"); } catch { /* ignore */ }
     toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
-      state: { orderId: data.id, orderNumber, total, address, estimatedTime },
+      state: { orderId: data.id, orderNumber: data.order_number, total, address: sanitizedAddress, estimatedTime },
       replace: true,
     });
   };
