@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,9 +18,10 @@ import Checkout from "./pages/Checkout.tsx";
 import OrderConfirmation from "./pages/OrderConfirmation.tsx";
 import OrderTracking from "./pages/OrderTracking.tsx";
 import Orders from "./pages/Orders.tsx";
-import Admin from "./pages/Admin.tsx";
-import Courier from "./pages/Courier.tsx";
-import CourierLogin from "./pages/CourierLogin.tsx";
+// Heavy admin/courier bundles are loaded on demand to keep the initial bundle small.
+const Admin = lazy(() => import("./pages/Admin.tsx"));
+const Courier = lazy(() => import("./pages/Courier.tsx"));
+const CourierLogin = lazy(() => import("./pages/CourierLogin.tsx"));
 import Perfil from "./pages/Perfil.tsx";
 import Historico from "./pages/Historico.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
