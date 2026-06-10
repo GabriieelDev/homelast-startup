@@ -171,22 +171,32 @@ const ParticlesCanvas = () => {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    // Respect user's reduced-motion preference: skip animation entirely.
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
     let raf = 0;
+    let visible = true;
     let particles: Array<{ x: number; y: number; r: number; vx: number; vy: number; c: string; a: number }> = [];
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Cap DPR to 1.5 to avoid wasteful overdraw on high-density screens.
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const isMobile = window.innerWidth < 768;
 
     const resize = () => {
       const parent = canvas.parentElement;
       if (!parent) return;
       const w = parent.clientWidth;
       const h = parent.clientHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
       canvas.style.width = w + "px";
       canvas.style.height = h + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const area = w * h;
-      const count = Math.max(28, Math.min(90, Math.floor(area / 12000)));
+      // Far fewer particles on mobile (cap at 20) to keep INP/CPU low.
+      const count = isMobile
+        ? Math.max(10, Math.min(20, Math.floor(area / 22000)))
+        : Math.max(28, Math.min(70, Math.floor(area / 14000)));
       particles = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -221,9 +231,39 @@ const ParticlesCanvas = () => {
       ctx.globalAlpha = 1;
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+
+    const start = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    // Pause when the canvas is offscreen or the tab is hidden.
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          visible = e.isIntersecting;
+          if (visible && !document.hidden) start();
+          else stop();
+        }
+      },
+      { threshold: 0.01 }
+    );
+    io.observe(canvas);
+
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else if (visible) start();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", onResize);
     };
   }, []);
