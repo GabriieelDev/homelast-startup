@@ -596,6 +596,7 @@ export type Database = {
           sales_drop_pct: number
         }[]
       }
+      get_next_order_number: { Args: never; Returns: number }
       get_user_emails: {
         Args: { _user_ids: string[] }
         Returns: {
