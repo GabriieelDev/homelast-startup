@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
-import { CartItem } from "@/hooks/useCart";
+import { CartItem, useCart } from "@/hooks/useCart";
 import { getEffectivePrice } from "@/lib/promotions";
 import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
