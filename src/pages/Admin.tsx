@@ -413,6 +413,7 @@ const Admin = () => {
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
     { key: "financeiro", label: "Financeiro", icon: DollarSign },
     { key: "relatorios", label: "Relatórios", icon: FileText },
+    { key: "avaliacoes", label: "Avaliações", icon: Star },
     { key: "configuracoes", label: "Configurações", icon: Settings },
   ];
 
