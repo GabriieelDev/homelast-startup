@@ -1156,6 +1156,8 @@ const Admin = () => {
             </div>
           )}
 
+          {tab === "avaliacoes" && <ReviewsManager />}
+
           {tab === "configuracoes" && (
             settingsLoading ? (
               <div className="rounded-lg border border-border p-4 text-sm text-muted-foreground">
