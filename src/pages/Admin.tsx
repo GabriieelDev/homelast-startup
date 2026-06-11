@@ -12,7 +12,7 @@ import {
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
-  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput,
+  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import NfeImporter from "@/components/admin/NfeImporter";
 import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
 import CarouselManager from "@/components/admin/CarouselManager";
 import CouponManager from "@/components/admin/CouponManager";
+import ReviewsManager from "@/components/admin/ReviewsManager";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -45,7 +46,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelado: "#E74C3C",
 };
 
-type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "cupons" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "cupons" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "avaliacoes" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
@@ -412,6 +413,7 @@ const Admin = () => {
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
     { key: "financeiro", label: "Financeiro", icon: DollarSign },
     { key: "relatorios", label: "Relatórios", icon: FileText },
+    { key: "avaliacoes", label: "Avaliações", icon: Star },
     { key: "configuracoes", label: "Configurações", icon: Settings },
   ];
 
@@ -1153,6 +1155,8 @@ const Admin = () => {
               </div>
             </div>
           )}
+
+          {tab === "avaliacoes" && <ReviewsManager />}
 
           {tab === "configuracoes" && (
             settingsLoading ? (
