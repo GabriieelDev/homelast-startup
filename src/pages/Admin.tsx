@@ -25,6 +25,7 @@ import NfeImporter from "@/components/admin/NfeImporter";
 import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
 import CarouselManager from "@/components/admin/CarouselManager";
 import CouponManager from "@/components/admin/CouponManager";
+import ReviewsManager from "@/components/admin/ReviewsManager";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
