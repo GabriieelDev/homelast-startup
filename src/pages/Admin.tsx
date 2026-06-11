@@ -12,7 +12,7 @@ import {
   ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
-  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput,
+  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
