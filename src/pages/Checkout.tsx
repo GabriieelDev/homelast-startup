@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
-import { CartItem } from "@/hooks/useCart";
+import { CartItem, useCart } from "@/hooks/useCart";
 import { getEffectivePrice } from "@/lib/promotions";
 import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
@@ -24,6 +24,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const [address, setAddress] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const [loading, setLoading] = useState(false);
@@ -124,7 +125,7 @@ const Checkout = () => {
       .single();
     setLoading(false);
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
-    try { localStorage.removeItem("servbem.cart.v2"); } catch { /* ignore */ }
+    clearCart();
     toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
       state: { orderId: data.id, orderNumber: data.order_number, total, address: sanitizedAddress, estimatedTime },
