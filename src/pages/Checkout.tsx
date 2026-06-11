@@ -76,6 +76,12 @@ const Checkout = () => {
       return;
     }
     setLoading(true);
+    const { data: orderNumber, error: seqError } = await supabase.rpc('get_next_order_number');
+    if (seqError || orderNumber == null) {
+      setLoading(false);
+      toast.error("Erro ao gerar número do pedido");
+      return;
+    }
     const itemCount = items.reduce((s, i) => s + i.quantity, 0);
     const { label: estimatedTime } = estimateDeliveryMinutes(itemCount, address);
     const sanitizedAddress = {
@@ -112,6 +118,7 @@ const Checkout = () => {
         payment_method: selectedPayment,
         address: sanitizedAddress,
         estimated_time: estimatedTime,
+        order_number: orderNumber,
       })
       .select("id, order_number")
       .single();
