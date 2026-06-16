@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useTransition, startTransition } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,7 @@ const CouponManager = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [, startListTransition] = useTransition();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,13 +60,15 @@ const CouponManager = () => {
       .select("id,code,description,discount_type,discount_value,min_order,expires_at,active,created_at")
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar cupons");
-    setCoupons((data as any) ?? []);
-    setLoading(false);
+    startListTransition(() => {
+      setCoupons((data as any) ?? []);
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     const code = form.code.trim().toUpperCase();
     const value = Number(form.discount_value);
     if (!code) return toast.error("Código é obrigatório");
@@ -76,41 +79,48 @@ const CouponManager = () => {
       return toast.error("Percentual máximo: 100%");
     }
 
+    // Feedback visual imediato — não bloqueia a thread principal.
     setSaving(true);
-    const payload = {
-      code,
-      description: form.description.trim() || null,
-      discount_type: form.discount_type,
-      discount_value: form.discount_type === "free_shipping" ? 0 : value,
-      min_order: Number(form.min_order) || 0,
-      expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
-      active: true,
-    };
-    const { error } = await supabase.from("coupons").insert(payload as any);
-    setSaving(false);
-    if (error) {
-      toast.error(error.code === "23505" ? "Já existe um cupom com esse código" : "Erro ao criar cupom");
-      return;
-    }
-    toast.success("Cupom criado!");
-    setForm(emptyForm);
-    setOpen(false);
-    load();
-  };
 
-  const toggleActive = async (c: Coupon) => {
+    // Defer o trabalho assíncrono para fora do clique, liberando o paint.
+    queueMicrotask(async () => {
+      const payload = {
+        code,
+        description: form.description.trim() || null,
+        discount_type: form.discount_type,
+        discount_value: form.discount_type === "free_shipping" ? 0 : value,
+        min_order: Number(form.min_order) || 0,
+        expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
+        active: true,
+      };
+      const { error } = await supabase.from("coupons").insert(payload as any);
+      startTransition(() => {
+        setSaving(false);
+        if (error) {
+          toast.error(error.code === "23505" ? "Já existe um cupom com esse código" : "Erro ao criar cupom");
+          return;
+        }
+        toast.success("Cupom criado!");
+        setForm(emptyForm);
+        setOpen(false);
+      });
+      if (!error) load();
+    });
+  }, [form, load]);
+
+  const toggleActive = useCallback(async (c: Coupon) => {
     const { error } = await supabase.from("coupons").update({ active: !c.active }).eq("id", c.id);
     if (error) return toast.error("Erro ao atualizar");
     toast.success(c.active ? "Cupom desativado" : "Cupom ativado");
     load();
-  };
+  }, [load]);
 
-  const remove = async (id: string) => {
+  const remove = useCallback(async (id: string) => {
     const { error } = await supabase.from("coupons").delete().eq("id", id);
     if (error) return toast.error("Erro ao excluir");
     toast.success("Cupom excluído");
     load();
-  };
+  }, [load]);
 
   const formatValue = (c: Coupon) =>
     c.discount_type === "percentage" ? `${c.discount_value}%` :
