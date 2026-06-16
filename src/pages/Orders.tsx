@@ -57,8 +57,31 @@ const Orders = () => {
     load();
 
     const channel = supabase
-      .channel("orders-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, load)
+      .channel(`orders-list-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const row = payload.new as Order;
+          setOrders((prev) => (prev.some((o) => o.id === row.id) ? prev : [row, ...prev]));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const row = payload.new as Order;
+          setOrders((prev) => prev.map((o) => (o.id === row.id ? { ...o, ...row } : o)));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const oldRow = payload.old as { id: string };
+          setOrders((prev) => prev.filter((o) => o.id !== oldRow.id));
+        }
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
