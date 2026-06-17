@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Package, Plus, Minus, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,6 +33,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange, stock = 99, quantity
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-left">{product.name}</DialogTitle>
+          <DialogDescription className="sr-only">Detalhes do produto {product.name}, preço e opções para adicionar ao carrinho.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="aspect-square w-full rounded-xl flex items-center justify-center overflow-hidden bg-[#F5F5F5] dark:bg-muted">
