@@ -178,6 +178,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{product ? "Editar produto" : "Adicionar produto"}</DialogTitle>
+          <DialogDescription className="sr-only">Formulário para {product ? "editar" : "adicionar"} um produto do catálogo.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1"><Label>Nome</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
