@@ -144,6 +144,7 @@ const CouponManager = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Novo cupom</DialogTitle>
+              <DialogDescription className="sr-only">Formulário para criar um novo cupom de desconto.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
