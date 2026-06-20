@@ -84,7 +84,7 @@ const Orders = () => {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(channel); clearInterval(pollInterval); };
   }, [user]);
 
   return (
