@@ -34,6 +34,7 @@ export interface CarouselSlide2 {
   ctaText: string;
   productIds: string[];
   countdownEnd: string | null;
+  image: string;
 }
 export interface CarouselSlide3 {
   enabled: boolean;
@@ -42,6 +43,7 @@ export interface CarouselSlide3 {
   coupon: string;
   conditions: string;
   ctaText: string;
+  image: string;
 }
 export interface CarouselConfig {
   slide1: CarouselSlide1;
