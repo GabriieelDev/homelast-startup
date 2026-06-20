@@ -128,6 +128,7 @@ const Admin = () => {
       setStockMap(map);
     };
     load(); loadStock();
+    const pollInterval = setInterval(() => { load(); }, 5000);
 
     const channel = supabase
       .channel("admin-orders")
