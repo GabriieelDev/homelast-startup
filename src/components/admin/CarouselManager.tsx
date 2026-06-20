@@ -68,9 +68,11 @@ export default function CarouselManager() {
         </Field>
         <Field label="Subtítulo"><Textarea rows={2} value={draft.slide1.subtitle} onChange={(e) => update1({ subtitle: e.target.value })} /></Field>
         <Field label="Texto do botão"><Input value={draft.slide1.ctaText} onChange={(e) => update1({ ctaText: e.target.value })} /></Field>
-        <Field label="URL da imagem (opcional)">
-          <Input value={draft.slide1.image} onChange={(e) => update1({ image: e.target.value })} placeholder="https://..." />
-        </Field>
+        <ImageField
+          label="Imagem de fundo (opcional)"
+          value={draft.slide1.image}
+          onChange={(url) => update1({ image: url })}
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {([1, 2, 3] as const).map((n) => (
             <div key={n} className="space-y-2 p-3 rounded-md bg-muted/40">
