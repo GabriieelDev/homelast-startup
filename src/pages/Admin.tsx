@@ -189,10 +189,20 @@ const Admin = () => {
 
   const updateStock = async (productId: string, newStock: number) => {
     if (isNaN(newStock) || newStock < 0) { toast.error("Quantidade inválida"); return; }
+    const prevStock = stockMap[productId];
+    setStockMap((prev) => ({ ...prev, [productId]: newStock }));
     const { error } = await supabase
       .from("product_stock")
       .upsert({ product_id: productId, stock: newStock }, { onConflict: "product_id" });
-    if (error) { toast.error("Erro ao atualizar estoque"); return; }
+    if (error) {
+      setStockMap((prev) => {
+        const next = { ...prev };
+        if (prevStock === undefined) delete next[productId]; else next[productId] = prevStock;
+        return next;
+      });
+      toast.error("Erro ao atualizar estoque");
+      return;
+    }
     toast.success("Estoque atualizado");
   };
 
