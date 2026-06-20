@@ -147,7 +147,21 @@ const Admin = () => {
         if (!row?.id) return;
         setOrders((prev) => prev.filter((o) => o.id !== row.id));
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "product_stock" }, loadStock)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "product_stock" }, (payload) => {
+        const row: any = payload.new;
+        if (!row?.product_id) return;
+        setStockMap((prev) => ({ ...prev, [row.product_id]: row.stock ?? 0 }));
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "product_stock" }, (payload) => {
+        const row: any = payload.new;
+        if (!row?.product_id) return;
+        setStockMap((prev) => ({ ...prev, [row.product_id]: row.stock ?? 0 }));
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "product_stock" }, (payload) => {
+        const row: any = payload.old;
+        if (!row?.product_id) return;
+        setStockMap((prev) => { const next = { ...prev }; delete next[row.product_id]; return next; });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
