@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Power, PowerOff, Eye, EyeOff } from "lucide-react";
+import { Power, PowerOff, Eye, EyeOff, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStoreSettings, DEFAULT_CAROUSEL, type CarouselConfig } from "@/hooks/useStoreSettings";
 import { useProducts } from "@/hooks/useProducts";
 import HeroCarousel from "@/components/HeroCarousel";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CarouselManager() {
   const { settings, save } = useStoreSettings();
