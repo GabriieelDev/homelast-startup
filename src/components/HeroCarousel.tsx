@@ -289,6 +289,12 @@ const Slide1 = ({
       aria-roledescription="slide"
     >
       <style>{`@keyframes heroFadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      {cfg.image && (
+        <>
+          <img src={cfg.image} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+          <div aria-hidden className="absolute inset-0 bg-black/50" />
+        </>
+      )}
       <ParticlesCanvas />
       <div className="container mx-auto md:h-full flex flex-col items-center justify-center text-center gap-4 md:gap-5 relative">
         <span
@@ -373,6 +379,12 @@ const Slide2 = ({
       style={{ background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
       aria-roledescription="slide"
     >
+      {cfg.image && (
+        <>
+          <img src={cfg.image} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+          <div aria-hidden className="absolute inset-0 bg-white/40" />
+        </>
+      )}
       {/* Decorative confetti / shapes */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full opacity-30 blur-3xl" style={{ background: "#FF8A4C" }} />
@@ -453,6 +465,12 @@ const Slide3 = ({
       style={{ background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
       aria-roledescription="slide"
     >
+      {cfg.image && (
+        <>
+          <img src={cfg.image} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+          <div aria-hidden className="absolute inset-0 bg-black/40" />
+        </>
+      )}
       {/* Decorative circles */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full" style={{ background: "rgba(0,118,95,0.35)" }} />

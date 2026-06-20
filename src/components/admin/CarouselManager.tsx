@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Power, PowerOff, Eye, EyeOff } from "lucide-react";
+import { Power, PowerOff, Eye, EyeOff, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStoreSettings, DEFAULT_CAROUSEL, type CarouselConfig } from "@/hooks/useStoreSettings";
 import { useProducts } from "@/hooks/useProducts";
 import HeroCarousel from "@/components/HeroCarousel";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CarouselManager() {
   const { settings, save } = useStoreSettings();
@@ -67,9 +68,11 @@ export default function CarouselManager() {
         </Field>
         <Field label="Subtítulo"><Textarea rows={2} value={draft.slide1.subtitle} onChange={(e) => update1({ subtitle: e.target.value })} /></Field>
         <Field label="Texto do botão"><Input value={draft.slide1.ctaText} onChange={(e) => update1({ ctaText: e.target.value })} /></Field>
-        <Field label="URL da imagem (opcional)">
-          <Input value={draft.slide1.image} onChange={(e) => update1({ image: e.target.value })} placeholder="https://..." />
-        </Field>
+        <ImageField
+          label="Imagem de fundo (opcional)"
+          value={draft.slide1.image}
+          onChange={(url) => update1({ image: url })}
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {([1, 2, 3] as const).map((n) => (
             <div key={n} className="space-y-2 p-3 rounded-md bg-muted/40">
@@ -114,6 +117,11 @@ export default function CarouselManager() {
             onChange={(e) => update2({ countdownEnd: e.target.value ? new Date(e.target.value).toISOString() : null })}
           />
         </Field>
+        <ImageField
+          label="Imagem de fundo (opcional)"
+          value={draft.slide2.image}
+          onChange={(url) => update2({ image: url })}
+        />
         <div className="space-y-2">
           <Label>Produtos em destaque (até 6 — se vazio, usa promoções ativas)</Label>
           <div className="max-h-64 overflow-auto rounded-md border border-border divide-y">
@@ -158,6 +166,11 @@ export default function CarouselManager() {
         <Field label="Código do cupom"><Input value={draft.slide3.coupon} onChange={(e) => update3({ coupon: e.target.value.toUpperCase() })} /></Field>
         <Field label="Condições"><Textarea rows={2} value={draft.slide3.conditions} onChange={(e) => update3({ conditions: e.target.value })} /></Field>
         <Field label="Texto do botão"><Input value={draft.slide3.ctaText} onChange={(e) => update3({ ctaText: e.target.value })} /></Field>
+        <ImageField
+          label="Imagem de fundo (opcional)"
+          value={draft.slide3.image}
+          onChange={(url) => update3({ image: url })}
+        />
       </section>
 
       <div className="flex gap-2 sticky bottom-0 bg-background py-3">
@@ -175,6 +188,98 @@ export default function CarouselManager() {
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1"><Label>{label}</Label>{children}</div>
 );
+
+const ImageField = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx. 5MB)");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `carousel/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("banners").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("banners").getPublicUrl(path);
+      onChange(data.publicUrl);
+      toast.success("Imagem enviada ✅");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar imagem");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      {value && (
+        <div className="relative w-full h-32 rounded-md overflow-hidden border border-border bg-muted">
+          <img src={value} alt="Pré-visualização" className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute top-1 right-1 rounded-full bg-black/60 hover:bg-black/80 text-white p-1 transition-transform hover:scale-105 active:scale-95"
+            aria-label="Remover imagem"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {uploading ? "Enviando..." : "Enviar imagem"}
+        </Button>
+        <Input
+          type="url"
+          placeholder="ou cole uma URL externa: https://..."
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1"
+        />
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+        }}
+      />
+    </div>
+  );
+};
 
 function toLocalInput(iso: string) {
   const d = new Date(iso);

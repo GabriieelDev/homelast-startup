@@ -34,6 +34,7 @@ export interface CarouselSlide2 {
   ctaText: string;
   productIds: string[];
   countdownEnd: string | null;
+  image: string;
 }
 export interface CarouselSlide3 {
   enabled: boolean;
@@ -42,6 +43,7 @@ export interface CarouselSlide3 {
   coupon: string;
   conditions: string;
   ctaText: string;
+  image: string;
 }
 export interface CarouselConfig {
   slide1: CarouselSlide1;
@@ -74,6 +76,7 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
     ctaText: "Ver todas as ofertas",
     productIds: [],
     countdownEnd: null,
+    image: "",
   },
   slide3: {
     enabled: true,
@@ -82,6 +85,7 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
     coupon: "BEMVINDO10",
     conditions: "Válido para novos clientes. Pedido mínimo R$ 50.",
     ctaText: "Aproveitar agora",
+    image: "",
   },
 };
 
