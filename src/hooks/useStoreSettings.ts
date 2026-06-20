@@ -76,6 +76,7 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
     ctaText: "Ver todas as ofertas",
     productIds: [],
     countdownEnd: null,
+    image: "",
   },
   slide3: {
     enabled: true,
@@ -84,6 +85,7 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
     coupon: "BEMVINDO10",
     conditions: "Válido para novos clientes. Pedido mínimo R$ 50.",
     ctaText: "Aproveitar agora",
+    image: "",
   },
 };
 
