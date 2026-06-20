@@ -164,7 +164,7 @@ const Admin = () => {
         setStockMap((prev) => { const next = { ...prev }; delete next[row.product_id]; return next; });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(channel); clearInterval(pollInterval); };
   }, [isAdmin]);
 
   const customerLabel = useCallback((userId: string, customerName?: string | null) => {
