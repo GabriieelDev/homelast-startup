@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   LayoutDashboard, Package, ShoppingBag, Boxes, Settings, ArrowLeft,
-  ShieldAlert, ChefHat, Truck, CheckCircle, MapPin, AlertTriangle, TrendingUp,
+  ShieldAlert, ChefHat, Truck, CheckCircle, Check, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
   Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput, Star,
@@ -920,16 +920,50 @@ const Admin = () => {
                           )}
                           <p><span className="font-semibold text-foreground">Pagamento:</span> {o.payment_method}</p>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {STATUS_FLOW.map((s, i) => {
-                            const Icon = STATUS_ICONS[s];
-                            const done = i <= idx;
-                            return (
-                              <div key={s} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md ${done ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                                <Icon className="h-3 w-3" /> {STATUS_LABELS[s]}
-                              </div>
-                            );
-                          })}
+                        <div className="relative pt-2 pb-5">
+                          {/* Connecting line background */}
+                          <div className="absolute top-[1.125rem] left-0 right-0 h-0.5 bg-muted rounded-full" />
+                          {/* Active progress line */}
+                          <div
+                            className="absolute top-[1.125rem] left-0 h-0.5 bg-accent rounded-full transition-all duration-500"
+                            style={{ width: `${(Math.max(0, idx) / (STATUS_FLOW.length - 1)) * 100}%` }}
+                          />
+                          <div className="relative flex justify-between items-start">
+                            {STATUS_FLOW.map((s, i) => {
+                              const Icon = STATUS_ICONS[s];
+                              const done = i < idx;
+                              const current = i === idx;
+                              const future = i > idx;
+                              return (
+                                <div key={s} className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+                                  <div
+                                    className={[
+                                      "relative z-10 flex items-center justify-center w-9 h-9 rounded-full border-2 transition-all duration-300",
+                                      done ? "bg-accent border-accent text-accent-foreground" : "",
+                                      current ? "bg-primary border-primary text-primary-foreground animate-pulse" : "",
+                                      future ? "bg-muted border-muted text-muted-foreground" : "",
+                                    ].filter(Boolean).join(" ")}
+                                  >
+                                    {done ? (
+                                      <Check className="h-4 w-4 animate-pop-in" />
+                                    ) : (
+                                      <Icon className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                  <span
+                                    className={[
+                                      "text-[10px] text-center leading-tight px-1",
+                                      done ? "text-accent font-medium" : "",
+                                      current ? "text-primary font-semibold" : "",
+                                      future ? "text-muted-foreground" : "",
+                                    ].filter(Boolean).join(" ")}
+                                  >
+                                    {STATUS_LABELS[s]}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                         {next ? (
                           <Button size="sm" onClick={() => advanceStatus(o)} className="btn-press">
