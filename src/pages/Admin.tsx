@@ -940,7 +940,7 @@ const Admin = () => {
                                     className={[
                                       "relative z-10 flex items-center justify-center w-9 h-9 rounded-full border-2 transition-all duration-300",
                                       done ? "bg-accent border-accent text-accent-foreground" : "",
-                                      current ? "bg-primary border-primary text-primary-foreground animate-pulse" : "",
+                                      current ? "bg-primary border-primary text-primary-foreground" : "",
                                       future ? "bg-muted border-muted text-muted-foreground" : "",
                                     ].filter(Boolean).join(" ")}
                                   >
