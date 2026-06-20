@@ -51,18 +51,13 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
           -{legacyDiscount}%
         </div>
       ) : null}
-      {onSale && savings > 0 && (
-        <div className="absolute top-2 right-2 z-10 bg-accent text-accent-foreground text-[11px] font-bold px-2 py-0.5 rounded-full shadow-md">
-          Economize R$ {savings.toFixed(2)}
-        </div>
-      )}
       {unavailable && (
         <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
           Indisponível
         </div>
       )}
       {lowStock && (
-        <div className={`absolute z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${onSale && savings > 0 ? "top-10 right-2" : "top-2 right-2"}`}>
+        <div className="absolute top-2 right-2 z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
           <AlertTriangle className="h-3 w-3" /> Últimas {stock}
         </div>
       )}
@@ -108,6 +103,9 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-snug min-h-[2.5rem]">
           {product.name}
         </h3>
+        <p className="min-h-[1.25rem] text-[11px] font-semibold text-accent">
+          {onSale && savings > 0 ? `Economize R$ ${savings.toFixed(2)}` : ""}
+        </p>
         <div className="flex items-end gap-1.5 min-h-[1.75rem]">
           {onSale ? (
             <>
