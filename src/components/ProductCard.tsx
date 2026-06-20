@@ -51,13 +51,18 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
           -{legacyDiscount}%
         </div>
       ) : null}
+      {onSale && savings > 0 && (
+        <div className="absolute top-2 right-2 z-10 bg-accent text-accent-foreground text-[11px] font-bold px-2 py-0.5 rounded-full shadow-md">
+          Economize R$ {savings.toFixed(2)}
+        </div>
+      )}
       {unavailable && (
         <div className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
           Indisponível
         </div>
       )}
       {lowStock && (
-        <div className="absolute top-2 right-2 z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+        <div className={`absolute z-10 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${onSale && savings > 0 ? "top-10 right-2" : "top-2 right-2"}`}>
           <AlertTriangle className="h-3 w-3" /> Últimas {stock}
         </div>
       )}
@@ -118,13 +123,8 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
             </>
           )}
         </div>
-        {onSale && (
-          <div className="space-y-0.5">
-            {savings > 0 && (
-              <p className="text-[11px] text-accent font-semibold">Economize R$ {savings.toFixed(2)}</p>
-            )}
-            {product.saleEnd && <SaleCountdown end={product.saleEnd} />}
-          </div>
+        {onSale && product.saleEnd && (
+          <SaleCountdown end={product.saleEnd} />
         )}
         <div className="pt-1">
           {unavailable ? (
