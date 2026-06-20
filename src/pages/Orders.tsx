@@ -55,6 +55,7 @@ const Orders = () => {
       setLoading(false);
     };
     load();
+    const pollInterval = setInterval(load, 5000);
 
     const channel = supabase
       .channel(`orders-list-${user.id}`)
