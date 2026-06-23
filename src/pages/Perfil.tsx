@@ -22,6 +22,40 @@ const Perfil = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
+  const { url: avatarSrc } = useUserAvatar();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    if (!["image/jpeg", "image/png"].includes(file.type)) return toast.error("Use uma imagem JPG ou PNG");
+    if (file.size > 2 * 1024 * 1024) return toast.error("Imagem máxima de 2MB");
+    setUploadingAvatar(true);
+    try {
+      const blob = await resizeImageToSquare(file, 200);
+      const path = `${user.id}/avatar.jpg`;
+      const { error: upErr } = await supabase.storage.from("avatares").upload(path, blob, {
+        cacheControl: "3600", upsert: true, contentType: "image/jpeg",
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatares").getPublicUrl(path);
+      const publicUrl = `${pub.publicUrl}?v=${Date.now()}`;
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("user_id", user.id);
+      if (updErr) throw updErr;
+      window.dispatchEvent(new CustomEvent("avatar-updated"));
+      toast.success("Foto atualizada ✅");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar foto");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
