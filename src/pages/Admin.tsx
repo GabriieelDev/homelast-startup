@@ -116,13 +116,26 @@ const Admin = () => {
     };
 
     const load = async () => {
-      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(5000);
+      if (error) {
+        console.error("[Admin] Falha ao carregar pedidos:", error);
+        toast.error(`Erro ao carregar pedidos: ${error.message}`);
+        return;
+      }
       const list = data ?? [];
       setOrders(list);
       loadProfilesFor(list.map((o: any) => o.user_id));
     };
     const loadStock = async () => {
-      const { data } = await supabase.from("product_stock").select("product_id, stock");
+      const { data, error } = await supabase.from("product_stock").select("product_id, stock");
+      if (error) {
+        console.error("[Admin] Falha ao carregar estoque:", error);
+        return;
+      }
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: any) => { map[r.product_id] = r.stock; });
       setStockMap(map);
