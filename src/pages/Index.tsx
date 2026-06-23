@@ -136,8 +136,14 @@ const Index = () => {
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" aria-label="Menu do usuário">
-                  <Menu className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground pl-1.5" aria-label="Menu do usuário">
+                  <span className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center border border-border">
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <UserIcon className="h-4 w-4 text-primary" />
+                    )}
+                  </span>
                   <span className="hidden sm:inline">Menu</span>
                 </Button>
               </DropdownMenuTrigger>
