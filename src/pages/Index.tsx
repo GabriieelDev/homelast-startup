@@ -37,6 +37,7 @@ const Index = () => {
   const { getStock } = useStock();
   const { isDisabled, disableProduct } = useDisabledProducts();
   const { products } = useProducts();
+  const { url: avatarSrc } = useUserAvatar();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [, startTransition] = useTransition();
