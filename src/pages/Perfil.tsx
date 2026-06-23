@@ -1,15 +1,17 @@
 import { LogoIcon } from "@/components/Logo";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon } from "lucide-react";
+import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon, Camera } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
+import { useUserAvatar } from "@/hooks/useUserAvatar";
+import { resizeImageToSquare } from "@/lib/avatar";
 
 const Perfil = () => {
   const navigate = useNavigate();
