@@ -27,6 +27,7 @@ import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import ProductDetailDialog from "@/components/ProductDetailDialog";
 import HorizontalProductRow from "@/components/HorizontalProductRow";
 import { isSaleActive } from "@/lib/promotions";
+import { useUserAvatar } from "@/hooks/useUserAvatar";
 import type { Product } from "@/data/products";
 
 const Index = () => {
@@ -36,6 +37,7 @@ const Index = () => {
   const { getStock } = useStock();
   const { isDisabled, disableProduct } = useDisabledProducts();
   const { products } = useProducts();
+  const { url: avatarSrc } = useUserAvatar();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [, startTransition] = useTransition();
@@ -134,8 +136,14 @@ const Index = () => {
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground" aria-label="Menu do usuário">
-                  <Menu className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="gap-1.5 text-foreground pl-1.5" aria-label="Menu do usuário">
+                  <span className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center border border-border">
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <UserIcon className="h-4 w-4 text-primary" />
+                    )}
+                  </span>
                   <span className="hidden sm:inline">Menu</span>
                 </Button>
               </DropdownMenuTrigger>

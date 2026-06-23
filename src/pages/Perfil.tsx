@@ -1,15 +1,17 @@
 import { LogoIcon } from "@/components/Logo";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon } from "lucide-react";
+import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon, Camera } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
+import { useUserAvatar } from "@/hooks/useUserAvatar";
+import { resizeImageToSquare } from "@/lib/avatar";
 
 const Perfil = () => {
   const navigate = useNavigate();
@@ -20,6 +22,40 @@ const Perfil = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPwd, setSavingPwd] = useState(false);
+  const { url: avatarSrc } = useUserAvatar();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    if (!["image/jpeg", "image/png"].includes(file.type)) return toast.error("Use uma imagem JPG ou PNG");
+    if (file.size > 2 * 1024 * 1024) return toast.error("Imagem máxima de 2MB");
+    setUploadingAvatar(true);
+    try {
+      const blob = await resizeImageToSquare(file, 200);
+      const path = `${user.id}/avatar.jpg`;
+      const { error: upErr } = await supabase.storage.from("avatares").upload(path, blob, {
+        cacheControl: "3600", upsert: true, contentType: "image/jpeg",
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatares").getPublicUrl(path);
+      const publicUrl = `${pub.publicUrl}?v=${Date.now()}`;
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("user_id", user.id);
+      if (updErr) throw updErr;
+      window.dispatchEvent(new CustomEvent("avatar-updated"));
+      toast.success("Foto atualizada ✅");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar foto");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -72,13 +108,36 @@ const Perfil = () => {
 
       <div className="container mx-auto max-w-lg px-4 py-6 space-y-4">
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-6 w-6 text-primary" />
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-border">
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="Foto de perfil" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-10 w-10 text-primary" />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                aria-label="Trocar foto de perfil"
+                className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform disabled:opacity-60"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-foreground truncate">{fullName || "Usuário"}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              {uploadingAvatar && <p className="text-xs text-muted-foreground mt-1">Enviando foto...</p>}
             </div>
           </div>
         </div>
