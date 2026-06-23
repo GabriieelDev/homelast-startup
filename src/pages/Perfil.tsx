@@ -108,13 +108,36 @@ const Perfil = () => {
 
       <div className="container mx-auto max-w-lg px-4 py-6 space-y-4">
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-6 w-6 text-primary" />
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-border">
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="Foto de perfil" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-10 w-10 text-primary" />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                aria-label="Trocar foto de perfil"
+                className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-transform disabled:opacity-60"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-foreground truncate">{fullName || "Usuário"}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              {uploadingAvatar && <p className="text-xs text-muted-foreground mt-1">Enviando foto...</p>}
             </div>
           </div>
         </div>
