@@ -106,17 +106,17 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         <p className="min-h-[1.25rem] text-[11px] font-semibold text-accent">
           {onSale && savings > 0 ? `Economize R$ ${savings.toFixed(2)}` : ""}
         </p>
-        <div className="flex items-end gap-1.5 min-h-[1.75rem]">
+        <div className="flex items-end gap-1.5 min-h-[1.75rem] flex-wrap">
           {onSale ? (
             <>
-              <span className="text-lg font-bold text-accent">R$ {effectivePrice.toFixed(2)}</span>
-              <span className="text-xs text-muted-foreground line-through">R$ {product.price.toFixed(2)}</span>
+              <span className="text-lg font-bold text-accent whitespace-nowrap">R$ {effectivePrice.toFixed(2)}</span>
+              <span className="text-xs text-muted-foreground line-through whitespace-nowrap">R$ {product.price.toFixed(2)}</span>
             </>
           ) : (
             <>
-              <span className="text-lg font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+              <span className="text-lg font-bold text-primary whitespace-nowrap">R$ {product.price.toFixed(2)}</span>
               {product.originalPrice && (
-                <span className="text-xs text-muted-foreground line-through">R$ {product.originalPrice.toFixed(2)}</span>
+                <span className="text-xs text-muted-foreground line-through whitespace-nowrap">R$ {product.originalPrice.toFixed(2)}</span>
               )}
             </>
           )}
