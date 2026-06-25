@@ -18,7 +18,6 @@ interface HeroCarouselProps {
 
 const AUTO_DELAY_MS = 3500; // time spent on slide 1 before iris triggers
 const IRIS_EXPAND_MS = 1500;
-const IRIS_FADE_MS = 450;
 
 const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const { settings } = useStoreSettings();
@@ -40,15 +39,13 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const touchStartX = useRef<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  // Iris transition state
-  const [irisPhase, setIrisPhase] = useState<"idle" | "expand" | "fade">("idle");
-  const [irisScale, setIrisScale] = useState(0);
-  const [irisDiameter, setIrisDiameter] = useState(0);
+  // Iris (clip-path reveal) transition state
+  const [irisActive, setIrisActive] = useState(false);
+  const [irisProgress, setIrisProgress] = useState(0); // 0 → 1
   const [snapNext, setSnapNext] = useState(false);
   const autoTimerRef = useRef<number | null>(null);
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
-  const irisStep4Ref = useRef<number | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
@@ -57,7 +54,6 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
     if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
     if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
-    if (irisStep4Ref.current) { window.clearTimeout(irisStep4Ref.current); irisStep4Ref.current = null; }
   }, []);
 
   // Clamp index when slide count changes
@@ -69,27 +65,12 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const next = useCallback(() => setIndex((i) => (i + 1) % SLIDE_COUNT), [SLIDE_COUNT]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
 
-  // Measure carousel diagonal for iris size
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const measure = () => {
-      const r = el.getBoundingClientRect();
-      setIrisDiameter(Math.ceil(Math.sqrt(r.width * r.width + r.height * r.height) * 1.15));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener("resize", measure);
-    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
-  }, []);
-
   // Schedule the auto iris transition each cycle (mount + re-enter viewport)
   useEffect(() => {
     clearAutoTimers();
     setIndex(0);
-    setIrisPhase("idle");
-    setIrisScale(0);
+    setIrisActive(false);
+    setIrisProgress(0);
     setSnapNext(false);
     hasAutoFiredRef.current = false;
     cancelAutoRef.current = false;
@@ -99,26 +80,21 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     autoTimerRef.current = window.setTimeout(() => {
       if (cancelAutoRef.current) return;
       hasAutoFiredRef.current = true;
-      // Phase 1: expand circle from 0 → 1 (Slide 2 already mounted behind iris)
-      setIrisPhase("expand");
-      setIrisScale(0);
-      requestAnimationFrame(() => requestAnimationFrame(() => setIrisScale(1)));
+      // Mount Slide 2 overlay clipped to a 0% circle, then expand to 150%.
+      setIrisActive(true);
+      setIrisProgress(0);
+      requestAnimationFrame(() => requestAnimationFrame(() => setIrisProgress(1)));
 
-      // Phase 2: when fully covered, fade the iris out — Slide 2 is revealed beneath
+      // After the reveal completes, snap underlying slider to index 1 and remove overlay.
       irisStep2Ref.current = window.setTimeout(() => {
-        setIrisPhase("fade");
-        // Phase 3: after fade completes, snap the underlying slider to index 1
-        // (transition disabled for one frame so the underlying slide doesn't slide).
+        setSnapNext(true);
+        setIndex(1);
         irisStep3Ref.current = window.setTimeout(() => {
-          setSnapNext(true);
-          setIndex(1);
-          irisStep4Ref.current = window.setTimeout(() => {
-            setIrisPhase("idle");
-            setIrisScale(0);
-            setSnapNext(false);
-          }, 50);
-        }, IRIS_FADE_MS + 30);
-      }, IRIS_EXPAND_MS);
+          setIrisActive(false);
+          setIrisProgress(0);
+          setSnapNext(false);
+        }, 50);
+      }, IRIS_EXPAND_MS + 30);
     }, AUTO_DELAY_MS);
 
     return clearAutoTimers;
@@ -218,10 +194,19 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           })}
         </div>
 
-        {/* Pre-positioned Slide 2 behind the iris during the auto transition.
-            This guarantees the carousel never goes blank when the iris fades out. */}
-        {irisPhase !== "idle" && cfg.slide2.enabled && (
-          <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden" aria-hidden>
+        {/* Slide 2 revealed via expanding circular clip-path over Slide 1.
+            No colored overlay — only the next slide's content is revealed. */}
+        {irisActive && cfg.slide2.enabled && (
+          <div
+            className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+            aria-hidden
+            style={{
+              clipPath: `circle(${irisProgress === 1 ? 150 : 0}% at 50% 50%)`,
+              WebkitClipPath: `circle(${irisProgress === 1 ? 150 : 0}% at 50% 50%)`,
+              transition: `clip-path ${IRIS_EXPAND_MS}ms ease-in-out, -webkit-clip-path ${IRIS_EXPAND_MS}ms ease-in-out`,
+              willChange: "clip-path",
+            }}
+          >
             <Slide2
               cfg={cfg.slide2}
               featured={featured}
@@ -232,26 +217,6 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           </div>
         )}
 
-        {/* Iris transition overlay */}
-        {irisPhase !== "idle" && irisDiameter > 0 && (
-          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden" aria-hidden>
-            <div
-              style={{
-                width: irisDiameter,
-                height: irisDiameter,
-                borderRadius: "50%",
-                backgroundColor: "#1D2D50",
-                transform: `scale(${irisScale})`,
-                opacity: irisPhase === "fade" ? 0 : 1,
-                transition:
-                  irisPhase === "expand"
-                    ? `transform ${IRIS_EXPAND_MS}ms cubic-bezier(0.65,0,0.35,1)`
-                    : `opacity ${IRIS_FADE_MS}ms ease-out`,
-                willChange: "transform, opacity",
-              }}
-            />
-          </div>
-        )}
 
         {SLIDE_COUNT > 1 && (
           <>
