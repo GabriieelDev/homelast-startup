@@ -194,10 +194,19 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           })}
         </div>
 
-        {/* Pre-positioned Slide 2 behind the iris during the auto transition.
-            This guarantees the carousel never goes blank when the iris fades out. */}
-        {irisPhase !== "idle" && cfg.slide2.enabled && (
-          <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden" aria-hidden>
+        {/* Slide 2 revealed via expanding circular clip-path over Slide 1.
+            No colored overlay — only the next slide's content is revealed. */}
+        {irisActive && cfg.slide2.enabled && (
+          <div
+            className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+            aria-hidden
+            style={{
+              clipPath: `circle(${irisProgress === 1 ? 150 : 0}% at 50% 50%)`,
+              WebkitClipPath: `circle(${irisProgress === 1 ? 150 : 0}% at 50% 50%)`,
+              transition: `clip-path ${IRIS_EXPAND_MS}ms ease-in-out, -webkit-clip-path ${IRIS_EXPAND_MS}ms ease-in-out`,
+              willChange: "clip-path",
+            }}
+          >
             <Slide2
               cfg={cfg.slide2}
               featured={featured}
@@ -208,26 +217,6 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           </div>
         )}
 
-        {/* Iris transition overlay */}
-        {irisPhase !== "idle" && irisDiameter > 0 && (
-          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden" aria-hidden>
-            <div
-              style={{
-                width: irisDiameter,
-                height: irisDiameter,
-                borderRadius: "50%",
-                backgroundColor: "#1D2D50",
-                transform: `scale(${irisScale})`,
-                opacity: irisPhase === "fade" ? 0 : 1,
-                transition:
-                  irisPhase === "expand"
-                    ? `transform ${IRIS_EXPAND_MS}ms cubic-bezier(0.65,0,0.35,1)`
-                    : `opacity ${IRIS_FADE_MS}ms ease-out`,
-                willChange: "transform, opacity",
-              }}
-            />
-          </div>
-        )}
 
         {SLIDE_COUNT > 1 && (
           <>
