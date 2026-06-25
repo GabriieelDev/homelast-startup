@@ -39,15 +39,13 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const touchStartX = useRef<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  // Iris transition state
-  const [irisPhase, setIrisPhase] = useState<"idle" | "expand" | "fade">("idle");
-  const [irisScale, setIrisScale] = useState(0);
-  const [irisDiameter, setIrisDiameter] = useState(0);
+  // Iris (clip-path reveal) transition state
+  const [irisActive, setIrisActive] = useState(false);
+  const [irisProgress, setIrisProgress] = useState(0); // 0 → 1
   const [snapNext, setSnapNext] = useState(false);
   const autoTimerRef = useRef<number | null>(null);
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
-  const irisStep4Ref = useRef<number | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
@@ -56,7 +54,6 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
     if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
     if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
-    if (irisStep4Ref.current) { window.clearTimeout(irisStep4Ref.current); irisStep4Ref.current = null; }
   }, []);
 
   // Clamp index when slide count changes
