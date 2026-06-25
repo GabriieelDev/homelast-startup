@@ -18,7 +18,6 @@ interface HeroCarouselProps {
 
 const AUTO_DELAY_MS = 3500; // time spent on slide 1 before iris triggers
 const IRIS_EXPAND_MS = 1500;
-const IRIS_FADE_MS = 450;
 
 const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const { settings } = useStoreSettings();
