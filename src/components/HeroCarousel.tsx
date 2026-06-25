@@ -44,9 +44,11 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const [irisPhase, setIrisPhase] = useState<"idle" | "expand" | "fade">("idle");
   const [irisScale, setIrisScale] = useState(0);
   const [irisDiameter, setIrisDiameter] = useState(0);
+  const [snapNext, setSnapNext] = useState(false);
   const autoTimerRef = useRef<number | null>(null);
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
+  const irisStep4Ref = useRef<number | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
