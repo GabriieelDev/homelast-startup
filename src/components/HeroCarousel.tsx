@@ -17,7 +17,8 @@ interface HeroCarouselProps {
 }
 
 const AUTO_DELAY_MS = 3500; // time spent on slide 1 before iris triggers
-const IRIS_EXPAND_MS = 1500;
+const IRIS_EXPAND_MS = 1800;
+const IRIS_EASING = "cubic-bezier(0.76, 0, 0.24, 1)";
 
 const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const { settings } = useStoreSettings();
@@ -194,16 +195,20 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           })}
         </div>
 
-        {/* Slide 2 revealed via expanding circular clip-path over Slide 1.
-            No colored overlay — only the next slide's content is revealed. */}
+        {/* Slide 2 revealed via a left-to-right curtain clip-path over Slide 1.
+            The right edge keeps a 40px rounded curvature during the motion. */}
         {irisActive && cfg.slide2.enabled && (
           <div
             className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
             aria-hidden
             style={{
-              clipPath: `circle(${irisProgress === 1 ? 150 : 0}% at 50% 50%)`,
-              WebkitClipPath: `circle(${irisProgress === 1 ? 150 : 0}% at 50% 50%)`,
-              transition: `clip-path ${IRIS_EXPAND_MS}ms ease-in-out, -webkit-clip-path ${IRIS_EXPAND_MS}ms ease-in-out`,
+              clipPath: irisProgress === 1
+                ? "inset(0 0% 0 0 round 0px)"
+                : "inset(0 100% 0 0 round 40px)",
+              WebkitClipPath: irisProgress === 1
+                ? "inset(0 0% 0 0 round 0px)"
+                : "inset(0 100% 0 0 round 40px)",
+              transition: `clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}, -webkit-clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}`,
               willChange: "clip-path",
             }}
           >
