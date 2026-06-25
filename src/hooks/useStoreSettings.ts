@@ -49,6 +49,7 @@ export interface CarouselConfig {
   slide1: CarouselSlide1;
   slide2: CarouselSlide2;
   slide3: CarouselSlide3;
+  auto_transition: boolean;
 }
 
 export const DEFAULT_CAROUSEL: CarouselConfig = {
@@ -87,6 +88,7 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
     ctaText: "Aproveitar agora",
     image: "",
   },
+  auto_transition: true,
 };
 
 export interface StoreSettings {
@@ -199,6 +201,7 @@ function parseCarousel(raw: unknown): CarouselConfig {
       productIds: Array.isArray(slide2.productIds) ? slide2.productIds : [],
     },
     slide3: { ...DEFAULT_CAROUSEL.slide3, ...slide3 },
+    auto_transition: typeof r.auto_transition === "boolean" ? r.auto_transition : true,
   };
 }
 
