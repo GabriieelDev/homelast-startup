@@ -187,9 +187,8 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
 
   return (
     <section
+      ref={sectionRef}
       className="relative overflow-hidden"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       aria-roledescription="carousel"
@@ -200,34 +199,55 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           style={{ transform: `translateX(-${index * 100}%)`, transitionDuration: "850ms" }}
         >
           {slides.map((key) => {
-            if (key === "s1") return <Slide1 key="s1" cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
+            if (key === "s1") return <Slide1 key={`s1-${cycleKey}`} cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
             if (key === "s2") return <Slide2 key="s2" cfg={cfg.slide2} featured={featured} onStart={onStart} renderHighlighted={renderHighlighted} onProductClick={onProductClick} />;
             return <Slide3 key="s3" cfg={cfg.slide3} copied={copied} onCopy={copyCoupon} onStart={onStart} />;
           })}
         </div>
 
+        {/* Iris transition overlay */}
+        {irisPhase !== "idle" && irisDiameter > 0 && (
+          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden" aria-hidden>
+            <div
+              style={{
+                width: irisDiameter,
+                height: irisDiameter,
+                borderRadius: "50%",
+                backgroundColor: "#1D2D50",
+                transform: `scale(${irisScale})`,
+                opacity: irisPhase === "fade" ? 0 : 1,
+                transition:
+                  irisPhase === "expand"
+                    ? `transform ${IRIS_EXPAND_MS}ms cubic-bezier(0.65,0,0.35,1)`
+                    : `opacity ${IRIS_FADE_MS}ms ease-out`,
+                willChange: "transform, opacity",
+              }}
+            />
+          </div>
+        )}
+
         {SLIDE_COUNT > 1 && (
           <>
             <button
-              onClick={() => { handleInteraction(); prev(); }}
+              onClick={() => { cancelIfPending(); prev(); }}
               aria-label="Slide anterior"
-              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-10"
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-30"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" />
             </button>
             <button
-              onClick={() => { handleInteraction(); next(); }}
+              onClick={() => { cancelIfPending(); next(); }}
               aria-label="Próximo slide"
-              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-10"
+              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-30"
             >
               <ChevronRight className="h-5 w-5 text-foreground" />
             </button>
 
-            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-10">
+            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-30">
               {slides.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => { handleInteraction(); goTo(i); }}
+                  onClick={() => { cancelIfPending(); goTo(i); }}
                   aria-label={`Ir para slide ${i + 1}`}
                   aria-current={index === i}
                   className={`h-2.5 rounded-full transition-all duration-500 ring-1 ring-white/30 ${
