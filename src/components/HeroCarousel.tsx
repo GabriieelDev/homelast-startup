@@ -227,30 +227,30 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
         </div>
 
         {/* Slide 2 revealed via an expanding inset clip-path over Slide 1. */}
-        {irisActive && cfg.slide2.enabled && (
-          <div
-            className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
-            aria-hidden
-            style={{
-              clipPath: irisProgress === 1
-                ? "inset(0% 0% 0% 0% round 0px)"
-                : "inset(50% 50% 50% 50% round 999px)",
-              WebkitClipPath: irisProgress === 1
-                ? "inset(0% 0% 0% 0% round 0px)"
-                : "inset(50% 50% 50% 50% round 999px)",
-              transition: `clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}, -webkit-clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}`,
-              willChange: "clip-path",
-            }}
-          >
-            <Slide2
-              cfg={cfg.slide2}
-              featured={featured}
-              onStart={onStart}
-              renderHighlighted={renderHighlighted}
-              onProductClick={onProductClick}
-            />
-          </div>
-        )}
+        {irisActive && cfg.slide2.enabled && (() => {
+          const inset = (50 * (1 - irisProgress)).toFixed(3);
+          const round = (999 * (1 - irisProgress)).toFixed(3);
+          const clip = `inset(${inset}% ${inset}% ${inset}% ${inset}% round ${round}px)`;
+          return (
+            <div
+              className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+              aria-hidden
+              style={{
+                clipPath: clip,
+                WebkitClipPath: clip,
+                willChange: "clip-path",
+              }}
+            >
+              <Slide2
+                cfg={cfg.slide2}
+                featured={featured}
+                onStart={onStart}
+                renderHighlighted={renderHighlighted}
+                onProductClick={onProductClick}
+              />
+            </div>
+          );
+        })()}
 
 
         {SLIDE_COUNT > 1 && (
