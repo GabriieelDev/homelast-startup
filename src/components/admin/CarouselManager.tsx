@@ -55,6 +55,26 @@ export default function CarouselManager() {
         </div>
       )}
 
+      {/* GLOBAL CAROUSEL OPTIONS */}
+      <section className="p-4 rounded-lg border border-border flex items-start justify-between gap-4">
+        <div>
+          <p className="font-semibold text-foreground">Transição automática entre slides</p>
+          <p className="text-xs text-muted-foreground">
+            Quando ativado, o Slide 1 transiciona automaticamente para o Slide 2 com efeito de íris circular após alguns segundos.
+          </p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={draft.auto_transition !== false}
+            onChange={(e) => setDraft({ ...draft, auto_transition: e.target.checked })}
+          />
+          <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:bg-accent transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:after:translate-x-5" />
+        </label>
+      </section>
+
+
       {/* SLIDE 1 */}
       <section className="space-y-3 p-4 rounded-lg border border-border">
         <div className="flex items-center justify-between">
