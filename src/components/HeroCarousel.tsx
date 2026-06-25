@@ -195,18 +195,18 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           })}
         </div>
 
-        {/* Slide 2 revealed via an expanding ellipse clip-path over Slide 1. */}
+        {/* Slide 2 revealed via an expanding inset clip-path over Slide 1. */}
         {irisActive && cfg.slide2.enabled && (
           <div
             className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
             aria-hidden
             style={{
               clipPath: irisProgress === 1
-                ? "ellipse(150% 50% at 50% 50%)"
-                : "ellipse(0% 50% at 50% 50%)",
+                ? "inset(0% 0% 0% 0% round 0px)"
+                : "inset(50% 50% 50% 50% round 50%)",
               WebkitClipPath: irisProgress === 1
-                ? "ellipse(150% 50% at 50% 50%)"
-                : "ellipse(0% 50% at 50% 50%)",
+                ? "inset(0% 0% 0% 0% round 0px)"
+                : "inset(50% 50% 50% 50% round 50%)",
               transition: `clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}, -webkit-clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}`,
               willChange: "clip-path",
             }}
