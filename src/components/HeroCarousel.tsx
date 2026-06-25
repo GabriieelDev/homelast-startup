@@ -65,27 +65,12 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const next = useCallback(() => setIndex((i) => (i + 1) % SLIDE_COUNT), [SLIDE_COUNT]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
 
-  // Measure carousel diagonal for iris size
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const measure = () => {
-      const r = el.getBoundingClientRect();
-      setIrisDiameter(Math.ceil(Math.sqrt(r.width * r.width + r.height * r.height) * 1.15));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    window.addEventListener("resize", measure);
-    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
-  }, []);
-
   // Schedule the auto iris transition each cycle (mount + re-enter viewport)
   useEffect(() => {
     clearAutoTimers();
     setIndex(0);
-    setIrisPhase("idle");
-    setIrisScale(0);
+    setIrisActive(false);
+    setIrisProgress(0);
     setSnapNext(false);
     hasAutoFiredRef.current = false;
     cancelAutoRef.current = false;
@@ -95,26 +80,21 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     autoTimerRef.current = window.setTimeout(() => {
       if (cancelAutoRef.current) return;
       hasAutoFiredRef.current = true;
-      // Phase 1: expand circle from 0 → 1 (Slide 2 already mounted behind iris)
-      setIrisPhase("expand");
-      setIrisScale(0);
-      requestAnimationFrame(() => requestAnimationFrame(() => setIrisScale(1)));
+      // Mount Slide 2 overlay clipped to a 0% circle, then expand to 150%.
+      setIrisActive(true);
+      setIrisProgress(0);
+      requestAnimationFrame(() => requestAnimationFrame(() => setIrisProgress(1)));
 
-      // Phase 2: when fully covered, fade the iris out — Slide 2 is revealed beneath
+      // After the reveal completes, snap underlying slider to index 1 and remove overlay.
       irisStep2Ref.current = window.setTimeout(() => {
-        setIrisPhase("fade");
-        // Phase 3: after fade completes, snap the underlying slider to index 1
-        // (transition disabled for one frame so the underlying slide doesn't slide).
+        setSnapNext(true);
+        setIndex(1);
         irisStep3Ref.current = window.setTimeout(() => {
-          setSnapNext(true);
-          setIndex(1);
-          irisStep4Ref.current = window.setTimeout(() => {
-            setIrisPhase("idle");
-            setIrisScale(0);
-            setSnapNext(false);
-          }, 50);
-        }, IRIS_FADE_MS + 30);
-      }, IRIS_EXPAND_MS);
+          setIrisActive(false);
+          setIrisProgress(0);
+          setSnapNext(false);
+        }, 50);
+      }, IRIS_EXPAND_MS + 30);
     }, AUTO_DELAY_MS);
 
     return clearAutoTimers;
