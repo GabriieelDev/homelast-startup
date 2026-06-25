@@ -90,6 +90,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     setIndex(0);
     setIrisPhase("idle");
     setIrisScale(0);
+    setSnapNext(false);
     hasAutoFiredRef.current = false;
     cancelAutoRef.current = false;
 
@@ -98,19 +99,25 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     autoTimerRef.current = window.setTimeout(() => {
       if (cancelAutoRef.current) return;
       hasAutoFiredRef.current = true;
-      // Phase 1: expand circle from 0 → 1
+      // Phase 1: expand circle from 0 → 1 (Slide 2 already mounted behind iris)
       setIrisPhase("expand");
       setIrisScale(0);
       requestAnimationFrame(() => requestAnimationFrame(() => setIrisScale(1)));
 
-      // Phase 2: when fully covered, swap slide + fade circle out
+      // Phase 2: when fully covered, fade the iris out — Slide 2 is revealed beneath
       irisStep2Ref.current = window.setTimeout(() => {
-        setIndex(1);
         setIrisPhase("fade");
+        // Phase 3: after fade completes, snap the underlying slider to index 1
+        // (transition disabled for one frame so the underlying slide doesn't slide).
         irisStep3Ref.current = window.setTimeout(() => {
-          setIrisPhase("idle");
-          setIrisScale(0);
-        }, IRIS_FADE_MS + 50);
+          setSnapNext(true);
+          setIndex(1);
+          irisStep4Ref.current = window.setTimeout(() => {
+            setIrisPhase("idle");
+            setIrisScale(0);
+            setSnapNext(false);
+          }, 50);
+        }, IRIS_FADE_MS + 30);
       }, IRIS_EXPAND_MS);
     }, AUTO_DELAY_MS);
 
