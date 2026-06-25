@@ -88,7 +88,6 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
     ctaText: "Aproveitar agora",
     image: "",
   },
-  },
   auto_transition: true,
 };
 
