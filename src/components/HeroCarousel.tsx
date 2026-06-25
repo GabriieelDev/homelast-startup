@@ -203,10 +203,10 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
             style={{
               clipPath: irisProgress === 1
                 ? "inset(0% 0% 0% 0% round 0px)"
-                : "inset(50% 50% 50% 50% round 50%)",
+                : "inset(50% 50% 50% 50% round 999px)",
               WebkitClipPath: irisProgress === 1
                 ? "inset(0% 0% 0% 0% round 0px)"
-                : "inset(50% 50% 50% 50% round 50%)",
+                : "inset(50% 50% 50% 50% round 999px)",
               transition: `clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}, -webkit-clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}`,
               willChange: "clip-path",
             }}
