@@ -40,13 +40,14 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const touchStartX = useRef<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
-  // Iris (clip-path reveal) transition state
+  // Iris (clip-path reveal) transition state — rAF-driven for mobile/Safari compatibility
   const [irisActive, setIrisActive] = useState(false);
-  const [irisProgress, setIrisProgress] = useState(0); // 0 → 1
+  const [irisProgress, setIrisProgress] = useState(0); // 0 → 1 (eased)
   const [snapNext, setSnapNext] = useState(false);
   const autoTimerRef = useRef<number | null>(null);
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
+  const irisRafRef = useRef<number | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
@@ -55,6 +56,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
     if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
     if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
+    if (irisRafRef.current) { cancelAnimationFrame(irisRafRef.current); irisRafRef.current = null; }
   }, []);
 
   // Clamp index when slide count changes
@@ -65,6 +67,22 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const goTo = useCallback((i: number) => setIndex(((i % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
   const next = useCallback(() => setIndex((i) => (i + 1) % SLIDE_COUNT), [SLIDE_COUNT]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
+
+  // cubic-bezier(0.76, 0, 0.24, 1) easing via Newton-Raphson
+  const bezierEase = useCallback((t: number) => {
+    const x1 = 0.76, y1 = 0, x2 = 0.24, y2 = 1;
+    const cx = (u: number) => { const i = 1 - u; return 3 * i * i * u * x1 + 3 * i * u * u * x2 + u * u * u; };
+    const cy = (u: number) => { const i = 1 - u; return 3 * i * i * u * y1 + 3 * i * u * u * y2 + u * u * u; };
+    const dcx = (u: number) => { const i = 1 - u; return 3 * i * i * x1 + 6 * i * u * (x2 - x1) + 3 * u * u * (1 - x2); };
+    let u = t;
+    for (let i = 0; i < 6; i++) {
+      const d = dcx(u);
+      if (Math.abs(d) < 1e-6) break;
+      u -= (cx(u) - t) / d;
+      if (u < 0) u = 0; else if (u > 1) u = 1;
+    }
+    return cy(u);
+  }, []);
 
   // Schedule the auto iris transition each cycle (mount + re-enter viewport)
   useEffect(() => {
@@ -81,10 +99,23 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     autoTimerRef.current = window.setTimeout(() => {
       if (cancelAutoRef.current) return;
       hasAutoFiredRef.current = true;
-      // Mount Slide 2 overlay clipped to a 0% circle, then expand to 150%.
       setIrisActive(true);
       setIrisProgress(0);
-      requestAnimationFrame(() => requestAnimationFrame(() => setIrisProgress(1)));
+
+      // rAF-driven animation (no CSS transition — ensures iOS Safari compatibility)
+      const startTime = performance.now();
+      const tick = (now: number) => {
+        if (cancelAutoRef.current) return;
+        const elapsed = now - startTime;
+        const raw = Math.min(1, elapsed / IRIS_EXPAND_MS);
+        setIrisProgress(bezierEase(raw));
+        if (raw < 1) {
+          irisRafRef.current = requestAnimationFrame(tick);
+        } else {
+          irisRafRef.current = null;
+        }
+      };
+      irisRafRef.current = requestAnimationFrame(tick);
 
       // After the reveal completes, snap underlying slider to index 1 and remove overlay.
       irisStep2Ref.current = window.setTimeout(() => {
@@ -99,7 +130,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     }, AUTO_DELAY_MS);
 
     return clearAutoTimers;
-  }, [cycleKey, autoEnabled, cfg.slide2.enabled, clearAutoTimers]);
+  }, [cycleKey, autoEnabled, cfg.slide2.enabled, clearAutoTimers, bezierEase]);
 
   // IntersectionObserver: reset cycle when carousel leaves & re-enters viewport
   useEffect(() => {
