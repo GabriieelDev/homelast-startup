@@ -57,6 +57,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
     if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
     if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
+    if (irisStep4Ref.current) { window.clearTimeout(irisStep4Ref.current); irisStep4Ref.current = null; }
   }, []);
 
   // Clamp index when slide count changes
