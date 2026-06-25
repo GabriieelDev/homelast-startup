@@ -195,19 +195,18 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           })}
         </div>
 
-        {/* Slide 2 revealed via a left-to-right curtain clip-path over Slide 1.
-            The right edge keeps a 40px rounded curvature during the motion. */}
+        {/* Slide 2 revealed via an expanding ellipse clip-path over Slide 1. */}
         {irisActive && cfg.slide2.enabled && (
           <div
             className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
             aria-hidden
             style={{
               clipPath: irisProgress === 1
-                ? "inset(0 0% 0 0 round 0px)"
-                : "inset(0 100% 0 0 round 40px)",
+                ? "ellipse(150% 50% at 50% 50%)"
+                : "ellipse(0% 50% at 50% 50%)",
               WebkitClipPath: irisProgress === 1
-                ? "inset(0 0% 0 0 round 0px)"
-                : "inset(0 100% 0 0 round 40px)",
+                ? "ellipse(150% 50% at 50% 50%)"
+                : "ellipse(0% 50% at 50% 50%)",
               transition: `clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}, -webkit-clip-path ${IRIS_EXPAND_MS}ms ${IRIS_EASING}`,
               willChange: "clip-path",
             }}
