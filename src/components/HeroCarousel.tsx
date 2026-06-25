@@ -16,12 +16,14 @@ interface HeroCarouselProps {
   onProductClick?: (productId: string) => void;
 }
 
-const AUTOPLAY_MS = 5000;
-const RESUME_MS = 5000;
+const AUTO_DELAY_MS = 3500; // time spent on slide 1 before iris triggers
+const IRIS_EXPAND_MS = 1500;
+const IRIS_FADE_MS = 450;
 
 const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const { settings } = useStoreSettings();
   const cfg = settings.carousel_config;
+  const autoEnabled = cfg.auto_transition !== false;
 
   // Slide 1 is always enabled; 2 and 3 are toggleable.
   const slides = useMemo(() => {
@@ -33,10 +35,27 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const SLIDE_COUNT = slides.length;
 
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [copied, setCopied] = useState(false);
-  const resumeTimer = useRef<number | null>(null);
+  const [cycleKey, setCycleKey] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  // Iris transition state
+  const [irisPhase, setIrisPhase] = useState<"idle" | "expand" | "fade">("idle");
+  const [irisScale, setIrisScale] = useState(0);
+  const [irisDiameter, setIrisDiameter] = useState(0);
+  const autoTimerRef = useRef<number | null>(null);
+  const irisStep2Ref = useRef<number | null>(null);
+  const irisStep3Ref = useRef<number | null>(null);
+  const cancelAutoRef = useRef(false);
+  const hasAutoFiredRef = useRef(false);
+
+  const clearAutoTimers = useCallback(() => {
+    cancelAutoRef.current = true;
+    if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
+    if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
+    if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
+  }, []);
 
   // Clamp index when slide count changes
   useEffect(() => {
@@ -47,26 +66,87 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const next = useCallback(() => setIndex((i) => (i + 1) % SLIDE_COUNT), [SLIDE_COUNT]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT), [SLIDE_COUNT]);
 
+  // Measure carousel diagonal for iris size
   useEffect(() => {
-    if (paused || SLIDE_COUNT < 2) return;
-    const t = window.setInterval(next, AUTOPLAY_MS);
-    return () => window.clearInterval(t);
-  }, [paused, next, SLIDE_COUNT]);
-
-  const handleInteraction = useCallback(() => {
-    setPaused(true);
-    if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
-    resumeTimer.current = window.setTimeout(() => setPaused(false), RESUME_MS);
+    const el = sectionRef.current;
+    if (!el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setIrisDiameter(Math.ceil(Math.sqrt(r.width * r.width + r.height * r.height) * 1.15));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
   }, []);
+
+  // Schedule the auto iris transition each cycle (mount + re-enter viewport)
+  useEffect(() => {
+    clearAutoTimers();
+    setIndex(0);
+    setIrisPhase("idle");
+    setIrisScale(0);
+    hasAutoFiredRef.current = false;
+    cancelAutoRef.current = false;
+
+    if (!autoEnabled || !cfg.slide2.enabled) return;
+
+    autoTimerRef.current = window.setTimeout(() => {
+      if (cancelAutoRef.current) return;
+      hasAutoFiredRef.current = true;
+      // Phase 1: expand circle from 0 → 1
+      setIrisPhase("expand");
+      setIrisScale(0);
+      requestAnimationFrame(() => requestAnimationFrame(() => setIrisScale(1)));
+
+      // Phase 2: when fully covered, swap slide + fade circle out
+      irisStep2Ref.current = window.setTimeout(() => {
+        setIndex(1);
+        setIrisPhase("fade");
+        irisStep3Ref.current = window.setTimeout(() => {
+          setIrisPhase("idle");
+          setIrisScale(0);
+        }, IRIS_FADE_MS + 50);
+      }, IRIS_EXPAND_MS);
+    }, AUTO_DELAY_MS);
+
+    return clearAutoTimers;
+  }, [cycleKey, autoEnabled, cfg.slide2.enabled, clearAutoTimers]);
+
+  // IntersectionObserver: reset cycle when carousel leaves & re-enters viewport
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    let wasOut = false;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) {
+            wasOut = true;
+          } else if (wasOut) {
+            wasOut = false;
+            setCycleKey((k) => k + 1);
+          }
+        }
+      },
+      { threshold: 0.25 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const cancelIfPending = useCallback(() => {
+    if (!hasAutoFiredRef.current) clearAutoTimers();
+  }, [clearAutoTimers]);
 
   const onTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
-    handleInteraction();
   };
   const onTouchEnd = (e: TouchEvent) => {
     if (touchStartX.current == null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
+    if (Math.abs(dx) > 40) { cancelIfPending(); (dx < 0 ? next : prev)(); }
     touchStartX.current = null;
   };
 
