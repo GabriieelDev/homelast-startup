@@ -49,6 +49,7 @@ export interface CarouselConfig {
   slide1: CarouselSlide1;
   slide2: CarouselSlide2;
   slide3: CarouselSlide3;
+  auto_transition: boolean;
 }
 
 export const DEFAULT_CAROUSEL: CarouselConfig = {
