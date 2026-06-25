@@ -44,9 +44,11 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const [irisPhase, setIrisPhase] = useState<"idle" | "expand" | "fade">("idle");
   const [irisScale, setIrisScale] = useState(0);
   const [irisDiameter, setIrisDiameter] = useState(0);
+  const [snapNext, setSnapNext] = useState(false);
   const autoTimerRef = useRef<number | null>(null);
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
+  const irisStep4Ref = useRef<number | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
@@ -55,6 +57,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
     if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
     if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
+    if (irisStep4Ref.current) { window.clearTimeout(irisStep4Ref.current); irisStep4Ref.current = null; }
   }, []);
 
   // Clamp index when slide count changes
@@ -87,6 +90,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     setIndex(0);
     setIrisPhase("idle");
     setIrisScale(0);
+    setSnapNext(false);
     hasAutoFiredRef.current = false;
     cancelAutoRef.current = false;
 
@@ -95,19 +99,25 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     autoTimerRef.current = window.setTimeout(() => {
       if (cancelAutoRef.current) return;
       hasAutoFiredRef.current = true;
-      // Phase 1: expand circle from 0 → 1
+      // Phase 1: expand circle from 0 → 1 (Slide 2 already mounted behind iris)
       setIrisPhase("expand");
       setIrisScale(0);
       requestAnimationFrame(() => requestAnimationFrame(() => setIrisScale(1)));
 
-      // Phase 2: when fully covered, swap slide + fade circle out
+      // Phase 2: when fully covered, fade the iris out — Slide 2 is revealed beneath
       irisStep2Ref.current = window.setTimeout(() => {
-        setIndex(1);
         setIrisPhase("fade");
+        // Phase 3: after fade completes, snap the underlying slider to index 1
+        // (transition disabled for one frame so the underlying slide doesn't slide).
         irisStep3Ref.current = window.setTimeout(() => {
-          setIrisPhase("idle");
-          setIrisScale(0);
-        }, IRIS_FADE_MS + 50);
+          setSnapNext(true);
+          setIndex(1);
+          irisStep4Ref.current = window.setTimeout(() => {
+            setIrisPhase("idle");
+            setIrisScale(0);
+            setSnapNext(false);
+          }, 50);
+        }, IRIS_FADE_MS + 30);
       }, IRIS_EXPAND_MS);
     }, AUTO_DELAY_MS);
 
@@ -196,7 +206,10 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
       <div className="relative md:h-[460px] overflow-hidden">
         <div
           className="flex md:h-full items-stretch transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
-          style={{ transform: `translateX(-${index * 100}%)`, transitionDuration: "850ms" }}
+          style={{
+            transform: `translateX(-${index * 100}%)`,
+            transitionDuration: snapNext ? "0ms" : "850ms",
+          }}
         >
           {slides.map((key) => {
             if (key === "s1") return <Slide1 key={`s1-${cycleKey}`} cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
@@ -204,6 +217,20 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
             return <Slide3 key="s3" cfg={cfg.slide3} copied={copied} onCopy={copyCoupon} onStart={onStart} />;
           })}
         </div>
+
+        {/* Pre-positioned Slide 2 behind the iris during the auto transition.
+            This guarantees the carousel never goes blank when the iris fades out. */}
+        {irisPhase !== "idle" && cfg.slide2.enabled && (
+          <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden" aria-hidden>
+            <Slide2
+              cfg={cfg.slide2}
+              featured={featured}
+              onStart={onStart}
+              renderHighlighted={renderHighlighted}
+              onProductClick={onProductClick}
+            />
+          </div>
+        )}
 
         {/* Iris transition overlay */}
         {irisPhase !== "idle" && irisDiameter > 0 && (
