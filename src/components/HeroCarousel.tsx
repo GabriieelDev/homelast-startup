@@ -119,7 +119,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           if (el) {
             const finalClip = "inset(0% 0% 0% 0% round 0px)";
             el.style.clipPath = finalClip;
-            el.style.webkitClipPath = finalClip;
+            (el.style as any).webkitClipPath = finalClip;
           }
           // Wait 100ms to ensure the browser renders the final frame before snapping
           irisStep2Ref.current = window.setTimeout(() => {
