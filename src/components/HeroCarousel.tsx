@@ -48,6 +48,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
   const irisRafRef = useRef<number | null>(null);
+  const irisOverlayRef = useRef<HTMLDivElement | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
@@ -113,20 +114,26 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           irisRafRef.current = requestAnimationFrame(tick);
         } else {
           irisRafRef.current = null;
+          // Force final full-rectangle clip-path directly on the overlay element
+          const el = irisOverlayRef.current;
+          if (el) {
+            const finalClip = "inset(0% 0% 0% 0% round 0px)";
+            el.style.clipPath = finalClip;
+            (el.style as any).webkitClipPath = finalClip;
+          }
+          // Wait 100ms to ensure the browser renders the final frame before snapping
+          irisStep2Ref.current = window.setTimeout(() => {
+            setSnapNext(true);
+            setIndex(1);
+            irisStep3Ref.current = window.setTimeout(() => {
+              setIrisActive(false);
+              setIrisProgress(0);
+              setSnapNext(false);
+            }, 50);
+          }, 100);
         }
       };
       irisRafRef.current = requestAnimationFrame(tick);
-
-      // After the reveal completes, snap underlying slider to index 1 and remove overlay.
-      irisStep2Ref.current = window.setTimeout(() => {
-        setSnapNext(true);
-        setIndex(1);
-        irisStep3Ref.current = window.setTimeout(() => {
-          setIrisActive(false);
-          setIrisProgress(0);
-          setSnapNext(false);
-        }, 50);
-      }, IRIS_EXPAND_MS + 30);
     }, AUTO_DELAY_MS);
 
     return clearAutoTimers;
@@ -233,6 +240,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           const clip = `inset(${inset}% ${inset}% ${inset}% ${inset}% round ${round}px)`;
           return (
             <div
+              ref={irisOverlayRef}
               className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
               aria-hidden
               style={{
