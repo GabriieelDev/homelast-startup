@@ -48,6 +48,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
   const irisRafRef = useRef<number | null>(null);
+  const irisOverlayRef = useRef<HTMLDivElement | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
