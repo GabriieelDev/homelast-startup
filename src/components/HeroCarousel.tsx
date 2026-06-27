@@ -240,6 +240,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           const clip = `inset(${inset}% ${inset}% ${inset}% ${inset}% round ${round}px)`;
           return (
             <div
+              ref={irisOverlayRef}
               className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
               aria-hidden
               style={{

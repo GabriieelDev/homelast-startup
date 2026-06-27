@@ -106,7 +106,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         <p className="min-h-[1.25rem] text-[11px] font-semibold text-accent">
           {onSale && savings > 0 ? `Economize R$ ${savings.toFixed(2)}` : ""}
         </p>
-        <div className="flex items-end gap-1.5 min-h-[1.75rem] flex-wrap">
+        <div className="flex flex-col gap-0.5 min-h-[2.5rem] justify-end">
           {onSale ? (
             <>
               <span className="text-lg font-bold text-accent whitespace-nowrap">R$ {effectivePrice.toFixed(2)}</span>
