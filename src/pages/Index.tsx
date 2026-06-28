@@ -41,6 +41,13 @@ const Index = () => {
   const { url: avatarSrc } = useUserAvatar();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const {
+    products: infiniteProducts,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteProducts(category);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
   const handleCategoryChange = useCallback((id: string) => {
     startTransition(() => setCategory(id));
