@@ -101,7 +101,39 @@ const Index = () => {
 
   const isFiltering = search.length >= 2 || category !== "all";
 
-  const maisComprados = useMemo(() => filtered.filter((p) => p.section.includes("mais-comprados")), [filtered]);
+  // Infinite-scrolled list used when filtering by category/search.
+  const infiniteFiltered = useMemo(() => {
+    let list = infiniteProducts;
+    if (!isAdmin) {
+      list = list.filter((p) => p.active !== false && !isDisabled(p.id));
+    }
+    if (category === "sale") {
+      list = list.filter((p) => isSaleActive(p));
+    }
+    if (search.length >= 2) {
+      const q = search.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [infiniteProducts, category, search, isAdmin, isDisabled]);
+
+  // Auto-load next page when sentinel is visible.
+  useEffect(() => {
+    if (!isFiltering) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [isFiltering, hasNextPage, isFetchingNextPage, fetchNextPage, infiniteFiltered.length]);
+
   const promocoes = useMemo(() => filtered.filter((p) => p.section.includes("promocoes")), [filtered]);
   const recomendados = useMemo(() => filtered.filter((p) => p.section.includes("recomendados")), [filtered]);
   const frequentes = useMemo(() => filtered.filter((p) => p.section.includes("frequentes")), [filtered]);
