@@ -55,8 +55,8 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const clearAutoTimers = useCallback(() => {
     cancelAutoRef.current = true;
     if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
-    if (irisStep2Ref.current) { window.clearTimeout(irisStep2Ref.current); irisStep2Ref.current = null; }
-    if (irisStep3Ref.current) { window.clearTimeout(irisStep3Ref.current); irisStep3Ref.current = null; }
+    if (irisStep2Ref.current) { cancelAnimationFrame(irisStep2Ref.current); irisStep2Ref.current = null; }
+    if (irisStep3Ref.current) { cancelAnimationFrame(irisStep3Ref.current); irisStep3Ref.current = null; }
     if (irisRafRef.current) { cancelAnimationFrame(irisRafRef.current); irisRafRef.current = null; }
   }, []);
 
@@ -121,16 +121,23 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
             el.style.clipPath = finalClip;
             (el.style as any).webkitClipPath = finalClip;
           }
-          // Wait 100ms to ensure the browser renders the final frame before snapping
-          irisStep2Ref.current = window.setTimeout(() => {
+          // Wait two animation frames to ensure mobile browsers render the final frame before snapping
+          new Promise<void>((resolve) => {
+            irisStep2Ref.current = requestAnimationFrame(() => {
+              irisStep2Ref.current = null;
+              irisStep3Ref.current = requestAnimationFrame(() => {
+                irisStep3Ref.current = null;
+                resolve();
+              });
+            });
+          }).then(() => {
+            if (cancelAutoRef.current) return;
             setSnapNext(true);
             setIndex(1);
-            irisStep3Ref.current = window.setTimeout(() => {
-              setIrisActive(false);
-              setIrisProgress(0);
-              setSnapNext(false);
-            }, 50);
-          }, 100);
+            setIrisActive(false);
+            setIrisProgress(0);
+            setSnapNext(false);
+          });
         }
       };
       irisRafRef.current = requestAnimationFrame(tick);
