@@ -19,7 +19,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useStock } from "@/hooks/useStock";
 import { useDisabledProducts } from "@/hooks/useDisabledProducts";
 import { useOrderNotifications } from "@/hooks/useOrderNotifications";
-import { useProducts } from "@/hooks/useProducts";
+import { useProducts, useInfiniteProducts } from "@/hooks/useProducts";
+import { Loader2 } from "lucide-react";
 import { useTopSellers } from "@/hooks/useTopSellers";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -40,6 +41,13 @@ const Index = () => {
   const { url: avatarSrc } = useUserAvatar();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const {
+    products: infiniteProducts,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteProducts(category);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
   const handleCategoryChange = useCallback((id: string) => {
     startTransition(() => setCategory(id));
@@ -92,6 +100,39 @@ const Index = () => {
   }, [products, category, search, isAdmin, isDisabled]);
 
   const isFiltering = search.length >= 2 || category !== "all";
+
+  // Infinite-scrolled list used when filtering by category/search.
+  const infiniteFiltered = useMemo(() => {
+    let list = infiniteProducts;
+    if (!isAdmin) {
+      list = list.filter((p) => p.active !== false && !isDisabled(p.id));
+    }
+    if (category === "sale") {
+      list = list.filter((p) => isSaleActive(p));
+    }
+    if (search.length >= 2) {
+      const q = search.toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [infiniteProducts, category, search, isAdmin, isDisabled]);
+
+  // Auto-load next page when sentinel is visible.
+  useEffect(() => {
+    if (!isFiltering) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [isFiltering, hasNextPage, isFetchingNextPage, fetchNextPage, infiniteFiltered.length]);
 
   const maisComprados = useMemo(() => filtered.filter((p) => p.section.includes("mais-comprados")), [filtered]);
   const promocoes = useMemo(() => filtered.filter((p) => p.section.includes("promocoes")), [filtered]);
@@ -205,17 +246,38 @@ const Index = () => {
           </div>
         )}
         {isFiltering ? (
-          <ProductSection
-            title={`Resultados${search ? ` para "${search}"` : ""}`}
-            emoji="🔍"
-            products={filtered}
-            getQuantity={getQuantity}
-            getStock={getStock}
-            onAdd={addItem}
-            onRemove={removeItem}
-            isAdmin={isAdmin}
-            onDisableProduct={disableProduct}
-          />
+          <>
+            <ProductSection
+              title={`Resultados${search ? ` para "${search}"` : ""}`}
+              emoji="🔍"
+              products={infiniteFiltered}
+              getQuantity={getQuantity}
+              getStock={getStock}
+              onAdd={addItem}
+              onRemove={removeItem}
+              isAdmin={isAdmin}
+              onDisableProduct={disableProduct}
+            />
+            {/* Sentinel for infinite scroll */}
+            <div ref={sentinelRef} aria-hidden className="h-px w-full" />
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#00B894" }} />
+              </div>
+            )}
+            {!hasNextPage && infiniteFiltered.length > 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                Todos os produtos carregados
+              </p>
+            )}
+            {infiniteFiltered.length === 0 && !isFetchingNextPage && (
+              <div className="text-center py-20 space-y-3">
+                <p className="text-4xl">😕</p>
+                <p className="text-lg font-semibold text-foreground">Nenhum produto encontrado</p>
+                <p className="text-muted-foreground">Tente outra busca ou categoria</p>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
@@ -223,13 +285,6 @@ const Index = () => {
             <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
             <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
           </>
-        )}
-        {filtered.length === 0 && (
-          <div className="text-center py-20 space-y-3">
-            <p className="text-4xl">😕</p>
-            <p className="text-lg font-semibold text-foreground">Nenhum produto encontrado</p>
-            <p className="text-muted-foreground">Tente outra busca ou categoria</p>
-          </div>
         )}
       </div>
 
