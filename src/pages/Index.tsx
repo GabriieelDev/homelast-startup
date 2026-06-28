@@ -246,17 +246,38 @@ const Index = () => {
           </div>
         )}
         {isFiltering ? (
-          <ProductSection
-            title={`Resultados${search ? ` para "${search}"` : ""}`}
-            emoji="🔍"
-            products={filtered}
-            getQuantity={getQuantity}
-            getStock={getStock}
-            onAdd={addItem}
-            onRemove={removeItem}
-            isAdmin={isAdmin}
-            onDisableProduct={disableProduct}
-          />
+          <>
+            <ProductSection
+              title={`Resultados${search ? ` para "${search}"` : ""}`}
+              emoji="🔍"
+              products={infiniteFiltered}
+              getQuantity={getQuantity}
+              getStock={getStock}
+              onAdd={addItem}
+              onRemove={removeItem}
+              isAdmin={isAdmin}
+              onDisableProduct={disableProduct}
+            />
+            {/* Sentinel for infinite scroll */}
+            <div ref={sentinelRef} aria-hidden className="h-px w-full" />
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#00B894" }} />
+              </div>
+            )}
+            {!hasNextPage && infiniteFiltered.length > 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                Todos os produtos carregados
+              </p>
+            )}
+            {infiniteFiltered.length === 0 && !isFetchingNextPage && (
+              <div className="text-center py-20 space-y-3">
+                <p className="text-4xl">😕</p>
+                <p className="text-lg font-semibold text-foreground">Nenhum produto encontrado</p>
+                <p className="text-muted-foreground">Tente outra busca ou categoria</p>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
@@ -264,13 +285,6 @@ const Index = () => {
             <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
             <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
           </>
-        )}
-        {filtered.length === 0 && (
-          <div className="text-center py-20 space-y-3">
-            <p className="text-4xl">😕</p>
-            <p className="text-lg font-semibold text-foreground">Nenhum produto encontrado</p>
-            <p className="text-muted-foreground">Tente outra busca ou categoria</p>
-          </div>
         )}
       </div>
 
