@@ -134,6 +134,7 @@ const Index = () => {
     return () => obs.disconnect();
   }, [isFiltering, hasNextPage, isFetchingNextPage, fetchNextPage, infiniteFiltered.length]);
 
+  const maisComprados = useMemo(() => filtered.filter((p) => p.section.includes("mais-comprados")), [filtered]);
   const promocoes = useMemo(() => filtered.filter((p) => p.section.includes("promocoes")), [filtered]);
   const recomendados = useMemo(() => filtered.filter((p) => p.section.includes("recomendados")), [filtered]);
   const frequentes = useMemo(() => filtered.filter((p) => p.section.includes("frequentes")), [filtered]);
