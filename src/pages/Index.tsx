@@ -259,11 +259,10 @@ const Index = () => {
               onRemove={removeItem}
               isAdmin={isAdmin}
               onDisableProduct={disableProduct}
-      />
-
-      <AnnouncementPopup />
-
+              onDisableProduct={disableProduct}
+            />
             {/* Sentinel for infinite scroll */}
+
             <div ref={sentinelRef} aria-hidden className="h-px w-full" />
             {isFetchingNextPage && (
               <div className="flex justify-center py-6">
