@@ -29,6 +29,8 @@ import ProductDetailDialog from "@/components/ProductDetailDialog";
 import HorizontalProductRow from "@/components/HorizontalProductRow";
 import { isSaleActive } from "@/lib/promotions";
 import { useUserAvatar } from "@/hooks/useUserAvatar";
+import AnnouncementPopup from "@/components/AnnouncementPopup";
+
 import type { Product } from "@/data/products";
 
 const Index = () => {
