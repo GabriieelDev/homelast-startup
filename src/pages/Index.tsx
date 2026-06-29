@@ -317,7 +317,10 @@ const Index = () => {
         onAdd={() => { if (detailProduct) addItem(detailProduct); }}
         onRemove={() => { if (detailProduct) removeItem(detailProduct.id); }}
       />
+
+      <AnnouncementPopup />
     </div>
+
   );
 };
 
