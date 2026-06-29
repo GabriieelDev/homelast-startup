@@ -26,6 +26,8 @@ import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
 import CarouselManager from "@/components/admin/CarouselManager";
 import CouponManager from "@/components/admin/CouponManager";
 import ReviewsManager from "@/components/admin/ReviewsManager";
+import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
