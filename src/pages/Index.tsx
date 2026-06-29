@@ -29,6 +29,8 @@ import ProductDetailDialog from "@/components/ProductDetailDialog";
 import HorizontalProductRow from "@/components/HorizontalProductRow";
 import { isSaleActive } from "@/lib/promotions";
 import { useUserAvatar } from "@/hooks/useUserAvatar";
+import AnnouncementPopup from "@/components/AnnouncementPopup";
+
 import type { Product } from "@/data/products";
 
 const Index = () => {
@@ -258,7 +260,9 @@ const Index = () => {
               isAdmin={isAdmin}
               onDisableProduct={disableProduct}
             />
+
             {/* Sentinel for infinite scroll */}
+
             <div ref={sentinelRef} aria-hidden className="h-px w-full" />
             {isFetchingNextPage && (
               <div className="flex justify-center py-6">
@@ -313,7 +317,10 @@ const Index = () => {
         onAdd={() => { if (detailProduct) addItem(detailProduct); }}
         onRemove={() => { if (detailProduct) removeItem(detailProduct.id); }}
       />
+
+      <AnnouncementPopup />
     </div>
+
   );
 };
 

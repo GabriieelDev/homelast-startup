@@ -12,7 +12,7 @@ import {
   ShieldAlert, ChefHat, Truck, CheckCircle, Check, MapPin, AlertTriangle, TrendingUp,
   Plus, Pencil, Trash2, Power, PowerOff, DollarSign, FileText, Download, FileSpreadsheet, Printer,
   Bell, BellOff, Clock, TrendingDown, PackageX,
-  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput, Star,
+  Instagram, Facebook, MessageCircle, Music2, GripVertical, Tag, FileInput, Star, Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
 import CarouselManager from "@/components/admin/CarouselManager";
 import CouponManager from "@/components/admin/CouponManager";
 import ReviewsManager from "@/components/admin/ReviewsManager";
+import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -46,7 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelado: "#E74C3C",
 };
 
-type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "cupons" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "avaliacoes" | "configuracoes";
+type Tab = "dashboard" | "produtos" | "categorias" | "nfe" | "promocoes" | "cupons" | "anuncios" | "pedidos" | "estoque" | "alertas" | "financeiro" | "relatorios" | "avaliacoes" | "configuracoes";
 type Period = "day" | "week" | "month" | "semester" | "year";
 
 const PERIOD_LABEL: Record<Period, string> = {
@@ -446,6 +448,8 @@ const Admin = () => {
     { key: "nfe", label: "Importar NF-e", icon: FileInput },
     { key: "promocoes", label: "Promoções", icon: Tag },
     { key: "cupons", label: "Cupons", icon: Tag },
+    { key: "anuncios", label: "Anúncios", icon: Megaphone },
+
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
@@ -818,6 +822,9 @@ const Admin = () => {
           {tab === "promocoes" && <SalePromotionsPanel />}
 
           {tab === "cupons" && <CouponManager />}
+
+          {tab === "anuncios" && <AnnouncementsManager />}
+
 
           {tab === "pedidos" && (
             <div className="space-y-4">
