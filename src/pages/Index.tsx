@@ -259,7 +259,10 @@ const Index = () => {
               onRemove={removeItem}
               isAdmin={isAdmin}
               onDisableProduct={disableProduct}
-            />
+      />
+
+      <AnnouncementPopup />
+
             {/* Sentinel for infinite scroll */}
             <div ref={sentinelRef} aria-hidden className="h-px w-full" />
             {isFetchingNextPage && (
