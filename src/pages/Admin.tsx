@@ -448,6 +448,8 @@ const Admin = () => {
     { key: "nfe", label: "Importar NF-e", icon: FileInput },
     { key: "promocoes", label: "Promoções", icon: Tag },
     { key: "cupons", label: "Cupons", icon: Tag },
+    { key: "anuncios", label: "Anúncios", icon: Megaphone },
+
     { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
     { key: "estoque", label: "Estoque", icon: Boxes },
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
