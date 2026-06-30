@@ -132,11 +132,20 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
             });
           }).then(() => {
             if (cancelAutoRef.current) return;
+            // Snap to slide 2 without lateral animation (iris already did the visual transition).
+            // Batch snapNext+index together so the render with index=1 has transitionDuration:0ms.
             setSnapNext(true);
             setIndex(1);
             setIrisActive(false);
             setIrisProgress(0);
-            setSnapNext(false);
+            // Re-enable transitions on a later frame so the snap is committed first.
+            irisStep2Ref.current = requestAnimationFrame(() => {
+              irisStep2Ref.current = null;
+              irisStep3Ref.current = requestAnimationFrame(() => {
+                irisStep3Ref.current = null;
+                if (!cancelAutoRef.current) setSnapNext(false);
+              });
+            });
           });
         }
       };
