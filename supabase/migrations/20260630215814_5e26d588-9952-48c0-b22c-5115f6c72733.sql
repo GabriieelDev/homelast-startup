@@ -1,0 +1,1 @@
+ALTER TABLE public.announcement_banners RENAME COLUMN code TO coupon_code;

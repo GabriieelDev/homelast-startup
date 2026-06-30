@@ -59,7 +59,7 @@ export type Database = {
       announcement_banners: {
         Row: {
           active: boolean
-          code: string | null
+          coupon_code: string | null
           created_at: string
           id: string
           image_url: string
@@ -71,7 +71,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
-          code?: string | null
+          coupon_code?: string | null
           created_at?: string
           id?: string
           image_url: string
@@ -83,7 +83,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
-          code?: string | null
+          coupon_code?: string | null
           created_at?: string
           id?: string
           image_url?: string
