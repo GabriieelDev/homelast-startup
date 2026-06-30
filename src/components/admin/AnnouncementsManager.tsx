@@ -22,7 +22,7 @@ interface Banner {
   id: string;
   image_url: string;
   type: AnnType;
-  code: string | null;
+  coupon_code: string | null;
   link_url: string | null;
   title: string | null;
   active: boolean;
@@ -33,7 +33,7 @@ interface Banner {
 const emptyForm = {
   image_url: "",
   type: "cupom" as AnnType,
-  code: "",
+  coupon_code: "",
   link_url: "",
   title: "",
   sort_order: "0",
@@ -51,12 +51,12 @@ const AnnouncementsManager = () => {
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("announcement_banners" as any)
+      .from("announcement_banners")
       .select("*")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar anúncios");
-    setItems((data as any) ?? []);
+    setItems((data as unknown as Banner[]) ?? []);
     setLoading(false);
   }, []);
 
@@ -86,18 +86,18 @@ const AnnouncementsManager = () => {
 
   const handleCreate = useCallback(async () => {
     if (!form.image_url) return toast.error("Envie uma imagem");
-    if (form.type === "cupom" && !form.code.trim()) return toast.error("Código do cupom é obrigatório");
+    if (form.type === "cupom" && !form.coupon_code.trim()) return toast.error("Código do cupom é obrigatório");
     setSaving(true);
     const payload = {
       image_url: form.image_url,
       type: form.type,
-      code: form.type === "cupom" ? form.code.trim().toUpperCase() : null,
+      coupon_code: form.type === "cupom" ? form.coupon_code.trim().toUpperCase() : null,
       link_url: form.link_url.trim() || null,
       title: form.title.trim() || null,
       sort_order: Number(form.sort_order) || 0,
       active: true,
     };
-    const { error } = await supabase.from("announcement_banners" as any).insert(payload as any);
+    const { error } = await supabase.from("announcement_banners").insert(payload);
     setSaving(false);
     if (error) return toast.error("Erro ao criar anúncio");
     toast.success("Anúncio criado!");
@@ -107,14 +107,14 @@ const AnnouncementsManager = () => {
   }, [form, load]);
 
   const toggleActive = useCallback(async (b: Banner) => {
-    const { error } = await supabase.from("announcement_banners" as any).update({ active: !b.active }).eq("id", b.id);
+    const { error } = await supabase.from("announcement_banners").update({ active: !b.active }).eq("id", b.id);
     if (error) return toast.error("Erro ao atualizar");
     toast.success(b.active ? "Anúncio desativado" : "Anúncio ativado");
     load();
   }, [load]);
 
   const remove = useCallback(async (id: string) => {
-    const { error } = await supabase.from("announcement_banners" as any).delete().eq("id", id);
+    const { error } = await supabase.from("announcement_banners").delete().eq("id", id);
     if (error) return toast.error("Erro ao excluir");
     toast.success("Anúncio excluído");
     load();
@@ -200,8 +200,8 @@ const AnnouncementsManager = () => {
                 <div>
                   <Label>Código do cupom</Label>
                   <Input
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                    value={form.coupon_code}
+                    onChange={(e) => setForm({ ...form, coupon_code: e.target.value.toUpperCase() })}
                     placeholder="PROMO10"
                     className="uppercase font-mono"
                   />
@@ -250,7 +250,7 @@ const AnnouncementsManager = () => {
                 <td className="p-3 capitalize">{b.type}</td>
                 <td className="p-3">
                   <div className="font-medium">{b.title || "—"}</div>
-                  {b.code && <div className="text-xs font-mono text-muted-foreground">{b.code}</div>}
+                  {b.coupon_code && <div className="text-xs font-mono text-muted-foreground">{b.coupon_code}</div>}
                 </td>
                 <td className="p-3">{b.sort_order}</td>
                 <td className="p-3">
