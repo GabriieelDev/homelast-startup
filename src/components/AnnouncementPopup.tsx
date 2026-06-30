@@ -66,7 +66,7 @@ const AnnouncementPopup = () => {
   const current = banners[index];
 
   const handleCopy = useCallback(async () => {
-    if (!current?.code) return;
+    if (!current?.coupon_code) return;
     try {
       await navigator.clipboard.writeText(current.coupon_code);
       setCopied(true);
