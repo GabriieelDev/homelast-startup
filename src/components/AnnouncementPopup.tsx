@@ -10,7 +10,7 @@ interface Banner {
   id: string;
   image_url: string;
   type: "cupom" | "promocao";
-  code: string | null;
+  coupon_code: string | null;
   link_url: string | null;
   title: string | null;
 }
