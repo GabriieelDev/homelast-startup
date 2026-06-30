@@ -41,13 +41,13 @@ const AnnouncementPopup = () => {
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
-        .from("announcement_banners" as any)
+        .from("announcement_banners")
         .select("id,image_url,type,coupon_code,link_url,title")
         .eq("active", true)
         .order("sort_order", { ascending: true })
         .limit(10);
       if (cancelled || error) return;
-      const list = (data as any as Banner[]) ?? [];
+      const list = (data as Banner[]) ?? [];
       if (list.length > 0) {
         setBanners(list);
         setOpen(true);

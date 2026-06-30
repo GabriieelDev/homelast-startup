@@ -51,12 +51,12 @@ const AnnouncementsManager = () => {
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("announcement_banners" as any)
+      .from("announcement_banners")
       .select("*")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar anúncios");
-    setItems((data as any) ?? []);
+    setItems((data as unknown as Banner[]) ?? []);
     setLoading(false);
   }, []);
 
@@ -97,7 +97,7 @@ const AnnouncementsManager = () => {
       sort_order: Number(form.sort_order) || 0,
       active: true,
     };
-    const { error } = await supabase.from("announcement_banners" as any).insert(payload as any);
+    const { error } = await supabase.from("announcement_banners").insert(payload);
     setSaving(false);
     if (error) return toast.error("Erro ao criar anúncio");
     toast.success("Anúncio criado!");
@@ -107,14 +107,14 @@ const AnnouncementsManager = () => {
   }, [form, load]);
 
   const toggleActive = useCallback(async (b: Banner) => {
-    const { error } = await supabase.from("announcement_banners" as any).update({ active: !b.active }).eq("id", b.id);
+    const { error } = await supabase.from("announcement_banners").update({ active: !b.active }).eq("id", b.id);
     if (error) return toast.error("Erro ao atualizar");
     toast.success(b.active ? "Anúncio desativado" : "Anúncio ativado");
     load();
   }, [load]);
 
   const remove = useCallback(async (id: string) => {
-    const { error } = await supabase.from("announcement_banners" as any).delete().eq("id", id);
+    const { error } = await supabase.from("announcement_banners").delete().eq("id", id);
     if (error) return toast.error("Erro ao excluir");
     toast.success("Anúncio excluído");
     load();
