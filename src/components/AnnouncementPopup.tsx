@@ -42,7 +42,7 @@ const AnnouncementPopup = () => {
     (async () => {
       const { data, error } = await supabase
         .from("announcement_banners" as any)
-        .select("id,image_url,type,code,link_url,title")
+        .select("id,image_url,type,coupon_code,link_url,title")
         .eq("active", true)
         .order("sort_order", { ascending: true })
         .limit(10);
@@ -68,9 +68,9 @@ const AnnouncementPopup = () => {
   const handleCopy = useCallback(async () => {
     if (!current?.code) return;
     try {
-      await navigator.clipboard.writeText(current.code);
+      await navigator.clipboard.writeText(current.coupon_code);
       setCopied(true);
-      toast.success(`Cupom ${current.code} copiado!`);
+      toast.success(`Cupom ${current.coupon_code} copiado!`);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Não foi possível copiar");
@@ -143,12 +143,12 @@ const AnnouncementPopup = () => {
           {current.title && (
             <h3 className="font-bold text-lg text-foreground">{current.title}</h3>
           )}
-          {current.type === "cupom" && current.code ? (
+          {current.type === "cupom" && current.coupon_code ? (
             <>
               <div className="flex items-center justify-between gap-3 rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-primary" />
-                  <span className="font-mono font-bold text-lg tracking-wider">{current.code}</span>
+                  <span className="font-mono font-bold text-lg tracking-wider">{current.coupon_code}</span>
                 </div>
               </div>
               <Button
