@@ -18,6 +18,14 @@ import { toast } from "sonner";
 
 type AnnType = "cupom" | "promocao";
 
+function uiToDb(type: AnnType): "coupon" | "promotion" {
+  return type === "cupom" ? "coupon" : "promotion";
+}
+
+function dbToUi(type: string): AnnType {
+  return type === "coupon" ? "cupom" : "promocao";
+}
+
 interface Banner {
   id: string;
   image_url: string;
