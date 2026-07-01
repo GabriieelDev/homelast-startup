@@ -103,7 +103,7 @@ const AnnouncementsManager = () => {
     setSaving(true);
     const payload = {
       image_url: form.image_url,
-      type: form.type,
+      type: uiToDb(form.type),
       coupon_code: form.type === "cupom" ? form.coupon_code.trim().toUpperCase() : null,
       link_url: form.link_url.trim() || null,
       title: form.title.trim() || null,
