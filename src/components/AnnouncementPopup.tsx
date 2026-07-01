@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Copy, Check, Tag, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -35,9 +36,12 @@ const AnnouncementPopup = () => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    if (initializedRef.current) return;
     if (!shouldShowToday()) return;
+    initializedRef.current = true;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
@@ -96,7 +100,9 @@ const AnnouncementPopup = () => {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
-        <DialogTitle className="sr-only">{current.title || "Anúncio promocional"}</DialogTitle>
+        <DialogTitle asChild>
+          <VisuallyHidden>Anúncios e promoções</VisuallyHidden>
+        </DialogTitle>
         <DialogDescription className="sr-only">
           {current.type === "cupom" ? "Cupom de desconto disponível" : "Promoção em destaque"}
         </DialogDescription>
