@@ -36,9 +36,12 @@ const AnnouncementPopup = () => {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    if (initializedRef.current) return;
     if (!shouldShowToday()) return;
+    initializedRef.current = true;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
