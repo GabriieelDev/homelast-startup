@@ -64,7 +64,12 @@ const AnnouncementsManager = () => {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar anúncios");
-    setItems((data as unknown as Banner[]) ?? []);
+    setItems(
+      (data as unknown as Banner[] | null)?.map((item) => ({
+        ...item,
+        type: dbToUi(item.type),
+      })) ?? []
+    );
     setLoading(false);
   }, []);
 
