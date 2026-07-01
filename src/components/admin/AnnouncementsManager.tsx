@@ -97,9 +97,17 @@ const AnnouncementsManager = () => {
       sort_order: Number(form.sort_order) || 0,
       active: true,
     };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setSaving(false);
+      return toast.error("Sessão expirada. Faça login novamente.");
+    }
     const { error } = await supabase.from("announcement_banners").insert(payload);
     setSaving(false);
-    if (error) return toast.error("Erro ao criar anúncio");
+    if (error) {
+      console.log('Erro ao criar anúncio:', error);
+      return toast.error(`Erro ao criar anúncio: ${error.message}`);
+    }
     toast.success("Anúncio criado!");
     setForm(emptyForm);
     setOpen(false);
