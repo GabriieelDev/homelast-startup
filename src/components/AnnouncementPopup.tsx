@@ -10,7 +10,7 @@ import { toast } from "sonner";
 interface Banner {
   id: string;
   image_url: string;
-  type: "cupom" | "promocao";
+  type: "coupon" | "promotion";
   coupon_code: string | null;
   link_url: string | null;
   title: string | null;
