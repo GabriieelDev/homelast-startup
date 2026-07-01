@@ -100,7 +100,9 @@ const AnnouncementPopup = () => {
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
-        <DialogTitle className="sr-only">{current.title || "Anúncio promocional"}</DialogTitle>
+        <DialogTitle asChild>
+          <VisuallyHidden>Anúncios e promoções</VisuallyHidden>
+        </DialogTitle>
         <DialogDescription className="sr-only">
           {current.type === "cupom" ? "Cupom de desconto disponível" : "Promoção em destaque"}
         </DialogDescription>
