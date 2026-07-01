@@ -18,6 +18,14 @@ import { toast } from "sonner";
 
 type AnnType = "cupom" | "promocao";
 
+function uiToDb(type: AnnType): "coupon" | "promotion" {
+  return type === "cupom" ? "coupon" : "promotion";
+}
+
+function dbToUi(type: string): AnnType {
+  return type === "coupon" ? "cupom" : "promocao";
+}
+
 interface Banner {
   id: string;
   image_url: string;
@@ -56,7 +64,12 @@ const AnnouncementsManager = () => {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar anúncios");
-    setItems((data as unknown as Banner[]) ?? []);
+    setItems(
+      (data as unknown as Banner[] | null)?.map((item) => ({
+        ...item,
+        type: dbToUi(item.type),
+      })) ?? []
+    );
     setLoading(false);
   }, []);
 
@@ -90,7 +103,7 @@ const AnnouncementsManager = () => {
     setSaving(true);
     const payload = {
       image_url: form.image_url,
-      type: form.type,
+      type: uiToDb(form.type),
       coupon_code: form.type === "cupom" ? form.coupon_code.trim().toUpperCase() : null,
       link_url: form.link_url.trim() || null,
       title: form.title.trim() || null,
