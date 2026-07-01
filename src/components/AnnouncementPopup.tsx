@@ -10,7 +10,7 @@ import { toast } from "sonner";
 interface Banner {
   id: string;
   image_url: string;
-  type: "cupom" | "promocao";
+  type: "coupon" | "promotion";
   coupon_code: string | null;
   link_url: string | null;
   title: string | null;
@@ -74,7 +74,7 @@ const AnnouncementPopup = () => {
     try {
       await navigator.clipboard.writeText(current.coupon_code);
       setCopied(true);
-      toast.success(`Cupom ${current.coupon_code} copiado!`);
+      toast.success("Cupom copiado! ✓", { style: { color: "#00B894" } });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Não foi possível copiar");
@@ -97,21 +97,23 @@ const AnnouncementPopup = () => {
 
   if (!current) return null;
 
+  const isCoupon = current.type === "coupon";
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
+      <DialogContent className="w-[90vw] max-w-[500px] p-0 overflow-hidden gap-0">
         <DialogTitle asChild>
           <VisuallyHidden>Anúncios e promoções</VisuallyHidden>
         </DialogTitle>
         <DialogDescription className="sr-only">
-          {current.type === "cupom" ? "Cupom de desconto disponível" : "Promoção em destaque"}
+          {isCoupon ? "Cupom de desconto disponível" : "Promoção em destaque"}
         </DialogDescription>
 
-        <div className="relative aspect-[4/3] bg-muted">
+        <div className="relative bg-muted">
           <img
             src={current.image_url}
             alt={current.title || "Anúncio"}
-            className="w-full h-full object-cover"
+            className="w-full h-auto object-contain"
           />
           {banners.length > 1 && (
             <>
@@ -149,7 +151,7 @@ const AnnouncementPopup = () => {
           {current.title && (
             <h3 className="font-bold text-lg text-foreground">{current.title}</h3>
           )}
-          {current.type === "cupom" && current.coupon_code ? (
+          {isCoupon && current.coupon_code ? (
             <>
               <div className="flex items-center justify-between gap-3 rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -160,15 +162,16 @@ const AnnouncementPopup = () => {
               <Button
                 onClick={handleCopy}
                 className="w-full gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                variant={copied ? "secondary" : "default"}
+                style={{ backgroundColor: "#00B894", color: "#fff" }}
               >
-                {copied ? <><Check className="h-4 w-4" /> Copiado!</> : <><Copy className="h-4 w-4" /> Copiar código</>}
+                {copied ? <><Check className="h-4 w-4" /> Copiado! ✓</> : <><Copy className="h-4 w-4" /> Copiar cupom</>}
               </Button>
             </>
           ) : (
             <Button
               onClick={handleAction}
               className="w-full gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              style={{ backgroundColor: "#1D2D50", color: "#fff" }}
             >
               <Sparkles className="h-4 w-4" /> Ver ofertas
             </Button>
