@@ -183,6 +183,26 @@ const Admin = () => {
     return () => { supabase.removeChannel(channel); clearInterval(pollInterval); };
   }, [isAdmin]);
 
+  // Detecta pedidos novos (status = 'recebido') e toca um "ding" apenas uma vez por pedido.
+  const seenOrderIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const currentIds = new Set(orders.map((o) => o.id));
+    if (seenOrderIdsRef.current === null) {
+      // Primeiro carregamento — apenas semeia, não toca.
+      seenOrderIdsRef.current = currentIds;
+      return;
+    }
+    const prev = seenOrderIdsRef.current;
+    const hasNew = orders.some((o) => o.status === "recebido" && !prev.has(o.id));
+    if (hasNew) playDing();
+    seenOrderIdsRef.current = currentIds;
+  }, [orders]);
+
+  const pendingOrdersCount = useMemo(
+    () => orders.filter((o) => o.status === "recebido").length,
+    [orders]
+  );
+
   const customerLabel = useCallback((userId: string, customerName?: string | null) => {
     return customerName?.trim() || profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
   }, [profilesMap, emailsMap]);
