@@ -85,6 +85,27 @@ const Courier = () => {
     }
   }, [user, isCourier, loadCourier, loadOrders]);
 
+  // Polling de 5s para pegar pedidos novos mesmo sem realtime.
+  useEffect(() => {
+    if (!user || !isCourier) return;
+    const id = setInterval(() => { loadOrders(); }, 5000);
+    return () => clearInterval(id);
+  }, [user, isCourier, loadOrders]);
+
+  // "Ding" quando um pedido novo aparecer na lista (uma vez por pedido).
+  const seenOrderIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const currentIds = new Set(orders.map((o) => o.id));
+    if (seenOrderIdsRef.current === null) {
+      seenOrderIdsRef.current = currentIds;
+      return;
+    }
+    const prev = seenOrderIdsRef.current;
+    const hasNew = orders.some((o) => !prev.has(o.id));
+    if (hasNew) playDing();
+    seenOrderIdsRef.current = currentIds;
+  }, [orders]);
+
   // Realtime updates for orders
   useEffect(() => {
     if (!user || !isCourier) return;
