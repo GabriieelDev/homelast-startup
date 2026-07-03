@@ -1,5 +1,6 @@
 import { LogoIcon } from "@/components/Logo";
-import { useEffect, useMemo, useState, useTransition, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, useCallback } from "react";
+import { playDing } from "@/lib/notifySound";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -181,6 +182,26 @@ const Admin = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); clearInterval(pollInterval); };
   }, [isAdmin]);
+
+  // Detecta pedidos novos (status = 'recebido') e toca um "ding" apenas uma vez por pedido.
+  const seenOrderIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const currentIds = new Set(orders.map((o) => o.id));
+    if (seenOrderIdsRef.current === null) {
+      // Primeiro carregamento — apenas semeia, não toca.
+      seenOrderIdsRef.current = currentIds;
+      return;
+    }
+    const prev = seenOrderIdsRef.current;
+    const hasNew = orders.some((o) => o.status === "recebido" && !prev.has(o.id));
+    if (hasNew) playDing();
+    seenOrderIdsRef.current = currentIds;
+  }, [orders]);
+
+  const pendingOrdersCount = useMemo(
+    () => orders.filter((o) => o.status === "recebido").length,
+    [orders]
+  );
 
   const customerLabel = useCallback((userId: string, customerName?: string | null) => {
     return customerName?.trim() || profilesMap[userId]?.trim() || emailsMap[userId] || "Cliente";
@@ -441,7 +462,7 @@ const Admin = () => {
   if (!isAdmin) return <Navigate to="/" replace />;
 
 
-  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
+  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number; badgeColor?: string }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "produtos", label: "Produtos", icon: Package },
     { key: "categorias", label: "Categorias", icon: Tag },
@@ -450,7 +471,7 @@ const Admin = () => {
     { key: "cupons", label: "Cupons", icon: Tag },
     { key: "anuncios", label: "Anúncios", icon: Megaphone },
 
-    { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
+    { key: "pedidos", label: "Pedidos", icon: ShoppingBag, badge: pendingOrdersCount, badgeColor: "#00B894" },
     { key: "estoque", label: "Estoque", icon: Boxes },
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
     { key: "financeiro", label: "Financeiro", icon: DollarSign },
@@ -562,7 +583,7 @@ const Admin = () => {
 
       <div className="container mx-auto px-4 py-6 grid md:grid-cols-[220px_1fr] gap-6">
         <aside className="space-y-1">
-          {tabs.map(({ key, label, icon: Icon, badge }) => (
+          {tabs.map(({ key, label, icon: Icon, badge, badgeColor }) => (
             <button
               key={key}
               onClick={() => handleTabChange(key)}
@@ -573,9 +594,16 @@ const Admin = () => {
               <Icon className="h-4 w-4" />
               <span className="flex-1 text-left">{label}</span>
               {badge && badge > 0 ? (
-                <span className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
-                  tab === key ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground"
-                }`}>{badge}</span>
+                <span
+                  className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                    badgeColor
+                      ? "text-white"
+                      : tab === key
+                      ? "bg-primary-foreground text-primary"
+                      : "bg-destructive text-destructive-foreground"
+                  }`}
+                  style={badgeColor ? { backgroundColor: badgeColor } : undefined}
+                >{badge}</span>
               ) : null}
             </button>
           ))}
