@@ -462,7 +462,7 @@ const Admin = () => {
   if (!isAdmin) return <Navigate to="/" replace />;
 
 
-  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
+  const tabs: { key: Tab; label: string; icon: typeof LayoutDashboard; badge?: number; badgeColor?: string }[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "produtos", label: "Produtos", icon: Package },
     { key: "categorias", label: "Categorias", icon: Tag },
@@ -471,7 +471,7 @@ const Admin = () => {
     { key: "cupons", label: "Cupons", icon: Tag },
     { key: "anuncios", label: "Anúncios", icon: Megaphone },
 
-    { key: "pedidos", label: "Pedidos", icon: ShoppingBag },
+    { key: "pedidos", label: "Pedidos", icon: ShoppingBag, badge: pendingOrdersCount, badgeColor: "#00B894" },
     { key: "estoque", label: "Estoque", icon: Boxes },
     { key: "alertas", label: "Alertas", icon: Bell, badge: alerts.length },
     { key: "financeiro", label: "Financeiro", icon: DollarSign },
