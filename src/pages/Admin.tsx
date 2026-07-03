@@ -1,5 +1,6 @@
 import { LogoIcon } from "@/components/Logo";
-import { useEffect, useMemo, useState, useTransition, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, useCallback } from "react";
+import { playDing } from "@/lib/notifySound";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
