@@ -126,8 +126,10 @@ export function useInfiniteProducts(category: string = "all") {
   return {
     products,
     loading: query.isLoading,
+    isFetching: query.isFetching,
     hasNextPage: Boolean(query.hasNextPage),
     fetchNextPage: query.fetchNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
+    error: query.error,
   };
 }
