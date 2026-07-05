@@ -16,11 +16,23 @@ export const useUserRole = () => {
       return;
     }
     setLoading(true);
+    let cancelled = false;
+    // Safety timeout: never block UI more than 4s on role resolution.
+    const timeout = setTimeout(() => {
+      if (cancelled) return;
+      console.warn("[useUserRole] timeout — falling back to 'cliente'");
+      setRoles(["cliente"]);
+      setLoading(false);
+    }, 4000);
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        clearTimeout(timeout);
+        if (error) console.error("[useUserRole] error:", error);
+        console.log("[useUserRole] loaded roles:", data);
         if (data && data.length > 0) {
           setRoles(data.map((r) => r.role as AppRole));
         } else {
@@ -28,6 +40,7 @@ export const useUserRole = () => {
         }
         setLoading(false);
       });
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, [user]);
 
   const isAdmin = roles.includes("admin");
