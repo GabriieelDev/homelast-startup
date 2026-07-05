@@ -110,7 +110,7 @@ export function useInfiniteProducts(category: string = "all") {
 
   useEffect(() => {
     const channel = supabase
-      .channel(`products-infinite-${Math.random().toString(36).slice(2)}`)
+      .channel("products-infinite")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
         queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
       })
