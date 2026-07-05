@@ -18,9 +18,7 @@ export function useCategories(opts: { onlyActive?: boolean } = {}) {
   const load = useCallback(async () => {
     let q = supabase.from("categories").select("*").order("display_order");
     if (opts.onlyActive) q = q.eq("active", true);
-    const { data, error } = await q;
-    if (error) console.error("[useCategories] load error:", error);
-    console.log("[useCategories] loaded:", (data ?? []).length);
+    const { data } = await q;
     setCategories((data ?? []) as Category[]);
     setLoading(false);
   }, [opts.onlyActive]);
@@ -28,7 +26,7 @@ export function useCategories(opts: { onlyActive?: boolean } = {}) {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel("categories-feed")
+      .channel(`categories-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
