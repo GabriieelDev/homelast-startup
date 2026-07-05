@@ -48,6 +48,7 @@ const Index = () => {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    isFetching: isFetchingInfinite,
   } = useInfiniteProducts(category);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
