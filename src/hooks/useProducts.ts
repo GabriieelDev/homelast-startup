@@ -34,16 +34,19 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("products")
       .select(PRODUCT_COLUMNS)
       .order("name");
+    if (error) console.error("[useProducts] load error:", error);
     let rows = (data ?? []) as any[];
-    const { data: costs } = await supabase.rpc("get_admin_product_costs");
+    const { data: costs, error: costsErr } = await supabase.rpc("get_admin_product_costs");
+    if (costsErr) console.warn("[useProducts] costs error:", costsErr);
     if (Array.isArray(costs) && costs.length > 0) {
       const map = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
       rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));
     }
+    console.log("[useProducts] loaded:", rows.length);
     setProducts(rows.map(fromRow));
     setLoading(false);
   }, []);
