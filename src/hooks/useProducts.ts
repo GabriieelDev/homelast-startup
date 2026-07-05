@@ -34,16 +34,19 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("products")
       .select(PRODUCT_COLUMNS)
       .order("name");
+    if (error) console.error("[useProducts] load error:", error);
     let rows = (data ?? []) as any[];
-    const { data: costs } = await supabase.rpc("get_admin_product_costs");
+    const { data: costs, error: costsErr } = await supabase.rpc("get_admin_product_costs");
+    if (costsErr) console.warn("[useProducts] costs error:", costsErr);
     if (Array.isArray(costs) && costs.length > 0) {
       const map = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
       rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));
     }
+    console.log("[useProducts] loaded:", rows.length);
     setProducts(rows.map(fromRow));
     setLoading(false);
   }, []);
@@ -51,7 +54,7 @@ export function useProducts() {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel(`products-feed-${Math.random().toString(36).slice(2)}`)
+      .channel("products-feed")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -110,7 +113,7 @@ export function useInfiniteProducts(category: string = "all") {
 
   useEffect(() => {
     const channel = supabase
-      .channel(`products-infinite-${Math.random().toString(36).slice(2)}`)
+      .channel("products-infinite")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
         queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
       })
@@ -122,6 +125,19 @@ export function useInfiniteProducts(category: string = "all") {
     () => (query.data?.pages.flat() ?? []) as Product[],
     [query.data],
   );
+
+  // [debug mobile] temporary log — remove after diagnosis
+  useEffect(() => {
+    console.log("[useInfiniteProducts]", {
+      category,
+      isLoading: query.isLoading,
+      isFetching: query.isFetching,
+      error: query.error ? String((query.error as any)?.message ?? query.error) : null,
+      pages: query.data?.pages.length ?? 0,
+      products: products.length,
+    });
+  }, [category, query.isLoading, query.isFetching, query.error, query.data, products.length]);
+
 
   return {
     products,
