@@ -26,7 +26,7 @@ export function useCategories(opts: { onlyActive?: boolean } = {}) {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel(`categories-${Math.random().toString(36).slice(2)}`)
+      .channel("categories-feed")
       .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
