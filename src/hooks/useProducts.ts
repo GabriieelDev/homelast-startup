@@ -123,6 +123,19 @@ export function useInfiniteProducts(category: string = "all") {
     [query.data],
   );
 
+  // [debug mobile] temporary log — remove after diagnosis
+  useEffect(() => {
+    console.log("[useInfiniteProducts]", {
+      category,
+      isLoading: query.isLoading,
+      isFetching: query.isFetching,
+      error: query.error ? String((query.error as any)?.message ?? query.error) : null,
+      pages: query.data?.pages.length ?? 0,
+      products: products.length,
+    });
+  }, [category, query.isLoading, query.isFetching, query.error, query.data, products.length]);
+
+
   return {
     products,
     loading: query.isLoading,
