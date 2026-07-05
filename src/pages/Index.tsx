@@ -123,6 +123,7 @@ const Index = () => {
   // Auto-load next page when sentinel is visible.
   useEffect(() => {
     if (!isFiltering) return;
+    if (isFetchingInfinite) return; // avoid firing before initial data settles (mobile)
     const el = sentinelRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
@@ -135,7 +136,7 @@ const Index = () => {
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [isFiltering, hasNextPage, isFetchingNextPage, fetchNextPage, infiniteFiltered.length]);
+  }, [isFiltering, hasNextPage, isFetchingNextPage, isFetchingInfinite, fetchNextPage, infiniteFiltered.length]);
 
   const maisComprados = useMemo(() => filtered.filter((p) => p.section.includes("mais-comprados")), [filtered]);
   const promocoes = useMemo(() => filtered.filter((p) => p.section.includes("promocoes")), [filtered]);
