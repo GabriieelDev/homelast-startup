@@ -80,7 +80,7 @@ export function useInfiniteProducts(category: string = "all") {
     queryKey,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
-      const page = pageParam as number;
+      const page = (pageParam as number) ?? 0;
       const from = page * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
       let q = supabase
@@ -91,13 +91,22 @@ export function useInfiniteProducts(category: string = "all") {
       if (category === "sale") q = q.eq("on_sale", true);
       else if (category && category !== "all") q = q.eq("category", category);
       const { data, error } = await q;
-      if (error) throw error;
+      if (error) {
+        console.error("Erro produtos:", error);
+        throw error;
+      }
       return ((data ?? []) as any[]).map(fromRow);
     },
     getNextPageParam: (lastPage, pages) =>
       lastPage.length === PAGE_SIZE ? pages.length : undefined,
+    retry: 2,
+    retryDelay: 1000,
     staleTime: 60_000,
   });
+
+  if (query.error) {
+    console.error("Erro produtos (query):", query.error);
+  }
 
   useEffect(() => {
     const channel = supabase
