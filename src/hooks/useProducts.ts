@@ -49,13 +49,20 @@ export function useProducts() {
     setLoading(false);
   }, []);
 
+  const channelRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel(`products-feed-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    if (channelRef.current) return;
+    const channel = supabase.channel(`products-feed-${Math.random().toString(36).slice(2)}`);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "products" }, load);
+    channel.subscribe();
+    channelRef.current = channel;
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [load]);
 
   const getById = useCallback(
