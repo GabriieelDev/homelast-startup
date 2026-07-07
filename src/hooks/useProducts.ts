@@ -116,14 +116,21 @@ export function useInfiniteProducts(category: string = "all") {
     console.error("Erro produtos (query):", query.error);
   }
 
+  const infiniteChannelRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {
-    const channel = supabase
-      .channel(`products-infinite-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    if (infiniteChannelRef.current) return;
+    const channel = supabase.channel(`products-infinite-${Math.random().toString(36).slice(2)}`);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+      queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
+    });
+    channel.subscribe();
+    infiniteChannelRef.current = channel;
+    return () => {
+      if (infiniteChannelRef.current) {
+        supabase.removeChannel(infiniteChannelRef.current);
+        infiniteChannelRef.current = null;
+      }
+    };
   }, [queryClient]);
 
   const products = useMemo(
