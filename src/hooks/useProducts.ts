@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product } from "@/data/products";
 
@@ -48,13 +49,20 @@ export function useProducts() {
     setLoading(false);
   }, []);
 
+  const channelRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel(`products-feed-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    if (channelRef.current) return;
+    const channel = supabase.channel(`products-feed-${Math.random().toString(36).slice(2)}`);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "products" }, load);
+    channel.subscribe();
+    channelRef.current = channel;
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [load]);
 
   const getById = useCallback(
@@ -108,14 +116,21 @@ export function useInfiniteProducts(category: string = "all") {
     console.error("Erro produtos (query):", query.error);
   }
 
+  const infiniteChannelRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {
-    const channel = supabase
-      .channel(`products-infinite-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    if (infiniteChannelRef.current) return;
+    const channel = supabase.channel(`products-infinite-${Math.random().toString(36).slice(2)}`);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+      queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
+    });
+    channel.subscribe();
+    infiniteChannelRef.current = channel;
+    return () => {
+      if (infiniteChannelRef.current) {
+        supabase.removeChannel(infiniteChannelRef.current);
+        infiniteChannelRef.current = null;
+      }
+    };
   }, [queryClient]);
 
   const products = useMemo(

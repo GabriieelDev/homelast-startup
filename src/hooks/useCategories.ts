@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface Category {
   id: string;
@@ -23,13 +24,20 @@ export function useCategories(opts: { onlyActive?: boolean } = {}) {
     setLoading(false);
   }, [opts.onlyActive]);
 
+  const channelRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel(`categories-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    if (channelRef.current) return;
+    const channel = supabase.channel(`categories-${Math.random().toString(36).slice(2)}`);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "categories" }, load);
+    channel.subscribe();
+    channelRef.current = channel;
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [load]);
 
   return { categories, loading, refresh: load };
