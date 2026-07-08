@@ -35,7 +35,7 @@ const Historico = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     supabase
       .from("orders")
       .select("id, order_number, total, status, created_at, items")
@@ -45,7 +45,7 @@ const Historico = () => {
         setOrders((data as OrderRow[]) ?? []);
         setLoading(false);
       });
-  }, [user]);
+  }, [user?.id]);
 
   const buyAgain = (o: OrderRow) => {
     const entries = (o.items ?? [])

@@ -12,7 +12,7 @@ export function useUserAvatar() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!user) { setAvatarUrl(null); setGravatar(null); return; }
+    if (!user?.id) { setAvatarUrl(null); setGravatar(null); return; }
 
     if (user.email) gravatarUrl(user.email).then((u) => { if (!cancelled) setGravatar(u); });
 
@@ -29,7 +29,7 @@ export function useUserAvatar() {
     const onUpdated = () => load();
     window.addEventListener("avatar-updated", onUpdated);
     return () => { cancelled = true; window.removeEventListener("avatar-updated", onUpdated); };
-  }, [user]);
+  }, [user?.id, user?.email]);
 
   return { url: avatarUrl || gravatar, uploadedUrl: avatarUrl, gravatarUrl: gravatar };
 }

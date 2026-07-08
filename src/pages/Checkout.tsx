@@ -41,12 +41,13 @@ const Checkout = () => {
         : Number((Math.random() * (maxS - minS) + minS).toFixed(2)) }
     : null;
 
+  const hasItems = !!state?.items?.length;
   useEffect(() => {
-    if (!state?.items?.length) {
+    if (!hasItems) {
       navigate("/");
       return;
     }
-    if (user) {
+    if (user?.id) {
       supabase
         .from("addresses")
         .select("*")
@@ -55,7 +56,7 @@ const Checkout = () => {
         .maybeSingle()
         .then(({ data }) => setAddress(data));
     }
-  }, [user, state, navigate]);
+  }, [user?.id, hasItems, navigate]);
 
   if (!state) return null;
 
