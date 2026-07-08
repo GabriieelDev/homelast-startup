@@ -10,7 +10,7 @@ export const useUserRole = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       setRoles([]);
       setLoading(false);
       return;
@@ -28,7 +28,7 @@ export const useUserRole = () => {
         }
         setLoading(false);
       });
-  }, [user]);
+  }, [user?.id]);
 
   const isAdmin = roles.includes("admin");
   const isCourier = roles.includes("entregador");

@@ -34,12 +34,12 @@ const Addresses = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchAddresses = async () => {
-    if (!user) return;
+    if (!user?.id) return;
     const { data } = await supabase.from("addresses").select("*").eq("user_id", user.id).order("is_default", { ascending: false });
     if (data) setAddresses(data as Address[]);
   };
 
-  useEffect(() => { fetchAddresses(); }, [user]);
+  useEffect(() => { fetchAddresses(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

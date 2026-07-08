@@ -43,13 +43,14 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     const load = async () => {
       const { data } = await supabase
         .from("orders")
         .select("id, order_number, total, status, created_at, estimated_time, items")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
       setOrders((data as Order[]) ?? []);
       setLoading(false);
@@ -58,10 +59,10 @@ const Orders = () => {
     const pollInterval = setInterval(load, 5000);
 
     const channel = supabase
-      .channel(`orders-list-${user.id}`)
+      .channel(`orders-list-${userId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        { event: "INSERT", schema: "public", table: "orders", filter: `user_id=eq.${userId}` },
         (payload) => {
           const row = payload.new as Order;
           setOrders((prev) => (prev.some((o) => o.id === row.id) ? prev : [row, ...prev]));
@@ -69,7 +70,7 @@ const Orders = () => {
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${userId}` },
         (payload) => {
           const row = payload.new as Order;
           setOrders((prev) => prev.map((o) => (o.id === row.id ? { ...o, ...row } : o)));
@@ -77,7 +78,7 @@ const Orders = () => {
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        { event: "DELETE", schema: "public", table: "orders", filter: `user_id=eq.${userId}` },
         (payload) => {
           const oldRow = payload.old as { id: string };
           setOrders((prev) => prev.filter((o) => o.id !== oldRow.id));
@@ -85,7 +86,7 @@ const Orders = () => {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); clearInterval(pollInterval); };
-  }, [user]);
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-background pb-24">

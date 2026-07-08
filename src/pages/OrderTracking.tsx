@@ -37,27 +37,28 @@ const OrderTracking = () => {
   const [submitting, setSubmitting] = useState(false);
   const lastStatus = useState<string | null>(null);
 
+  const orderId = state?.orderId;
   useEffect(() => {
-    if (!state?.orderId || !user) {
+    if (!orderId || !user?.id) {
       navigate("/pedidos", { replace: true });
       return;
     }
 
     const loadOrder = async () => {
-      const { data } = await supabase.from("orders").select("*").eq("id", state.orderId).maybeSingle();
+      const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
       if (!data) { navigate("/pedidos", { replace: true }); return; }
       setOrder(data);
       setLoading(false);
 
-      const { data: rev } = await supabase.from("order_reviews").select("*").eq("order_id", state.orderId).maybeSingle();
+      const { data: rev } = await supabase.from("order_reviews").select("*").eq("order_id", orderId).maybeSingle();
       setReview(rev);
     };
     loadOrder();
 
     // Realtime updates
     const channel = supabase
-      .channel(`order-${state.orderId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${state.orderId}` }, (payload) => {
+      .channel(`order-${orderId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, (payload) => {
         const newOrder = payload.new as any;
         setOrder((prev: any) => {
           if (prev && prev.status !== newOrder.status) {
@@ -69,7 +70,7 @@ const OrderTracking = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [state, user, navigate]);
+  }, [orderId, user?.id, navigate]);
 
   const handleSubmitReview = async () => {
     if (!rating || !user || !order) return;

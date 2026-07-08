@@ -58,7 +58,7 @@ const Perfil = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     supabase
       .from("profiles")
       .select("full_name, phone")
@@ -70,7 +70,7 @@ const Perfil = () => {
           setPhone(data.phone ?? "");
         }
       });
-  }, [user]);
+  }, [user?.id]);
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
