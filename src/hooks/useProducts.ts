@@ -7,6 +7,35 @@ import type { Product } from "@/data/products";
 const PRODUCT_COLUMNS =
   "id,name,price,original_price,image,category,category_id,sections,unit,description,active,on_sale,discount_type,discount_value,sale_price,sale_start,sale_end,sale_label";
 
+interface UseProductsOptions {
+  includeAdminCosts?: boolean;
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function loadAdminProductCosts(maxRetries = 1) {
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    const { data, error, status } = await supabase.rpc("get_admin_product_costs");
+
+    if (!error) return Array.isArray(data) ? data : [];
+
+    console.error("[Products] Falha em get_admin_product_costs:", {
+      status,
+      code: error.code,
+      message: error.message,
+      attempt: attempt + 1,
+    });
+
+    if ([400, 401, 403].includes(status) || attempt === maxRetries) {
+      return [];
+    }
+
+    await sleep(750 * (attempt + 1));
+  }
+
+  return [];
+}
+
 function fromRow(r: any): Product {
   return {
     id: r.id,
@@ -30,24 +59,32 @@ function fromRow(r: any): Product {
   } as Product;
 }
 
-export function useProducts() {
+export function useProducts({ includeAdminCosts = false }: UseProductsOptions = {}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("products")
       .select(PRODUCT_COLUMNS)
       .order("name");
+
+    if (error) {
+      console.error("[Products] Falha ao carregar produtos:", error);
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+
     let rows = (data ?? []) as any[];
-    const { data: costs } = await supabase.rpc("get_admin_product_costs");
-    if (Array.isArray(costs) && costs.length > 0) {
+    if (includeAdminCosts) {
+      const costs = await loadAdminProductCosts();
       const map = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
       rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));
     }
     setProducts(rows.map(fromRow));
     setLoading(false);
-  }, []);
+  }, [includeAdminCosts]);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   useEffect(() => {

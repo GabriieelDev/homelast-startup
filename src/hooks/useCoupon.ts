@@ -19,6 +19,7 @@ interface CalcParams {
 
 export function useCoupon() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,11 +61,11 @@ export function useCoupon() {
       }
 
       // First-order check
-      if (data.discount_type === "first_order" && user) {
+      if (data.discount_type === "first_order" && userId) {
         const { count } = await supabase
           .from("orders")
           .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
+          .eq("user_id", userId);
         if ((count ?? 0) > 0) {
           setError("Cupom válido apenas na primeira compra.");
           setCoupon(null);
@@ -100,7 +101,7 @@ export function useCoupon() {
       });
       return true;
     },
-    [user]
+    [userId]
   );
 
   const clear = useCallback(() => {

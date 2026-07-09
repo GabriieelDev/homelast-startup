@@ -40,57 +40,59 @@ const Courier = () => {
   const navigate = useNavigate();
   const { user, signOut, loading: authLoading } = useAuth();
   const { isCourier, loading: roleLoading } = useUserRole();
+  const userId = user?.id;
+  const userEmail = user?.email;
   const [status, setStatus] = useState<CourierStatus>("offline");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const loadCourier = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     // Ensure courier profile exists
     const { data: courierData } = await supabase
       .from("couriers")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (!courierData) {
       await supabase.from("couriers").insert({
-        user_id: user.id,
-        full_name: user.email?.split("@")[0] ?? "Entregador",
+        user_id: userId,
+        full_name: userEmail?.split("@")[0] ?? "Entregador",
       });
       setStatus("offline");
     } else {
       setStatus((courierData.status as CourierStatus) ?? "offline");
     }
-  }, [user]);
+  }, [userId, userEmail]);
 
   const loadOrders = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoadingOrders(true);
     const { data } = await supabase
       .from("orders")
       .select("*")
-      .or(`courier_id.is.null,courier_id.eq.${user.id}`)
+      .or(`courier_id.is.null,courier_id.eq.${userId}`)
       .in("status", ["preparo", "caminho"])
       .order("created_at", { ascending: false });
     setOrders((data as Order[]) ?? []);
     setLoadingOrders(false);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (user && isCourier) {
+    if (userId && isCourier) {
       loadCourier();
       loadOrders();
     }
-  }, [user, isCourier, loadCourier, loadOrders]);
+  }, [userId, isCourier, loadCourier, loadOrders]);
 
   // Polling de 5s para pegar pedidos novos mesmo sem realtime.
   useEffect(() => {
-    if (!user || !isCourier) return;
+    if (!userId || !isCourier) return;
     const id = setInterval(() => { loadOrders(); }, 5000);
     return () => clearInterval(id);
-  }, [user, isCourier, loadOrders]);
+  }, [userId, isCourier, loadOrders]);
 
   // "Ding" quando um pedido novo aparecer na lista (uma vez por pedido).
   const seenOrderIdsRef = useRef<Set<string> | null>(null);
@@ -108,7 +110,7 @@ const Courier = () => {
 
   // Realtime updates for orders
   useEffect(() => {
-    if (!user || !isCourier) return;
+    if (!userId || !isCourier) return;
     const channel = supabase
       .channel("courier-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
@@ -118,21 +120,21 @@ const Courier = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, isCourier, loadOrders]);
+  }, [userId, isCourier, loadOrders]);
 
   const updateStatus = async (newStatus: CourierStatus) => {
-    if (!user) return;
+    if (!userId) return;
     setStatus(newStatus);
-    await supabase.from("couriers").update({ status: newStatus }).eq("user_id", user.id);
+    await supabase.from("couriers").update({ status: newStatus }).eq("user_id", userId);
     toast.success(`Status atualizado: ${STATUS_LABEL[newStatus]}`);
   };
 
   const acceptOrder = async (order: Order) => {
-    if (!user) return;
+    if (!userId) return;
     setActionLoading(order.id);
     const { error } = await supabase
       .from("orders")
-      .update({ courier_id: user.id, status: "caminho" })
+      .update({ courier_id: userId, status: "caminho" })
       .eq("id", order.id);
     setActionLoading(null);
     if (error) {
@@ -145,7 +147,7 @@ const Courier = () => {
   };
 
   const markDelivered = async (order: Order) => {
-    if (!user) return;
+    if (!userId) return;
     setActionLoading(order.id);
     const { error } = await supabase
       .from("orders")
@@ -193,7 +195,7 @@ const Courier = () => {
   }
 
   const available = orders.filter((o) => !o.courier_id);
-  const myActive = orders.filter((o) => o.courier_id === user.id);
+  const myActive = orders.filter((o) => o.courier_id === userId);
 
   return (
     <div className="min-h-screen bg-background">

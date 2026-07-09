@@ -26,17 +26,18 @@ const calcFrete = () => {
 const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: FloatingCartProps) => {
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
+  const userId = user?.id;
   const navigate = useNavigate();
   const [defaultAddress, setDefaultAddress] = useState<string | null>(null);
   const [hasAddress, setHasAddress] = useState(false);
   const [frete] = useState(() => Number(calcFrete().toFixed(2)));
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     supabase
       .from("addresses")
       .select("street, number, neighborhood")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("is_default", true)
       .maybeSingle()
       .then(({ data }) => {
@@ -47,7 +48,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
           setHasAddress(false);
         }
       });
-  }, [user]);
+  }, [userId]);
 
   if (totalItems === 0) return null;
 
