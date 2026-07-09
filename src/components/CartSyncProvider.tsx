@@ -5,6 +5,7 @@ import { cartSync } from "@/hooks/useCart";
 
 const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
+  const userId = user?.id ?? null;
   const channelRef = useRef<any>(null);
   const lastUserRef = useRef<string | null>(null);
 
@@ -18,7 +19,7 @@ const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    if (!user) {
+    if (!userId) {
       if (lastUserRef.current) {
         cartSync.onLogout();
         lastUserRef.current = null;
@@ -27,17 +28,17 @@ const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    if (lastUserRef.current === user.id) return;
-    lastUserRef.current = user.id;
+    if (lastUserRef.current === userId) return;
+    lastUserRef.current = userId;
 
-    cartSync.onLogin(user.id);
+    cartSync.onLogin(userId);
 
     cleanupChannel();
     channelRef.current = supabase
-      .channel(`user-cart-${user.id}`)
+      .channel(`user-cart-${userId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "user_carts", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "user_carts", filter: `user_id=eq.${userId}` },
         (payload) => {
           const items = (payload.new as any)?.items;
           if (Array.isArray(items)) {
@@ -50,7 +51,7 @@ const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe();
 
     return cleanupChannel;
-  }, [user, loading]);
+  }, [userId, loading]);
 
   return <>{children}</>;
 };

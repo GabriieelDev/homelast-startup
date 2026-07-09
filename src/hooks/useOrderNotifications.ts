@@ -17,26 +17,27 @@ const STATUS_MSG: Record<string, string> = {
  */
 export function useOrderNotifications() {
   const { user } = useAuth();
+  const userId = user?.id;
   const navigate = useNavigate();
   const lastStatus = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     // Seed current statuses to avoid spamming on initial load
     supabase
       .from("orders")
       .select("id, status")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .then(({ data }) => {
         (data ?? []).forEach((o: any) => (lastStatus.current[o.id] = o.status));
       });
 
     const channel = supabase
-      .channel(`user-orders-${user.id}`)
+      .channel(`user-orders-${userId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${userId}` },
         (payload) => {
           const row: any = payload.new ?? payload.old;
           if (!row) return;
@@ -62,5 +63,5 @@ export function useOrderNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, navigate]);
+  }, [userId, navigate]);
 }

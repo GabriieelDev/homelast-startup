@@ -78,7 +78,7 @@ const Admin = () => {
   const [productFormOpen, setProductFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
-  const { products } = useProducts();
+  const { products } = useProducts({ includeAdminCosts: true });
   const { disabledIds, enableProduct } = useDisabledProducts();
   const { settings, loading: settingsLoading, save: saveSettings } = useStoreSettings();
   const [draftSettings, setDraftSettings] = useState(settings);
@@ -92,8 +92,13 @@ const Admin = () => {
   };
   const STATUS_ICONS: Record<string, any> = { recebido: Package, preparo: ChefHat, caminho: Truck, entregue: CheckCircle };
 
+  const adminPollingStartedRef = useRef(false);
+  const adminPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const adminChannelRef = useRef<any>(null);
+
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || adminPollingStartedRef.current) return;
+    adminPollingStartedRef.current = true;
 
     const loadProfilesFor = async (userIds: string[]) => {
       const ids = Array.from(new Set(userIds.filter(Boolean)));
@@ -144,9 +149,9 @@ const Admin = () => {
       setStockMap(map);
     };
     load(); loadStock();
-    const pollInterval = setInterval(() => { load(); }, 5000);
+    adminPollIntervalRef.current = setInterval(() => { load(); }, 5000);
 
-    const channel = supabase
+    adminChannelRef.current = supabase
       .channel("admin-orders")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
         const row: any = payload.new;
@@ -180,8 +185,21 @@ const Admin = () => {
         setStockMap((prev) => { const next = { ...prev }; delete next[row.product_id]; return next; });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); clearInterval(pollInterval); };
   }, [isAdmin]);
+
+  useEffect(() => {
+    return () => {
+      if (adminPollIntervalRef.current) {
+        clearInterval(adminPollIntervalRef.current);
+        adminPollIntervalRef.current = null;
+      }
+      if (adminChannelRef.current) {
+        supabase.removeChannel(adminChannelRef.current);
+        adminChannelRef.current = null;
+      }
+      adminPollingStartedRef.current = false;
+    };
+  }, []);
 
   // Detecta pedidos novos (status = 'recebido') e toca um "ding" apenas uma vez por pedido.
   const seenOrderIdsRef = useRef<Set<string> | null>(null);

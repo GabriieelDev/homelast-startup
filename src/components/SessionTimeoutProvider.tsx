@@ -18,6 +18,7 @@ const ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "scroll", "click"
 
 const SessionTimeoutProvider = ({ children }: { children: ReactNode }) => {
   const { user, signOut } = useAuth();
+  const userId = user?.id;
   const navigate = useNavigate();
   const [warnOpen, setWarnOpen] = useState(false);
   const [remaining, setRemaining] = useState(WARNING_BEFORE_MS);
@@ -54,14 +55,14 @@ const SessionTimeoutProvider = ({ children }: { children: ReactNode }) => {
   }, [doLogout]);
 
   const resetTimers = useCallback(() => {
-    if (!user) return;
+    if (!userId) return;
     clearTimers();
     setWarnOpen(false);
     warnTimer.current = setTimeout(startCountdown, INACTIVITY_MS - WARNING_BEFORE_MS);
-  }, [user, startCountdown]);
+  }, [userId, startCountdown]);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       clearTimers();
       setWarnOpen(false);
       return;
@@ -76,7 +77,7 @@ const SessionTimeoutProvider = ({ children }: { children: ReactNode }) => {
       clearTimers();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, warnOpen]);
+  }, [userId, warnOpen]);
 
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000).toString().padStart(2, "0");
