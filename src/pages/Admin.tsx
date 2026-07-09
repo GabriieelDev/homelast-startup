@@ -78,7 +78,7 @@ const Admin = () => {
   const [productFormOpen, setProductFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
-  const { products } = useProducts({ includeAdminCosts: true });
+  const { products } = useProducts({ includeAdminCosts: isAdmin });
   const { disabledIds, enableProduct } = useDisabledProducts();
   const { settings, loading: settingsLoading, save: saveSettings } = useStoreSettings();
   const [draftSettings, setDraftSettings] = useState(settings);

@@ -47,11 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // 1) Listener registered first so we don't miss events.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      const houveMudanca =
-        (userRef.current?.id ?? null) !== (newSession?.user?.id ?? null) ||
-        (sessionRef.current?.access_token ?? null) !== (newSession?.access_token ?? null);
-      console.log("[Auth] evento:", event, "setUser chamado:", houveMudanca);
-
       if (event === "SIGNED_OUT" && newSession === null) {
         userRef.current = null;
         sessionRef.current = null;
