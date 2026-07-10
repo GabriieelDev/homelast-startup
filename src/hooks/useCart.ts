@@ -94,54 +94,73 @@ function resetPushDedup() {
   _lastPushedHash = null;
 }
 
+// Tracks last user we ran onLogin/onLogout for. Module-level so it survives
+// CartSyncProvider remounts (StrictMode, HMR) — otherwise we'd re-run the
+// login merge on every remount and generate spurious upserts.
+let _lastAuthUser: string | null = null;
+let _loginInFlight: Promise<void> | null = null;
+
 /** Called by CartSyncProvider when auth state changes. */
 export const cartSync = {
   async onLogin(userId: string) {
+    if (_lastAuthUser === userId) return;
+    if (_loginInFlight) return _loginInFlight;
+    _lastAuthUser = userId;
     _userId = userId;
     _serverSyncEnabled = true;
+    resetPushDedup();
 
-    const local = _items;
-    const { data } = await supabase
-      .from("user_carts")
-      .select("items")
-      .eq("user_id", userId)
-      .maybeSingle();
+    _loginInFlight = (async () => {
+      const local = _items;
+      const { data } = await supabase
+        .from("user_carts")
+        .select("items")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    const server: CartItem[] = Array.isArray((data as any)?.items)
-      ? ((data as any).items as CartItem[]).filter((i) => i?.product?.id)
-      : [];
+      const server: CartItem[] = Array.isArray((data as any)?.items)
+        ? ((data as any).items as CartItem[]).filter((i) => i?.product?.id)
+        : [];
 
-    const localHas = local.length > 0;
-    const serverHas = server.length > 0;
+      const localHas = local.length > 0;
+      const serverHas = server.length > 0;
 
-    if (!localHas && !serverHas) return;
-    if (!localHas && serverHas) {
-      _suppressNextPush = true;
-      setItems(server);
-      toast.success("Seu carrinho foi restaurado 🛒");
-      return;
-    }
-    if (localHas && !serverHas) {
-      setItems(local, { push: true });
-      toast.success("Seus itens foram salvos no carrinho");
-      return;
-    }
-    // Both have items → silently merge
-    const merged = mergeCarts(local, server);
-    setItems(merged, { push: true });
-    toast.success("Carrinhos mesclados 🛒");
+      if (!localHas && !serverHas) return;
+      if (!localHas && serverHas) {
+        _suppressNextPush = true;
+        setItems(server);
+        toast.success("Seu carrinho foi restaurado 🛒");
+        return;
+      }
+      if (localHas && !serverHas) {
+        setItems(local, { push: true });
+        toast.success("Seus itens foram salvos no carrinho");
+        return;
+      }
+      // Both have items → silently merge
+      const merged = mergeCarts(local, server);
+      setItems(merged, { push: true });
+      toast.success("Carrinhos mesclados 🛒");
+    })().finally(() => { _loginInFlight = null; });
+
+    return _loginInFlight;
   },
 
 
   onLogout() {
+    if (_lastAuthUser === null) return;
+    _lastAuthUser = null;
     _userId = null;
     _serverSyncEnabled = false;
+    resetPushDedup();
     // keep local cart as temporary session
   },
 
   /** Apply realtime update from server (do not push back). */
   applyServerSnapshot(items: CartItem[]) {
     _suppressNextPush = true;
+    // Server is source of truth — align dedup hash so we don't push it back.
+    _lastPushedHash = hashItems(items);
     setItems(items);
   },
 
