@@ -7,7 +7,6 @@ const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const userId = user?.id ?? null;
   const channelRef = useRef<any>(null);
-  const lastUserRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -20,35 +19,32 @@ const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     if (!userId) {
-      if (lastUserRef.current) {
-        cartSync.onLogout();
-        lastUserRef.current = null;
-        cleanupChannel();
-      }
+      cartSync.onLogout();
+      cleanupChannel();
       return;
     }
 
-    if (lastUserRef.current === userId) return;
-    lastUserRef.current = userId;
+    // cartSync.onLogin is idempotent per userId (module-level guard),
+    // so remounts / StrictMode double-invocations won't re-run the merge.
+    void cartSync.onLogin(userId);
 
-    cartSync.onLogin(userId);
-
-    cleanupChannel();
-    channelRef.current = supabase
-      .channel(`user-cart-${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_carts", filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const items = (payload.new as any)?.items;
-          if (Array.isArray(items)) {
-            cartSync.applyServerSnapshot(
-              items.filter((i: any) => i?.product?.id)
-            );
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel(`user-cart-${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "user_carts", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            const items = (payload.new as any)?.items;
+            if (Array.isArray(items)) {
+              cartSync.applyServerSnapshot(
+                items.filter((i: any) => i?.product?.id)
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    }
 
     return cleanupChannel;
   }, [userId, loading]);
@@ -57,3 +53,4 @@ const CartSyncProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default CartSyncProvider;
+
