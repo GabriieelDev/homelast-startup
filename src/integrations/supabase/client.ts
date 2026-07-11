@@ -8,14 +8,54 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Retry backoff schedule for HTTP 429 (rate limit). We NEVER treat 429 as
+// a logout signal — instead we wait and retry the same request transparently.
+const RETRY_DELAYS_MS = [2000, 5000, 10000];
+
+// Broadcast reconnecting state so the UI can show a discreet indicator.
+const emitReconnecting = (active: boolean) => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('supabase:reconnecting', { detail: { active } }));
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const retryingFetch: typeof fetch = async (input, init) => {
+  let lastResponse: Response | null = null;
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const res = await fetch(input, init);
+      if (res.status !== 429) {
+        if (attempt > 0) emitReconnecting(false);
+        return res;
+      }
+      lastResponse = res;
+    } catch (err) {
+      lastError = err;
+    }
+
+    if (attempt < RETRY_DELAYS_MS.length) {
+      emitReconnecting(true);
+      await sleep(RETRY_DELAYS_MS[attempt]);
+    }
+  }
+
+  emitReconnecting(false);
+  if (lastResponse) return lastResponse;
+  throw lastError ?? new Error('Network error');
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    // Use the SDK default storageKey to avoid ever having two `sb-*-auth-token`
-    // entries in localStorage (custom + default) fighting over the session.
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
+  },
+  global: {
+    fetch: retryingFetch,
   },
 });
