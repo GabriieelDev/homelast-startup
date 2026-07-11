@@ -10,7 +10,7 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 // Retry backoff schedule for HTTP 429 (rate limit). We NEVER treat 429 as
 // a logout signal — instead we wait and retry the same request transparently.
-const RETRY_DELAYS_MS = [2000, 5000, 10000];
+const RETRY_DELAYS_MS = [500, 1500, 3000];
 
 // Broadcast reconnecting state so the UI can show a discreet indicator.
 const emitReconnecting = (active: boolean) => {
