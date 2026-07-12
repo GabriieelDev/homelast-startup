@@ -12,39 +12,87 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // a logout signal — instead we wait and retry the same request transparently.
 const RETRY_DELAYS_MS = [500, 1500, 3000];
 
-// Broadcast reconnecting state so the UI can show a discreet indicator.
-const emitReconnecting = (active: boolean) => {
+// Global counter of concurrently-retrying requests. The "reconnecting" UI
+// stays visible while at least one request is retrying; it only clears
+// once ALL parallel retry chains have finished. Prevents flicker when
+// multiple requests hit 429 at the same time.
+let activeRetryCount = 0;
+let retryRequestSeq = 0;
+const RETRY_DEBUG = typeof window !== 'undefined'
+  && (window.location.search.includes('debug=true')
+      || (window as any).__RETRY_DEBUG === true);
+
+const setReconnectingActive = (delta: 1 | -1) => {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('supabase:reconnecting', { detail: { active } }));
+  const prev = activeRetryCount;
+  activeRetryCount = Math.max(0, activeRetryCount + delta);
+  if (prev === 0 && activeRetryCount > 0) {
+    window.dispatchEvent(new CustomEvent('supabase:reconnecting', { detail: { active: true } }));
+  } else if (prev > 0 && activeRetryCount === 0) {
+    window.dispatchEvent(new CustomEvent('supabase:reconnecting', { detail: { active: false } }));
+  }
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const shortUrl = (input: RequestInfo | URL) => {
+  try {
+    const u = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : (input as Request).url);
+    return u.replace(/^https?:\/\/[^/]+/, '').slice(0, 80);
+  } catch {
+    return '<unknown>';
+  }
+};
+
 const retryingFetch: typeof fetch = async (input, init) => {
   let lastResponse: Response | null = null;
   let lastError: unknown = null;
+  let countedActive = false;
+  const reqId = ++retryRequestSeq;
+  const url = shortUrl(input);
+  const startedAt = performance.now();
 
-  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-    try {
-      const res = await fetch(input, init);
-      if (res.status !== 429) {
-        if (attempt > 0) emitReconnecting(false);
-        return res;
+  try {
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        const res = await fetch(input, init);
+        if (res.status !== 429) {
+          if (RETRY_DEBUG && attempt > 0) {
+            console.log(`[retry #${reqId}] ✓ ok after ${attempt} retries in ${Math.round(performance.now() - startedAt)}ms — ${url} (active=${activeRetryCount})`);
+          }
+          return res;
+        }
+        lastResponse = res;
+        if (RETRY_DEBUG) {
+          console.log(`[retry #${reqId}] 429 attempt=${attempt} url=${url} activeBefore=${activeRetryCount}`);
+        }
+      } catch (err) {
+        lastError = err;
+        if (RETRY_DEBUG) {
+          console.log(`[retry #${reqId}] net-err attempt=${attempt} url=${url}`, err);
+        }
       }
-      lastResponse = res;
-    } catch (err) {
-      lastError = err;
+
+      if (attempt < RETRY_DELAYS_MS.length) {
+        if (!countedActive) {
+          countedActive = true;
+          setReconnectingActive(1);
+          if (RETRY_DEBUG) console.log(`[retry #${reqId}] ▶ start retry loop (active=${activeRetryCount}) url=${url}`);
+        }
+        await sleep(RETRY_DELAYS_MS[attempt]);
+      }
     }
 
-    if (attempt < RETRY_DELAYS_MS.length) {
-      emitReconnecting(true);
-      await sleep(RETRY_DELAYS_MS[attempt]);
+    if (lastResponse) return lastResponse;
+    throw lastError ?? new Error('Network error');
+  } finally {
+    if (countedActive) {
+      setReconnectingActive(-1);
+      if (RETRY_DEBUG) {
+        console.log(`[retry #${reqId}] ■ end retry loop after ${Math.round(performance.now() - startedAt)}ms (active=${activeRetryCount}) url=${url}`);
+      }
     }
   }
-
-  emitReconnecting(false);
-  if (lastResponse) return lastResponse;
-  throw lastError ?? new Error('Network error');
 };
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
