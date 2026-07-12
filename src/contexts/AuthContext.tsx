@@ -53,27 +53,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      if (event === "SIGNED_OUT" && newSession === null) {
-        // If the user explicitly signed out, honor it immediately.
-        if (signOutRequestedRef.current) {
-          signOutRequestedRef.current = false;
-          clearAuth();
-          return;
-        }
-        // Otherwise, this may be a transient failure (e.g. refresh_token
-        // rate-limited beyond retries). Double-check with getSession before
-        // dropping the user — the retrying fetch wrapper will handle 429s.
-        try {
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            applySession(data.session);
-            return;
-          }
-        } catch {
-          // network still down — keep the current session visible
-          return;
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      // NOTE: never call supabase.auth.getSession()/getUser()/refreshSession()
+      // from inside this callback — doing so re-enters the SDK's refresh path
+      // and, on refresh failures, produces a SIGNED_OUT → getSession →
+      // refresh → SIGNED_OUT infinite loop. 429s are already handled
+      // transparently by the retrying fetch wrapper in the client.
+      if (event === "SIGNED_OUT") {
+        signOutRequestedRef.current = false;
         clearAuth();
         return;
       }
