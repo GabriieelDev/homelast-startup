@@ -150,6 +150,9 @@ const Admin = () => {
     };
     load(); loadStock();
     adminPollIntervalRef.current = setInterval(() => { load(); }, 5000);
+    // TEMP DEBUG: contador global de pollings ativos
+    (window as any).__activePollingCount = ((window as any).__activePollingCount ?? 0) + 1;
+    console.log(`[POLL+] Admin orders polling criado. Ativos agora: ${(window as any).__activePollingCount}`);
 
     adminChannelRef.current = supabase
       .channel("admin-orders")
@@ -192,6 +195,8 @@ const Admin = () => {
       if (adminPollIntervalRef.current) {
         clearInterval(adminPollIntervalRef.current);
         adminPollIntervalRef.current = null;
+        (window as any).__activePollingCount = Math.max(0, ((window as any).__activePollingCount ?? 1) - 1);
+        console.log(`[POLL-] Admin orders polling limpo. Ativos agora: ${(window as any).__activePollingCount}`);
       }
       if (adminChannelRef.current) {
         supabase.removeChannel(adminChannelRef.current);
