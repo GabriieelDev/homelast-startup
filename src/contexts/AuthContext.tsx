@@ -75,11 +75,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    const onReconnecting = (e: Event) => {
-      const detail = (e as CustomEvent<{ active: boolean }>).detail;
-      setReconnecting(!!detail?.active);
-    };
-    window.addEventListener('supabase:reconnecting', onReconnecting);
+
+
 
     return () => {
       subscription.unsubscribe();
