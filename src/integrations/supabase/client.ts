@@ -8,91 +8,70 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Retry backoff schedule for HTTP 429 (rate limit). We NEVER treat 429 as
-// a logout signal — instead we wait and retry the same request transparently.
+// Silent retry + circuit breaker for HTTP 429 (rate limit).
+// - We NEVER treat 429 as a logout signal.
+// - We NEVER show any UI indicator ("Reconectando...", etc.) — reconnection
+//   must be invisible. The screen keeps whatever data was last loaded.
+// - If too many 429s happen in a short window, we open a circuit breaker:
+//   subsequent requests short-circuit to a fake 429 for a cool-down period,
+//   so callers just keep their previously-rendered data. After the cool-down,
+//   traffic resumes silently.
 const RETRY_DELAYS_MS = [500, 1500, 3000];
+const BREAKER_THRESHOLD = 5;          // >5 429s
+const BREAKER_WINDOW_MS = 30_000;     // within 30s
+const BREAKER_COOLDOWN_MS = 18_000;   // pause 18s
 
-// Global counter of concurrently-retrying requests. The "reconnecting" UI
-// stays visible while at least one request is retrying; it only clears
-// once ALL parallel retry chains have finished. Prevents flicker when
-// multiple requests hit 429 at the same time.
-let activeRetryCount = 0;
-let retryRequestSeq = 0;
-const RETRY_DEBUG = typeof window !== 'undefined'
-  && (window.location.search.includes('debug=true')
-      || (window as any).__RETRY_DEBUG === true);
-
-const setReconnectingActive = (delta: 1 | -1) => {
-  if (typeof window === 'undefined') return;
-  const prev = activeRetryCount;
-  activeRetryCount = Math.max(0, activeRetryCount + delta);
-  if (prev === 0 && activeRetryCount > 0) {
-    window.dispatchEvent(new CustomEvent('supabase:reconnecting', { detail: { active: true } }));
-  } else if (prev > 0 && activeRetryCount === 0) {
-    window.dispatchEvent(new CustomEvent('supabase:reconnecting', { detail: { active: false } }));
-  }
-};
+const recent429s: number[] = [];
+let breakerOpenUntil = 0;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const shortUrl = (input: RequestInfo | URL) => {
-  try {
-    const u = typeof input === 'string' ? input : (input instanceof URL ? input.toString() : (input as Request).url);
-    return u.replace(/^https?:\/\/[^/]+/, '').slice(0, 80);
-  } catch {
-    return '<unknown>';
+const record429 = () => {
+  const now = Date.now();
+  recent429s.push(now);
+  // prune old
+  while (recent429s.length && now - recent429s[0] > BREAKER_WINDOW_MS) {
+    recent429s.shift();
+  }
+  if (recent429s.length > BREAKER_THRESHOLD && now >= breakerOpenUntil) {
+    breakerOpenUntil = now + BREAKER_COOLDOWN_MS;
   }
 };
 
+const makeSilent429 = (): Response =>
+  new Response(JSON.stringify({ error: 'rate_limited' }), {
+    status: 429,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
 const retryingFetch: typeof fetch = async (input, init) => {
+  // Circuit breaker open → fail silently without hitting the network.
+  if (Date.now() < breakerOpenUntil) {
+    return makeSilent429();
+  }
+
   let lastResponse: Response | null = null;
   let lastError: unknown = null;
-  let countedActive = false;
-  const reqId = ++retryRequestSeq;
-  const url = shortUrl(input);
-  const startedAt = performance.now();
 
-  try {
-    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
-      try {
-        const res = await fetch(input, init);
-        if (res.status !== 429) {
-          if (RETRY_DEBUG && attempt > 0) {
-            console.log(`[retry #${reqId}] ✓ ok after ${attempt} retries in ${Math.round(performance.now() - startedAt)}ms — ${url} (active=${activeRetryCount})`);
-          }
-          return res;
-        }
-        lastResponse = res;
-        if (RETRY_DEBUG) {
-          console.log(`[retry #${reqId}] 429 attempt=${attempt} url=${url} activeBefore=${activeRetryCount}`);
-        }
-      } catch (err) {
-        lastError = err;
-        if (RETRY_DEBUG) {
-          console.log(`[retry #${reqId}] net-err attempt=${attempt} url=${url}`, err);
-        }
-      }
-
-      if (attempt < RETRY_DELAYS_MS.length) {
-        if (!countedActive) {
-          countedActive = true;
-          setReconnectingActive(1);
-          if (RETRY_DEBUG) console.log(`[retry #${reqId}] ▶ start retry loop (active=${activeRetryCount}) url=${url}`);
-        }
-        await sleep(RETRY_DELAYS_MS[attempt]);
-      }
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const res = await fetch(input, init);
+      if (res.status !== 429) return res;
+      lastResponse = res;
+      record429();
+      // If the breaker just opened, stop retrying immediately.
+      if (Date.now() < breakerOpenUntil) return makeSilent429();
+    } catch (err) {
+      lastError = err;
     }
 
-    if (lastResponse) return lastResponse;
-    throw lastError ?? new Error('Network error');
-  } finally {
-    if (countedActive) {
-      setReconnectingActive(-1);
-      if (RETRY_DEBUG) {
-        console.log(`[retry #${reqId}] ■ end retry loop after ${Math.round(performance.now() - startedAt)}ms (active=${activeRetryCount}) url=${url}`);
-      }
+    if (attempt < RETRY_DELAYS_MS.length) {
+      await sleep(RETRY_DELAYS_MS[attempt]);
     }
   }
+
+  if (lastResponse) return lastResponse;
+  throw lastError ?? new Error('Network error');
 };
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
