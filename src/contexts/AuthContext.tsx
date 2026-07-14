@@ -75,15 +75,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    const onReconnecting = (e: Event) => {
-      const detail = (e as CustomEvent<{ active: boolean }>).detail;
-      setReconnecting(!!detail?.active);
-    };
-    window.addEventListener('supabase:reconnecting', onReconnecting);
+
+
 
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('supabase:reconnecting', onReconnecting);
     };
   }, []);
 
@@ -95,16 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ user, session, loading, reconnecting, signOut }}>
       {children}
-      {reconnecting && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] px-3 py-1.5 rounded-full bg-black/80 text-white text-xs shadow-lg backdrop-blur-sm flex items-center gap-2"
-        >
-          <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          Reconectando...
-        </div>
-      )}
     </AuthContext.Provider>
   );
 };
+
