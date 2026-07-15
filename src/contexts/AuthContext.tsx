@@ -47,6 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const clearAuth = () => {
+      // TEMP debug: confirm nothing sneaks in an unwanted logout.
+      console.warn("[AuthContext] clearAuth chamado", new Error().stack);
       userRef.current = null;
       sessionRef.current = null;
       setSession(null);
