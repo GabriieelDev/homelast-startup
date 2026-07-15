@@ -251,13 +251,16 @@ async function fetchStoreSettingsFromDb(): Promise<StoreSettings | null> {
     console.error("Erro ao carregar configurações da loja", error);
     return null;
   }
-  if (adminError) {
-    // adminError esperado para usuários não-admin — silenciar para não vazar contexto
-  }
 
   if (!data || token !== settingsReadToken) return null;
 
-  const admin = Array.isArray(adminRows) && adminRows[0] ? adminRows[0] as Record<string, unknown> : null;
+  // If the admin RPC failed (non-admin, transient error, breaker open),
+  // preserve whatever admin fields we already had in cachedSettings instead of
+  // falling back to DEFAULTS. mapStoreSettingsRow already reads from `previous`
+  // when `admin` is null, so passing null here is exactly the desired behavior.
+  const admin = !adminError && Array.isArray(adminRows) && adminRows[0]
+    ? (adminRows[0] as Record<string, unknown>)
+    : null;
   return mapStoreSettingsRow(data as Record<string, unknown>, admin, cachedSettings);
 }
 

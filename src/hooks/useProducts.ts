@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product } from "@/data/products";
@@ -13,7 +13,7 @@ interface UseProductsOptions {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function loadAdminProductCosts(maxRetries = 1) {
+async function loadAdminProductCosts(maxRetries = 1): Promise<any[] | null> {
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     const { data, error, status } = await supabase.rpc("get_admin_product_costs");
 
@@ -27,13 +27,14 @@ async function loadAdminProductCosts(maxRetries = 1) {
     });
 
     if ([400, 401, 403].includes(status) || attempt === maxRetries) {
-      return [];
+      // Signal failure so callers can preserve previous data instead of zeroing costs.
+      return null;
     }
 
     await sleep(750 * (attempt + 1));
   }
 
-  return [];
+  return null;
 }
 
 function fromRow(r: any): Product {
@@ -62,6 +63,7 @@ function fromRow(r: any): Product {
 export function useProducts({ includeAdminCosts = false }: UseProductsOptions = {}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const lastCostsRef = useRef<Map<string, number>>(new Map());
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -71,7 +73,7 @@ export function useProducts({ includeAdminCosts = false }: UseProductsOptions = 
 
     if (error) {
       console.error("[Products] Falha ao carregar produtos:", error);
-      setProducts([]);
+      // Preserve last successful data — never wipe the UI on transient errors.
       setLoading(false);
       return;
     }
@@ -79,7 +81,10 @@ export function useProducts({ includeAdminCosts = false }: UseProductsOptions = 
     let rows = (data ?? []) as any[];
     if (includeAdminCosts) {
       const costs = await loadAdminProductCosts();
-      const map = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
+      if (costs !== null) {
+        lastCostsRef.current = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
+      }
+      const map = lastCostsRef.current;
       rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));
     }
     setProducts(rows.map(fromRow));
@@ -147,6 +152,7 @@ export function useInfiniteProducts(category: string = "all") {
     retry: 2,
     retryDelay: 1000,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   if (query.error) {
@@ -158,6 +164,9 @@ export function useInfiniteProducts(category: string = "all") {
     if (infiniteChannelRef.current) return;
     const channel = supabase.channel(`products-infinite-${Math.random().toString(36).slice(2)}`);
     channel.on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+      // Skip invalidation while the last fetch errored — keeps previous data on-screen
+      // instead of thrashing a failing query.
+      if (query.isError) return;
       queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
     });
     channel.subscribe();
@@ -168,7 +177,7 @@ export function useInfiniteProducts(category: string = "all") {
         infiniteChannelRef.current = null;
       }
     };
-  }, [queryClient]);
+  }, [queryClient, query.isError]);
 
   const products = useMemo(
     () => (query.data?.pages.flat() ?? []) as Product[],
