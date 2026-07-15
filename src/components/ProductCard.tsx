@@ -196,5 +196,8 @@ export default memo(ProductCard, (prev, next) =>
   prev.quantity === next.quantity &&
   prev.stock === next.stock &&
   prev.isAdmin === next.isAdmin &&
+  prev.selectedVariantId === next.selectedVariantId &&
+  prev.variants === next.variants &&
   Boolean(prev.onDisable) === Boolean(next.onDisable)
 );
+
