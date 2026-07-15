@@ -58,8 +58,10 @@ function fromRow(r: any): Product {
     saleStart: r.sale_start ?? null,
     saleEnd: r.sale_end ?? null,
     saleLabel: r.sale_label ?? null,
+    variantGroup: r.variant_group ?? null,
   } as Product;
 }
+
 
 export function useProducts({ includeAdminCosts = false }: UseProductsOptions = {}) {
   const [products, setProducts] = useState<Product[]>([]);
