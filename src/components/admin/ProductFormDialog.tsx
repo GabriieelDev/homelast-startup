@@ -234,6 +234,18 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
             <div className="space-y-1"><Label>Estoque inicial</Label><Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} /></div>
           )}
           <div className="space-y-1"><Label>Descrição (opcional)</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
+          <div className="space-y-1">
+            <Label>Grupo (opcional)</Label>
+            <Input
+              value={variantGroup}
+              onChange={(e) => setVariantGroup(e.target.value)}
+              placeholder='Ex.: "Miojo Nissin", "Arroz Urbano"'
+            />
+            <p className="text-xs text-muted-foreground">
+              Produtos com o mesmo grupo aparecem como um único card com chips de variação no feed.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label>Seções de exibição</Label>
             <div className="grid grid-cols-2 gap-2">
