@@ -62,8 +62,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // refresh → SIGNED_OUT infinite loop. 429s are already handled
       // transparently by the retrying fetch wrapper in the client.
       if (event === "SIGNED_OUT") {
-        signOutRequestedRef.current = false;
-        clearAuth();
+        // Only honor SIGNED_OUT when it was explicitly requested via signOut().
+        // Spurious SIGNED_OUT events (rate limits, transient refresh failures)
+        // must NOT log the user out — keep whatever session/user we have.
+        if (signOutRequestedRef.current) {
+          signOutRequestedRef.current = false;
+          clearAuth();
+        } else {
+          console.warn("[AuthContext] SIGNED_OUT ignorado (não solicitado)");
+        }
         return;
       }
       if (newSession) {
