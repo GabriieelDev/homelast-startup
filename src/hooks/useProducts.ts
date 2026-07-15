@@ -63,6 +63,7 @@ function fromRow(r: any): Product {
 export function useProducts({ includeAdminCosts = false }: UseProductsOptions = {}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const lastCostsRef = useRef<Map<string, number>>(new Map());
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -72,7 +73,7 @@ export function useProducts({ includeAdminCosts = false }: UseProductsOptions = 
 
     if (error) {
       console.error("[Products] Falha ao carregar produtos:", error);
-      setProducts([]);
+      // Preserve last successful data — never wipe the UI on transient errors.
       setLoading(false);
       return;
     }
@@ -80,7 +81,10 @@ export function useProducts({ includeAdminCosts = false }: UseProductsOptions = 
     let rows = (data ?? []) as any[];
     if (includeAdminCosts) {
       const costs = await loadAdminProductCosts();
-      const map = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
+      if (costs !== null) {
+        lastCostsRef.current = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
+      }
+      const map = lastCostsRef.current;
       rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));
     }
     setProducts(rows.map(fromRow));
