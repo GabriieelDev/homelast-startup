@@ -90,7 +90,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       setSaleStart(toLocal(product?.saleStart ?? null));
       setSaleEnd(toLocal(product?.saleEnd ?? null));
       setSaleLabel(product?.saleLabel ?? "");
+      setVariantGroup(product?.variantGroup ?? "");
     }
+
   }, [open, product]);
 
   const priceNum = parseFloat(price) || 0;
