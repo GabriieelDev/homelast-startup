@@ -408,6 +408,7 @@ export type Database = {
           sections: string[]
           unit: string
           updated_at: string
+          variant_group: string | null
         }
         Insert: {
           active?: boolean
@@ -431,6 +432,7 @@ export type Database = {
           sections?: string[]
           unit?: string
           updated_at?: string
+          variant_group?: string | null
         }
         Update: {
           active?: boolean
@@ -454,6 +456,7 @@ export type Database = {
           sections?: string[]
           unit?: string
           updated_at?: string
+          variant_group?: string | null
         }
         Relationships: [
           {
