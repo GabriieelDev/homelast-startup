@@ -55,6 +55,8 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [saleStart, setSaleStart] = useState("");
   const [saleEnd, setSaleEnd] = useState("");
   const [saleLabel, setSaleLabel] = useState("");
+  const [variantGroup, setVariantGroup] = useState("");
+
 
   const handleUpload = async (file: File) => {
     if (!file) return;
