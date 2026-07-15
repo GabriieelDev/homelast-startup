@@ -13,7 +13,7 @@ interface UseProductsOptions {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function loadAdminProductCosts(maxRetries = 1) {
+async function loadAdminProductCosts(maxRetries = 1): Promise<any[] | null> {
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     const { data, error, status } = await supabase.rpc("get_admin_product_costs");
 
@@ -27,13 +27,14 @@ async function loadAdminProductCosts(maxRetries = 1) {
     });
 
     if ([400, 401, 403].includes(status) || attempt === maxRetries) {
-      return [];
+      // Signal failure so callers can preserve previous data instead of zeroing costs.
+      return null;
     }
 
     await sleep(750 * (attempt + 1));
   }
 
-  return [];
+  return null;
 }
 
 function fromRow(r: any): Product {
