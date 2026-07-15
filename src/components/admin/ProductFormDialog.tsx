@@ -155,7 +155,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       sale_start: onSale ? (fromLocal(saleStart) ?? new Date().toISOString()) : null,
       sale_end: onSale ? fromLocal(saleEnd) : null,
       sale_label: onSale && saleLabel.trim() ? saleLabel.trim() : null,
+      variant_group: variantGroup.trim() ? variantGroup.trim() : null,
     };
+
     if (product) {
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
       setSaving(false);
