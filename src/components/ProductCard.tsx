@@ -23,9 +23,13 @@ interface ProductCardProps {
   stock?: number;
   isAdmin?: boolean;
   onDisable?: () => void;
+  variants?: { id: string; label: string }[];
+  selectedVariantId?: string;
+  onSelectVariant?: (id: string) => void;
 }
 
-const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, onDisable }: ProductCardProps) => {
+const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, onDisable, variants, selectedVariantId, onSelectVariant }: ProductCardProps) => {
+
   const unavailable = stock <= 0;
   const lowStock = stock > 0 && stock <= 5;
   const reachedMax = quantity >= stock;
