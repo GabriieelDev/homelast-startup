@@ -55,6 +55,8 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
   const [saleStart, setSaleStart] = useState("");
   const [saleEnd, setSaleEnd] = useState("");
   const [saleLabel, setSaleLabel] = useState("");
+  const [variantGroup, setVariantGroup] = useState("");
+
 
   const handleUpload = async (file: File) => {
     if (!file) return;
@@ -88,7 +90,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       setSaleStart(toLocal(product?.saleStart ?? null));
       setSaleEnd(toLocal(product?.saleEnd ?? null));
       setSaleLabel(product?.saleLabel ?? "");
+      setVariantGroup(product?.variantGroup ?? "");
     }
+
   }, [open, product]);
 
   const priceNum = parseFloat(price) || 0;
@@ -151,7 +155,9 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       sale_start: onSale ? (fromLocal(saleStart) ?? new Date().toISOString()) : null,
       sale_end: onSale ? fromLocal(saleEnd) : null,
       sale_label: onSale && saleLabel.trim() ? saleLabel.trim() : null,
+      variant_group: variantGroup.trim() ? variantGroup.trim() : null,
     };
+
     if (product) {
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
       setSaving(false);
@@ -228,6 +234,18 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
             <div className="space-y-1"><Label>Estoque inicial</Label><Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} /></div>
           )}
           <div className="space-y-1"><Label>Descrição (opcional)</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
+          <div className="space-y-1">
+            <Label>Grupo (opcional)</Label>
+            <Input
+              value={variantGroup}
+              onChange={(e) => setVariantGroup(e.target.value)}
+              placeholder='Ex.: "Miojo Nissin", "Arroz Urbano"'
+            />
+            <p className="text-xs text-muted-foreground">
+              Produtos com o mesmo grupo aparecem como um único card com chips de variação no feed.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label>Seções de exibição</Label>
             <div className="grid grid-cols-2 gap-2">

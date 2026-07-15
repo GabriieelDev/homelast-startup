@@ -22,7 +22,9 @@ export interface Product {
   saleStart?: string | null;
   saleEnd?: string | null;
   saleLabel?: string | null;
+  variantGroup?: string | null;
 }
+
 
 export const categories = [
   { id: "all", label: "Todos", icon: "🛒" },
