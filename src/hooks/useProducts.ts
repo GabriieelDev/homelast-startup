@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Product } from "@/data/products";
 
 const PRODUCT_COLUMNS =
-  "id,name,price,original_price,image,category,category_id,sections,unit,description,active,on_sale,discount_type,discount_value,sale_price,sale_start,sale_end,sale_label";
+  "id,name,price,original_price,image,category,category_id,sections,unit,description,active,on_sale,discount_type,discount_value,sale_price,sale_start,sale_end,sale_label,variant_group";
+
 
 interface UseProductsOptions {
   includeAdminCosts?: boolean;
