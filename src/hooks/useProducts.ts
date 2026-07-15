@@ -152,6 +152,7 @@ export function useInfiniteProducts(category: string = "all") {
     retry: 2,
     retryDelay: 1000,
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   if (query.error) {
@@ -163,6 +164,9 @@ export function useInfiniteProducts(category: string = "all") {
     if (infiniteChannelRef.current) return;
     const channel = supabase.channel(`products-infinite-${Math.random().toString(36).slice(2)}`);
     channel.on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+      // Skip invalidation while the last fetch errored — keeps previous data on-screen
+      // instead of thrashing a failing query.
+      if (query.isError) return;
       queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
     });
     channel.subscribe();
@@ -173,7 +177,7 @@ export function useInfiniteProducts(category: string = "all") {
         infiniteChannelRef.current = null;
       }
     };
-  }, [queryClient]);
+  }, [queryClient, query.isError]);
 
   const products = useMemo(
     () => (query.data?.pages.flat() ?? []) as Product[],
