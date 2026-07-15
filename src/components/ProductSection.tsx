@@ -1,5 +1,8 @@
+import { useMemo } from "react";
 import ProductCard from "./ProductCard";
+import VariantProductCard from "./VariantProductCard";
 import { Product } from "@/data/products";
+import { groupByVariant } from "@/lib/variantGroups";
 
 interface ProductSectionProps {
   title: string;
@@ -14,7 +17,8 @@ interface ProductSectionProps {
 }
 
 const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, getStock, isAdmin, onDisableProduct }: ProductSectionProps) => {
-  if (products.length === 0) return null;
+  const entries = useMemo(() => groupByVariant(products), [products]);
+  if (entries.length === 0) return null;
 
   return (
     <section className="space-y-4">
@@ -22,18 +26,36 @@ const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, 
         <span>{emoji}</span> {title}
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            quantity={getQuantity(product.id)}
-            stock={getStock ? getStock(product.id) : 99}
-            onAdd={() => onAdd(product)}
-            onRemove={() => onRemove(product.id)}
-            isAdmin={isAdmin}
-            onDisable={onDisableProduct ? () => onDisableProduct(product.id) : undefined}
-          />
-        ))}
+        {entries.map((entry) => {
+          if (entry.kind === "group") {
+            return (
+              <VariantProductCard
+                key={entry.key}
+                variants={entry.variants}
+                labels={entry.labels}
+                getQuantity={getQuantity}
+                getStock={getStock}
+                onAdd={onAdd}
+                onRemove={onRemove}
+                isAdmin={isAdmin}
+                onDisableProduct={onDisableProduct}
+              />
+            );
+          }
+          const product = entry.product;
+          return (
+            <ProductCard
+              key={product.id}
+              product={product}
+              quantity={getQuantity(product.id)}
+              stock={getStock ? getStock(product.id) : 99}
+              onAdd={() => onAdd(product)}
+              onRemove={() => onRemove(product.id)}
+              isAdmin={isAdmin}
+              onDisable={onDisableProduct ? () => onDisableProduct(product.id) : undefined}
+            />
+          );
+        })}
       </div>
     </section>
   );
