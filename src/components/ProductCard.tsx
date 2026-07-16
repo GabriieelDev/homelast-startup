@@ -109,7 +109,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         </h3>
         <div className="min-h-[26px] flex items-start">
           {variants && variants.length > 1 ? (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide w-full">
               {variants.map((v) => {
                 const active = v.id === (selectedVariantId ?? product.id);
                 return (
