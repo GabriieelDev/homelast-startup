@@ -1,0 +1,3 @@
+ALTER TABLE public.store_settings
+  ADD COLUMN IF NOT EXISTS free_shipping_threshold NUMERIC(10,2) NOT NULL DEFAULT 50.00,
+  ADD COLUMN IF NOT EXISTS flat_shipping_fee NUMERIC(10,2) NOT NULL DEFAULT 8.00;
