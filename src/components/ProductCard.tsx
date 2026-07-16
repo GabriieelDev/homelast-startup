@@ -107,28 +107,31 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-snug min-h-[2.5rem]">
           {product.name}
         </h3>
-        {variants && variants.length > 1 && (
-          <div className="flex flex-wrap gap-1">
-            {variants.map((v) => {
-              const active = v.id === (selectedVariantId ?? product.id);
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onSelectVariant?.(v.id); }}
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
-                    active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:border-primary/60"
-                  }`}
-                  title={v.label}
-                >
-                  {v.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <div className="min-h-[26px] flex items-start">
+          {variants && variants.length > 1 ? (
+            <div className="flex flex-nowrap gap-1 overflow-x-auto scrollbar-hide w-full">
+              {variants.map((v) => {
+                const active = v.id === (selectedVariantId ?? product.id);
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onSelectVariant?.(v.id); }}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap shrink-0 ${
+                      active
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background text-foreground border-border hover:border-primary/60"
+                    }`}
+                    title={v.label}
+
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
         <p className="min-h-[1.25rem] text-[11px] font-semibold text-accent">
           {onSale && savings > 0 ? `Economize R$ ${savings.toFixed(2)}` : ""}
         </p>
