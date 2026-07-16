@@ -117,12 +117,13 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
                     key={v.id}
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onSelectVariant?.(v.id); }}
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap shrink-0 ${
                       active
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background text-foreground border-border hover:border-primary/60"
                     }`}
                     title={v.label}
+
                   >
                     {v.label}
                   </button>
