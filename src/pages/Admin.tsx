@@ -1297,9 +1297,10 @@ const Admin = () => {
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
-                const minS = Number(draftSettings.min_shipping);
-                const maxS = Number(draftSettings.max_shipping);
-                if (maxS < minS) { toast.error("Frete máximo deve ser maior que o mínimo"); return; }
+                const freeThreshold = Number(draftSettings.free_shipping_threshold);
+                const flatFee = Number(draftSettings.flat_shipping_fee);
+                if (Number.isNaN(freeThreshold) || freeThreshold < 0) { toast.error("Valor mínimo para frete grátis inválido"); return; }
+                if (Number.isNaN(flatFee) || flatFee < 0) { toast.error("Valor do frete fixo inválido"); return; }
                 // Validate social URLs
                 const PLATFORM_LABEL: Record<string, string> = { instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp", tiktok: "TikTok" };
                 const invalid = (draftSettings.social_links || []).find((l) => {
@@ -1323,8 +1324,10 @@ const Admin = () => {
                   address: draftSettings.address,
                   hours: draftSettings.hours,
                   min_order: Number(draftSettings.min_order),
-                  min_shipping: minS,
-                  max_shipping: maxS,
+                  min_shipping: Number(draftSettings.min_shipping),
+                  max_shipping: Number(draftSettings.max_shipping),
+                  free_shipping_threshold: freeThreshold,
+                  flat_shipping_fee: flatFee,
                   social_links: (draftSettings.social_links || []).map((l, i) => ({ ...l, order: i })),
                 } as any);
                 if (err) toast.error(err.message || "Erro ao salvar"); else toast.success("Configurações salvas ✅");
@@ -1346,8 +1349,28 @@ const Admin = () => {
                 <h3 className="font-semibold text-foreground">Pedido & frete</h3>
                 <div className="space-y-1"><Label>Pedido mínimo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.min_order} onChange={(e) => setDraftSettings({ ...draftSettings, min_order: Number(e.target.value) })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label>Frete mínimo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.min_shipping} onChange={(e) => setDraftSettings({ ...draftSettings, min_shipping: Number(e.target.value) })} /></div>
-                  <div className="space-y-1"><Label>Frete máximo (R$)</Label><Input type="number" step="0.01" min="0" value={draftSettings.max_shipping} onChange={(e) => setDraftSettings({ ...draftSettings, max_shipping: Number(e.target.value) })} /></div>
+                  <div className="space-y-1">
+                    <Label>Frete grátis a partir de (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={draftSettings.free_shipping_threshold}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, free_shipping_threshold: Number(e.target.value) })}
+                    />
+                    <p className="text-xs text-muted-foreground">Se o subtotal atingir esse valor, o frete é grátis.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Valor do frete fixo (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={draftSettings.flat_shipping_fee}
+                      onChange={(e) => setDraftSettings({ ...draftSettings, flat_shipping_fee: Number(e.target.value) })}
+                    />
+                    <p className="text-xs text-muted-foreground">Cobrado quando o subtotal ficar abaixo do mínimo.</p>
+                  </div>
                 </div>
               </div>
 

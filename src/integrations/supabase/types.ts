@@ -530,6 +530,8 @@ export type Database = {
           address: string | null
           alerts_enabled: boolean
           carousel_config: Json
+          flat_shipping_fee: number
+          free_shipping_threshold: number
           hours: string | null
           id: string
           late_order_minutes: number
@@ -547,6 +549,8 @@ export type Database = {
           address?: string | null
           alerts_enabled?: boolean
           carousel_config?: Json
+          flat_shipping_fee?: number
+          free_shipping_threshold?: number
           hours?: string | null
           id: string
           late_order_minutes?: number
@@ -564,6 +568,8 @@ export type Database = {
           address?: string | null
           alerts_enabled?: boolean
           carousel_config?: Json
+          flat_shipping_fee?: number
+          free_shipping_threshold?: number
           hours?: string | null
           id?: string
           late_order_minutes?: number

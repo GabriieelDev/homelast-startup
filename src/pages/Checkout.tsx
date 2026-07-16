@@ -12,6 +12,7 @@ import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { toast } from "sonner";
+import { calcShipping } from "@/lib/shipping";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
@@ -33,12 +34,8 @@ const Checkout = () => {
   const { settings } = useStoreSettings();
 
   const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
-  const minS = settings.min_shipping;
-  const maxS = Math.max(minS, settings.max_shipping);
   const state = rawState
-    ? { ...rawState, frete: typeof rawState.frete === "number"
-        ? Math.min(maxS, Math.max(minS, rawState.frete))
-        : Number((Math.random() * (maxS - minS) + minS).toFixed(2)) }
+    ? { ...rawState, frete: calcShipping(rawState.totalPrice, settings) }
     : null;
 
   const hasItems = !!state?.items?.length;
@@ -190,9 +187,13 @@ const Checkout = () => {
               <span className="text-muted-foreground flex items-center gap-1">
                 <Truck className="h-3.5 w-3.5" /> Frete
               </span>
-              <span className={coupon?.freeShipping ? "text-primary line-through" : "text-foreground"}>
-                R$ {frete.toFixed(2)}
-              </span>
+              {frete === 0 ? (
+                <span className="font-semibold text-accent">Grátis</span>
+              ) : (
+                <span className={coupon?.freeShipping ? "text-primary line-through" : "text-foreground"}>
+                  R$ {frete.toFixed(2)}
+                </span>
+              )}
             </div>
             {coupon && (
               <div className="flex justify-between text-sm">

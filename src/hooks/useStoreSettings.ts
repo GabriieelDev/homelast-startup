@@ -100,6 +100,8 @@ export interface StoreSettings {
   min_order: number;
   min_shipping: number;
   max_shipping: number;
+  free_shipping_threshold: number;
+  flat_shipping_fee: number;
   alerts_enabled: boolean;
   low_stock_threshold: number;
   late_order_minutes: number;
@@ -117,6 +119,8 @@ const DEFAULTS: StoreSettings = {
   min_order: 0,
   min_shipping: 5,
   max_shipping: 15,
+  free_shipping_threshold: 50,
+  flat_shipping_fee: 8,
   alerts_enabled: true,
   low_stock_threshold: 5,
   late_order_minutes: 60,
@@ -125,7 +129,7 @@ const DEFAULTS: StoreSettings = {
   carousel_config: DEFAULT_CAROUSEL,
 };
 
-const STORE_SETTINGS_SELECT = "id,name,phone,address,hours,min_order,min_shipping,max_shipping,social_links,carousel_config,updated_at";
+const STORE_SETTINGS_SELECT = "id,name,phone,address,hours,min_order,min_shipping,max_shipping,free_shipping_threshold,flat_shipping_fee,social_links,carousel_config,updated_at";
 
 let cachedSettings: StoreSettings = DEFAULTS;
 let hasLoadedSettings = false;
@@ -227,6 +231,8 @@ function mapStoreSettingsRow(
     min_order: Number(row.min_order ?? previous.min_order),
     min_shipping: Number(row.min_shipping ?? previous.min_shipping),
     max_shipping: Number(row.max_shipping ?? previous.max_shipping),
+    free_shipping_threshold: Number(row.free_shipping_threshold ?? previous.free_shipping_threshold),
+    flat_shipping_fee: Number(row.flat_shipping_fee ?? previous.flat_shipping_fee),
     alerts_enabled: typeof admin?.alerts_enabled === "boolean" ? admin.alerts_enabled : previous.alerts_enabled,
     low_stock_threshold: Number(admin?.low_stock_threshold ?? previous.low_stock_threshold),
     late_order_minutes: Number(admin?.late_order_minutes ?? previous.late_order_minutes),

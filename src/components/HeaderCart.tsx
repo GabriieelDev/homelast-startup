@@ -6,6 +6,8 @@ import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerOverlay, DrawerPortal } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { calcShipping } from "@/lib/shipping";
 
 interface HeaderCartProps {
   items: CartItem[];
@@ -20,6 +22,7 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { settings } = useStoreSettings();
 
   useEffect(() => {
     if (isMobile) return;
@@ -32,7 +35,8 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
 
   const handleCheckout = () => {
     setOpen(false);
-    navigate("/checkout", { state: { items, totalPrice, frete: Number((Math.random() * 10 + 5).toFixed(2)) } });
+    const frete = calcShipping(totalPrice, settings);
+    navigate("/checkout", { state: { items, totalPrice, frete } });
   };
 
   const TriggerButton = (
