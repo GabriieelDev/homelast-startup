@@ -187,9 +187,13 @@ const Checkout = () => {
               <span className="text-muted-foreground flex items-center gap-1">
                 <Truck className="h-3.5 w-3.5" /> Frete
               </span>
-              <span className={coupon?.freeShipping ? "text-primary line-through" : "text-foreground"}>
-                R$ {frete.toFixed(2)}
-              </span>
+              {frete === 0 ? (
+                <span className="font-semibold text-accent">Grátis</span>
+              ) : (
+                <span className={coupon?.freeShipping ? "text-primary line-through" : "text-foreground"}>
+                  R$ {frete.toFixed(2)}
+                </span>
+              )}
             </div>
             {coupon && (
               <div className="flex justify-between text-sm">
