@@ -1,11 +1,13 @@
 import { ShoppingCart, Clock, ChevronUp, X, Trash2, MapPin, Truck } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
 import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { calcShipping } from "@/lib/shipping";
 
 interface FloatingCartProps {
   items: CartItem[];
@@ -15,14 +17,6 @@ interface FloatingCartProps {
   onAdd: (product: CartItem["product"]) => void;
 }
 
-const FRETE_MIN = 5;
-const FRETE_MAX = 15;
-
-const calcFrete = () => {
-  const base = Math.random() * 10 + 5;
-  return Math.min(Math.max(base, FRETE_MIN), FRETE_MAX);
-};
-
 const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: FloatingCartProps) => {
   const [expanded, setExpanded] = useState(false);
   const { user } = useAuth();
@@ -30,7 +24,10 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
   const navigate = useNavigate();
   const [defaultAddress, setDefaultAddress] = useState<string | null>(null);
   const [hasAddress, setHasAddress] = useState(false);
-  const [frete] = useState(() => Number(calcFrete().toFixed(2)));
+  const { settings } = useStoreSettings();
+  const frete = useMemo(() => calcShipping(totalPrice, settings), [totalPrice, settings]);
+  const isFreeShipping = frete === 0;
+  const missingForFree = Math.max(0, Number(settings.free_shipping_threshold) - totalPrice);
 
   useEffect(() => {
     if (!userId) return;
