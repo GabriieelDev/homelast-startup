@@ -12,6 +12,7 @@ import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { toast } from "sonner";
+import { calcShipping } from "@/lib/shipping";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
@@ -33,12 +34,8 @@ const Checkout = () => {
   const { settings } = useStoreSettings();
 
   const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
-  const minS = settings.min_shipping;
-  const maxS = Math.max(minS, settings.max_shipping);
   const state = rawState
-    ? { ...rawState, frete: typeof rawState.frete === "number"
-        ? Math.min(maxS, Math.max(minS, rawState.frete))
-        : Number((Math.random() * (maxS - minS) + minS).toFixed(2)) }
+    ? { ...rawState, frete: calcShipping(rawState.totalPrice, settings) }
     : null;
 
   const hasItems = !!state?.items?.length;

@@ -125,10 +125,19 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center gap-1"><Truck className="h-3.5 w-3.5" /> Frete</span>
-              <span className="text-foreground">R$ {frete.toFixed(2)}</span>
+              {isFreeShipping ? (
+                <span className="font-semibold text-accent">Grátis</span>
+              ) : (
+                <span className="text-foreground">R$ {frete.toFixed(2)}</span>
+              )}
             </div>
+            {!isFreeShipping && missingForFree > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Faltam R$ {missingForFree.toFixed(2)} para frete grátis
+              </p>
+            )}
             <div className="flex items-center justify-between font-bold text-foreground">
-              <span>Total</span>
+              <span>Total com frete</span>
               <span>R$ {(totalPrice + frete).toFixed(2)}</span>
             </div>
           </div>
@@ -147,7 +156,7 @@ const FloatingCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: Floati
               </span>
             </div>
             <div>
-              <p className="font-bold text-sm">R$ {(totalPrice + frete).toFixed(2)}</p>
+              <p className="font-bold text-sm">R$ {totalPrice.toFixed(2)}</p>
               <div className="flex items-center gap-1 text-xs opacity-80">
                 <Clock className="h-3 w-3" />
                 Entrega em {deliveryMin}–{deliveryMax} min
