@@ -8,14 +8,15 @@ interface Props {
   title: string;
   emoji: string;
   products: Product[];
+  allProducts?: Product[];
   getQuantity: (id: string) => number;
   getStock?: (id: string) => number;
   onAdd: (p: Product) => void;
   onRemove: (id: string) => void;
 }
 
-const HorizontalProductRow = ({ title, emoji, products, getQuantity, getStock, onAdd, onRemove }: Props) => {
-  const entries = useMemo(() => groupByVariant(products), [products]);
+const HorizontalProductRow = ({ title, emoji, products, allProducts, getQuantity, getStock, onAdd, onRemove }: Props) => {
+  const entries = useMemo(() => groupByVariant(products, allProducts), [products, allProducts]);
   if (entries.length === 0) return null;
 
   const renderCard = (entry: ReturnType<typeof groupByVariant>[number]) => {
