@@ -8,6 +8,7 @@ interface ProductSectionProps {
   title: string;
   emoji: string;
   products: Product[];
+  allProducts?: Product[];
   getQuantity: (id: string) => number;
   onAdd: (product: Product) => void;
   onRemove: (id: string) => void;
@@ -16,8 +17,8 @@ interface ProductSectionProps {
   onDisableProduct?: (id: string) => void;
 }
 
-const ProductSection = ({ title, emoji, products, getQuantity, onAdd, onRemove, getStock, isAdmin, onDisableProduct }: ProductSectionProps) => {
-  const entries = useMemo(() => groupByVariant(products), [products]);
+const ProductSection = ({ title, emoji, products, allProducts, getQuantity, onAdd, onRemove, getStock, isAdmin, onDisableProduct }: ProductSectionProps) => {
+  const entries = useMemo(() => groupByVariant(products, allProducts), [products, allProducts]);
   if (entries.length === 0) return null;
 
   return (
