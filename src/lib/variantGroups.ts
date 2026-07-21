@@ -16,37 +16,65 @@ export interface SingleEntry {
 
 export type FeedEntry = VariantGroup | SingleEntry;
 
+const normalizeGroup = (v: string | null | undefined) =>
+  (v ?? "").trim().toLowerCase();
+
 /**
- * Group consecutive/adjacent products that share the same non-empty
- * `variantGroup`, preserving the original ordering of the first occurrence.
+ * Group products that share the same non-empty `variantGroup`.
+ *
+ * A product with a non-empty `variantGroup` is NEVER emitted as a single card.
+ * If `allProducts` is provided, each detected group is expanded to include ALL
+ * sibling variants from the catalog (not just the ones present in `products`),
+ * so the grouped card always represents the full group even when the current
+ * list only contains one variant (e.g. section/top-sellers/recently-viewed
+ * filters).
+ *
  * Products with empty/null `variantGroup` remain as single entries.
+ * Ordering follows the first occurrence of each group / single in `products`.
  */
-export function groupByVariant(products: Product[]): FeedEntry[] {
+export function groupByVariant(
+  products: Product[],
+  allProducts?: Product[],
+): FeedEntry[] {
   const groupOrder: string[] = [];
-  const groups = new Map<string, Product[]>();
+  const groupSeen = new Set<string>();
   const singles: { index: number; product: Product }[] = [];
   const positions = new Map<string, number>();
 
   products.forEach((p, index) => {
-    const g = (p.variantGroup ?? "").trim();
+    const g = normalizeGroup(p.variantGroup);
     if (!g) {
       singles.push({ index, product: p });
       return;
     }
-    if (!groups.has(g)) {
-      groups.set(g, []);
+    if (!groupSeen.has(g)) {
+      groupSeen.add(g);
       groupOrder.push(g);
       positions.set(g, index);
     }
-    groups.get(g)!.push(p);
   });
+
+  // Build a lookup of every variant in each group from the catalog when available,
+  // so a section that only contains one variant still renders the full grouped card.
+  const source = allProducts && allProducts.length > 0 ? allProducts : products;
+  const groupVariants = new Map<string, Product[]>();
+  for (const p of source) {
+    const g = normalizeGroup(p.variantGroup);
+    if (!g || !groupSeen.has(g)) continue;
+    const arr = groupVariants.get(g);
+    if (arr) arr.push(p);
+    else groupVariants.set(g, [p]);
+  }
 
   const entries: { pos: number; entry: FeedEntry }[] = [];
 
   for (const g of groupOrder) {
-    const variants = groups.get(g)!;
+    const variants = groupVariants.get(g) ?? [];
+    if (variants.length === 0) continue;
+    // Dedupe by id (in case allProducts overlaps with products).
+    const uniq = Array.from(new Map(variants.map((v) => [v.id, v])).values());
     // Sort variants by name so labels are stable and predictable.
-    const sorted = [...variants].sort((a, b) => a.name.localeCompare(b.name));
+    const sorted = uniq.sort((a, b) => a.name.localeCompare(b.name));
     entries.push({
       pos: positions.get(g)!,
       entry: {
