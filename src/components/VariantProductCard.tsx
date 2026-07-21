@@ -39,8 +39,6 @@ const VariantProductCard = ({ variants, labels, getQuantity, getStock, onAdd, on
     [variants, labels],
   );
 
-  if (!selected) return null;
-
   return (
     <ProductCard
       product={selected}
