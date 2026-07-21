@@ -14,10 +14,25 @@ interface Props {
 }
 
 const VariantProductCard = ({ variants, labels, getQuantity, getStock, onAdd, onRemove, isAdmin, onDisableProduct }: Props) => {
-  const [selectedId, setSelectedId] = useState<string>(variants[0]?.id ?? "");
+  // Default = variant with highest stock; ties → first in list; all zero → first.
+  const defaultId = useMemo(() => {
+    if (variants.length === 0) return "";
+    let bestId = variants[0].id;
+    let bestStock = getStock ? getStock(variants[0].id) : 0;
+    for (let i = 1; i < variants.length; i++) {
+      const s = getStock ? getStock(variants[i].id) : 0;
+      if (s > bestStock) {
+        bestStock = s;
+        bestId = variants[i].id;
+      }
+    }
+    return bestId;
+  }, [variants, getStock]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeId = selectedId ?? defaultId;
   const selected = useMemo(
-    () => variants.find((v) => v.id === selectedId) ?? variants[0],
-    [variants, selectedId],
+    () => variants.find((v) => v.id === activeId) ?? variants[0],
+    [variants, activeId],
   );
   const chips = useMemo(
     () => variants.map((v, i) => ({ id: v.id, label: labels[i] ?? v.name })),
