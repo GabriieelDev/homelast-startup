@@ -257,6 +257,7 @@ const Index = () => {
               title={`Resultados${search ? ` para "${search}"` : ""}`}
               emoji="🔍"
               products={infiniteFiltered}
+              allProducts={visibleProducts}
               getQuantity={getQuantity}
               getStock={getStock}
               onAdd={addItem}
@@ -288,10 +289,10 @@ const Index = () => {
           </>
         ) : (
           <>
-            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
-            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
-            <ProductSection title="Recomendados" emoji="✨" products={recomendados} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
-            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Recomendados" emoji="✨" products={recomendados} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
           </>
         )}
       </div>
