@@ -221,6 +221,7 @@ const Index = () => {
               title="Mais vendidos"
               emoji="🔥"
               products={topSellersProducts}
+              allProducts={visibleProducts}
               getQuantity={getQuantity}
               getStock={getStock}
               onAdd={addItem}
@@ -232,6 +233,7 @@ const Index = () => {
               title="Vistos recentemente"
               emoji="👁️"
               products={recentlyViewedProducts}
+              allProducts={visibleProducts}
               getQuantity={getQuantity}
               getStock={getStock}
               onAdd={addItem}
