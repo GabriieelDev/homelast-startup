@@ -26,9 +26,10 @@ interface ProductCardProps {
   variants?: { id: string; label: string }[];
   selectedVariantId?: string;
   onSelectVariant?: (id: string) => void;
+  fromPrice?: number;
 }
 
-const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, onDisable, variants, selectedVariantId, onSelectVariant }: ProductCardProps) => {
+const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, onDisable, variants, selectedVariantId, onSelectVariant, fromPrice }: ProductCardProps) => {
 
   const unavailable = stock <= 0;
   const lowStock = stock > 0 && stock <= 5;
@@ -137,7 +138,12 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         </p>
 
         <div className="flex flex-col gap-0.5 min-h-[2.5rem] justify-end">
-          {onSale ? (
+          {fromPrice !== undefined ? (
+            <>
+              <span className="text-[11px] text-muted-foreground leading-none">a partir de</span>
+              <span className="text-lg font-bold text-primary whitespace-nowrap">R$ {fromPrice.toFixed(2)}</span>
+            </>
+          ) : onSale ? (
             <>
               <span className="text-lg font-bold text-accent whitespace-nowrap">R$ {effectivePrice.toFixed(2)}</span>
               <span className="text-xs text-muted-foreground line-through whitespace-nowrap">R$ {product.price.toFixed(2)}</span>
@@ -201,6 +207,7 @@ export default memo(ProductCard, (prev, next) =>
   prev.isAdmin === next.isAdmin &&
   prev.selectedVariantId === next.selectedVariantId &&
   prev.variants === next.variants &&
+  prev.fromPrice === next.fromPrice &&
   Boolean(prev.onDisable) === Boolean(next.onDisable)
 );
 

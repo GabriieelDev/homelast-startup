@@ -29,6 +29,7 @@ const VariantProductCard = ({ variants, labels, getQuantity, getStock, onAdd, on
     return bestId;
   }, [variants, getStock]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hasUserSelectedVariant, setHasUserSelectedVariant] = useState(false);
   const activeId = selectedId ?? defaultId;
   const selected = useMemo(
     () => variants.find((v) => v.id === activeId) ?? variants[0],
@@ -38,6 +39,13 @@ const VariantProductCard = ({ variants, labels, getQuantity, getStock, onAdd, on
     () => variants.map((v, i) => ({ id: v.id, label: labels[i] ?? v.name })),
     [variants, labels],
   );
+
+  const { minPrice, showFromPrice } = useMemo(() => {
+    const prices = variants.map((v) => v.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return { minPrice: min, showFromPrice: min !== max && !hasUserSelectedVariant };
+  }, [variants, hasUserSelectedVariant]);
 
   return (
     <ProductCard
@@ -50,7 +58,11 @@ const VariantProductCard = ({ variants, labels, getQuantity, getStock, onAdd, on
       onDisable={onDisableProduct ? () => onDisableProduct(selected.id) : undefined}
       variants={chips}
       selectedVariantId={selected.id}
-      onSelectVariant={setSelectedId}
+      onSelectVariant={(id) => {
+        setHasUserSelectedVariant(true);
+        setSelectedId(id);
+      }}
+      fromPrice={showFromPrice ? minPrice : undefined}
     />
   );
 };
