@@ -11,7 +11,7 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
-import { MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu, Plus } from "lucide-react";
+import { MapPin, LogOut, Shield, Package, History, User as UserIcon, Menu, Plus, TicketPercent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HeaderCart from "@/components/HeaderCart";
 import BottomNav from "@/components/BottomNav";
