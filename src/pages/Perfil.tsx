@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon, Camera } from "lucide-react";
+import { ArrowLeft, MapPin, LogOut, KeyRound, User, Moon, Camera, TicketPercent } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
@@ -169,6 +169,17 @@ const Perfil = () => {
           <div className="flex-1">
             <p className="font-medium text-foreground">Meus endereços</p>
             <p className="text-xs text-muted-foreground">Editar endereços de entrega</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate("/meus-cupons")}
+          className="w-full bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors text-left"
+        >
+          <TicketPercent className="h-5 w-5 text-primary" />
+          <div className="flex-1">
+            <p className="font-medium text-foreground">Meus cupons</p>
+            <p className="text-xs text-muted-foreground">Cupons que você resgatou</p>
           </div>
         </button>
 
