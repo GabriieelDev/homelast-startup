@@ -71,13 +71,34 @@ const AnnouncementPopup = () => {
 
   const handleCopy = useCallback(async () => {
     if (!current?.coupon_code) return;
+    const code = current.coupon_code;
     try {
-      await navigator.clipboard.writeText(current.coupon_code);
+      await navigator.clipboard.writeText(code);
       setCopied(true);
       toast.success("Cupom copiado! ✓", { style: { color: "#00B894" } });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Não foi possível copiar");
+    }
+    // Registra o resgate no banco (silencioso, só para usuários logados)
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      if (!userId) return;
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("id")
+        .ilike("code", code)
+        .maybeSingle();
+      if (!coupon?.id) return;
+      await supabase
+        .from("user_redeemed_coupons")
+        .upsert(
+          { user_id: userId, coupon_id: coupon.id },
+          { onConflict: "user_id,coupon_id", ignoreDuplicates: true }
+        );
+    } catch {
+      // ignora silenciosamente
     }
   }, [current]);
 

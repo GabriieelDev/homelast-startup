@@ -24,6 +24,7 @@ const Courier = lazy(() => import("./pages/Courier.tsx"));
 const CourierLogin = lazy(() => import("./pages/CourierLogin.tsx"));
 import Perfil from "./pages/Perfil.tsx";
 import Historico from "./pages/Historico.tsx";
+import MeusCupons from "./pages/MeusCupons.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
 import TermosDeUso from "./pages/TermosDeUso.tsx";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade.tsx";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
               <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+              <Route path="/meus-cupons" element={<ProtectedRoute><MeusCupons /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="/entregador/login" element={<CourierLogin />} />
               <Route path="/entregador" element={<ProtectedRoute><Courier /></ProtectedRoute>} />
