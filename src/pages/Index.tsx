@@ -198,6 +198,7 @@ const Index = () => {
                 <DropdownMenuItem onClick={() => go("/perfil")}><UserIcon className="h-4 w-4 mr-2" /> Meu perfil</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => go("/pedidos")}><Package className="h-4 w-4 mr-2" /> Meus pedidos</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => go("/historico")}><History className="h-4 w-4 mr-2" /> Histórico</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => go("/meus-cupons")}><TicketPercent className="h-4 w-4 mr-2" /> Meus cupons</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => go("/enderecos")}><MapPin className="h-4 w-4 mr-2" /> Endereços</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
