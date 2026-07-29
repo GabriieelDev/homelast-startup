@@ -603,6 +603,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_redeemed_coupons: {
+        Row: {
+          coupon_id: string
+          id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          id?: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_redeemed_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
