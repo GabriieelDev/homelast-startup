@@ -194,7 +194,7 @@ const Auth = () => {
           <div className="min-h-[42vh] lg:min-h-0 flex flex-col justify-center gap-5 px-4 lg:px-0 lg:gap-0 lg:space-y-8">
             {/* Logo */}
             <div className="flex flex-col items-center gap-2 auth-rise auth-d1">
-              <div className="w-14 h-14 rounded-2xl bg-white/15 lg:bg-[#1D2D50]/10 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-[10px] border border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.18),0_0_40px_rgba(0,184,148,0.25)] lg:bg-white/60 lg:border-[#1D2D50]/10 flex items-center justify-center">
                 <LogoIcon className="h-7 w-7" />
               </div>
               <span className="lg:hidden font-display font-bold text-lg text-white">HomeLast Startup</span>
@@ -252,7 +252,7 @@ const Auth = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5"
+                className={primaryBtn}
               >
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
@@ -331,7 +331,7 @@ const Auth = () => {
                 <FieldError field="confirmPassword" />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5">
+              <Button type="submit" disabled={loading} className={primaryBtn}>
                 {loading ? "Criando conta..." : "Criar conta"}
               </Button>
 
@@ -355,7 +355,7 @@ const Auth = () => {
                 </div>
                 <FieldError field="email" />
               </div>
-              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5">
+              <Button type="submit" disabled={loading} className={primaryBtn}>
                 {loading ? "Enviando..." : "Enviar link de recuperação"}
               </Button>
               <p className="text-center text-sm text-[#616161] auth-rise auth-d6">
@@ -368,9 +368,12 @@ const Auth = () => {
           )}
 
             {/* Security footer */}
-            <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD] auth-rise auth-d6">
-              <LockSmall className="h-3 w-3" />
-              <span>Conexão segura e criptografada</span>
+            <div className="flex items-start justify-center gap-2 auth-rise auth-d6">
+              <LockSmall className="h-4 w-4 mt-0.5 text-[#00B894]" />
+              <div className="text-center leading-tight">
+                <p className="text-xs font-semibold text-[#616161]">Conexão segura</p>
+                <p className="text-[11px] text-[#BDBDBD]">Seus dados são protegidos por criptografia</p>
+              </div>
             </div>
           </div>
         </div>
