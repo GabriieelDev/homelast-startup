@@ -179,9 +179,9 @@ const Auth = () => {
 
       {/* RIGHT — FORM */}
       <main className="flex-1 lg:w-2/5 flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div key={mode} className="w-full max-w-md space-y-8">
           {/* Logo */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 auth-rise auth-d1">
             <div className="w-14 h-14 rounded-2xl bg-[#1D2D50]/10 flex items-center justify-center">
               <LogoIcon className="h-7 w-7 text-[#1D2D50]" />
             </div>
@@ -190,12 +190,12 @@ const Auth = () => {
 
           {/* Heading */}
           <div className="text-center space-y-1">
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#212121]">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#212121] auth-rise auth-d2">
               {mode === "login" && "Bem-vindo de volta!"}
               {mode === "signup" && "Crie sua conta"}
               {mode === "forgot" && "Recupere sua senha"}
             </h2>
-            <p className="text-sm text-[#757575]">
+            <p className="text-sm text-[#757575] auth-rise auth-d3">
               {mode === "login" && "Entre na sua conta para continuar comprando"}
               {mode === "signup" && "Cadastre-se e comece a comprar agora"}
               {mode === "forgot" && "Enviaremos um link para redefinir sua senha"}
