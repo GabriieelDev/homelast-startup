@@ -352,12 +352,14 @@ const Auth = () => {
             </form>
           )}
 
-          {/* Security footer */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD] auth-rise auth-d6">
-            <LockSmall className="h-3 w-3" />
-            <span>Conexão segura e criptografada</span>
+            {/* Security footer */}
+            <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD] auth-rise auth-d6">
+              <LockSmall className="h-3 w-3" />
+              <span>Conexão segura e criptografada</span>
+            </div>
           </div>
         </div>
+
       </main>
     </div>
   );
