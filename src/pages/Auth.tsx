@@ -179,29 +179,36 @@ const Auth = () => {
       </aside>
 
       {/* RIGHT — FORM */}
-      <main className="flex-1 lg:w-2/5 flex items-center justify-center p-6 sm:p-10">
-        <div key={mode} className="w-full max-w-md space-y-8">
+      <main className="relative flex-1 lg:w-2/5 flex items-start lg:items-center justify-center px-4 pt-8 pb-8 sm:px-8 lg:p-10 bg-[#F7F8FA] lg:bg-white">
+        {/* Mobile brand band */}
+        <div className="lg:hidden absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#1D2D50] to-[#16233F]" />
+
+        <div key={mode} className="relative z-10 w-full max-w-md space-y-5 lg:space-y-8">
           {/* Logo */}
           <div className="flex flex-col items-center gap-2 auth-rise auth-d1">
-            <div className="w-14 h-14 rounded-2xl bg-[#1D2D50]/10 flex items-center justify-center">
-              <LogoIcon className="h-7 w-7 text-[#1D2D50]" />
+            <div className="w-14 h-14 rounded-2xl bg-white/15 lg:bg-[#1D2D50]/10 flex items-center justify-center">
+              <LogoIcon className="h-7 w-7" />
             </div>
-            <span className="lg:hidden font-display font-bold text-lg text-[#1D2D50]">HomeLast Startup</span>
+            <span className="lg:hidden font-display font-bold text-lg text-white">HomeLast Startup</span>
           </div>
 
           {/* Heading */}
           <div className="text-center space-y-1">
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#212121] auth-rise auth-d2">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-white lg:text-[#212121] auth-rise auth-d2">
               {mode === "login" && "Bem-vindo de volta!"}
               {mode === "signup" && "Crie sua conta"}
               {mode === "forgot" && "Recupere sua senha"}
             </h2>
-            <p className="text-sm text-[#757575] auth-rise auth-d3">
+            <p className="text-sm text-white/75 lg:text-[#757575] auth-rise auth-d3">
               {mode === "login" && "Entre na sua conta para continuar comprando"}
               {mode === "signup" && "Cadastre-se e comece a comprar agora"}
               {mode === "forgot" && "Enviaremos um link para redefinir sua senha"}
             </p>
           </div>
+
+          {/* Form card */}
+          <div className="bg-white rounded-2xl shadow-[0_12px_40px_-12px_rgba(29,45,80,0.28)] p-5 sm:p-6 space-y-6 lg:bg-transparent lg:rounded-none lg:shadow-none lg:p-0">
+
 
           {/* LOGIN */}
           {mode === "login" && (
