@@ -131,9 +131,10 @@ const Auth = () => {
 
   // Field styling: gray border default, soft blue on focus, gray icons
   const fieldWrapper = "relative";
-  const iconLeft = "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9E9E9E] pointer-events-none";
-  const iconRight = "absolute right-3 top-1/2 -translate-y-1/2 text-[#9E9E9E] hover:text-[#424242] transition-colors";
-  const inputBase = "h-12 pl-10 border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
+  const iconLeft = "absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1D2D50]/65 pointer-events-none";
+  const iconRight = "absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1D2D50]/65 hover:text-[#1D2D50] transition-colors";
+  const inputBase = "h-12 pl-11 rounded-xl border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
+  const plainInput = "h-12 rounded-xl border-[#E0E0E0] bg-white shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
   const labelBase = "text-sm font-medium text-[#424242]";
 
   return (
