@@ -179,9 +179,9 @@ const Auth = () => {
 
       {/* RIGHT — FORM */}
       <main className="flex-1 lg:w-2/5 flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-md space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div key={mode} className="w-full max-w-md space-y-8">
           {/* Logo */}
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 auth-rise auth-d1">
             <div className="w-14 h-14 rounded-2xl bg-[#1D2D50]/10 flex items-center justify-center">
               <LogoIcon className="h-7 w-7 text-[#1D2D50]" />
             </div>
@@ -190,12 +190,12 @@ const Auth = () => {
 
           {/* Heading */}
           <div className="text-center space-y-1">
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#212121]">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#212121] auth-rise auth-d2">
               {mode === "login" && "Bem-vindo de volta!"}
               {mode === "signup" && "Crie sua conta"}
               {mode === "forgot" && "Recupere sua senha"}
             </h2>
-            <p className="text-sm text-[#757575]">
+            <p className="text-sm text-[#757575] auth-rise auth-d3">
               {mode === "login" && "Entre na sua conta para continuar comprando"}
               {mode === "signup" && "Cadastre-se e comece a comprar agora"}
               {mode === "forgot" && "Enviaremos um link para redefinir sua senha"}
@@ -205,7 +205,7 @@ const Auth = () => {
           {/* LOGIN */}
           {mode === "login" && (
             <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="email" className={labelBase}>E-mail</Label>
                 <div className={fieldWrapper}>
                   <Mail className={iconLeft} />
@@ -214,7 +214,7 @@ const Auth = () => {
                 <FieldError field="email" />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="password" className={labelBase}>Senha</Label>
                 <div className={fieldWrapper}>
                   <Lock className={iconLeft} />
@@ -226,7 +226,7 @@ const Auth = () => {
                 <FieldError field="password" />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 auth-rise auth-d5">
                 <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(!!v)} />
                 <Label htmlFor="remember" className="text-sm text-[#424242] cursor-pointer">Lembrar de mim neste dispositivo</Label>
               </div>
@@ -234,21 +234,21 @@ const Auth = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all"
+                className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5"
               >
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
 
-              <button type="button" onClick={() => switchMode("forgot")} className="block mx-auto text-sm text-[#1D2D50] hover:underline">
+              <button type="button" onClick={() => switchMode("forgot")} className="block mx-auto auth-rise auth-d6 text-sm text-[#1D2D50] hover:underline">
                 Esqueci minha senha
               </button>
 
-              <div className="relative">
+              <div className="relative auth-rise auth-d6">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-[#EEEEEE]" /></div>
                 <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-[#9E9E9E]">ou</span></div>
               </div>
 
-              <p className="text-center text-sm text-[#616161]">
+              <p className="text-center text-sm text-[#616161] auth-rise auth-d6">
                 Não tem conta?{" "}
                 <button type="button" onClick={() => switchMode("signup")} className="text-[#00B894] hover:text-[#E65100] font-bold">
                   Criar conta
@@ -260,12 +260,12 @@ const Auth = () => {
           {/* SIGNUP */}
           {mode === "signup" && (
             <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="fullName" className={labelBase}>Nome completo</Label>
                 <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
                 <FieldError field="fullName" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="signupEmail" className={labelBase}>E-mail</Label>
                 <div className={fieldWrapper}>
                   <Mail className={iconLeft} />
@@ -273,12 +273,12 @@ const Auth = () => {
                 </div>
                 <FieldError field="email" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="phone" className={labelBase}>Telefone</Label>
                 <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
                 <FieldError field="phone" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d5">
                 <Label htmlFor="signupPassword" className={labelBase}>Senha</Label>
                 <div className={fieldWrapper}>
                   <Lock className={iconLeft} />
@@ -299,7 +299,7 @@ const Auth = () => {
                 )}
                 <FieldError field="password" />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d5">
                 <Label htmlFor="confirmPassword" className={labelBase}>Confirmar senha</Label>
                 <div className={fieldWrapper}>
                   <Lock className={iconLeft} />
@@ -308,11 +308,11 @@ const Auth = () => {
                 <FieldError field="confirmPassword" />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all">
+              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5">
                 {loading ? "Criando conta..." : "Criar conta"}
               </Button>
 
-              <p className="text-center text-sm text-[#616161]">
+              <p className="text-center text-sm text-[#616161] auth-rise auth-d6">
                 Já tem conta?{" "}
                 <button type="button" onClick={() => switchMode("login")} className="text-[#1D2D50] hover:underline font-medium">
                   Entrar
@@ -324,7 +324,7 @@ const Auth = () => {
           {/* FORGOT */}
           {mode === "forgot" && (
             <form onSubmit={handleForgotPassword} className="space-y-5">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="forgotEmail" className={labelBase}>E-mail</Label>
                 <div className={fieldWrapper}>
                   <Mail className={iconLeft} />
@@ -332,10 +332,10 @@ const Auth = () => {
                 </div>
                 <FieldError field="email" />
               </div>
-              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all">
+              <Button type="submit" disabled={loading} className="w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-lg shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5">
                 {loading ? "Enviando..." : "Enviar link de recuperação"}
               </Button>
-              <p className="text-center text-sm text-[#616161]">
+              <p className="text-center text-sm text-[#616161] auth-rise auth-d6">
                 Lembrou a senha?{" "}
                 <button type="button" onClick={() => switchMode("login")} className="text-[#1D2D50] hover:underline font-medium">
                   Voltar ao login
@@ -345,7 +345,7 @@ const Auth = () => {
           )}
 
           {/* Security footer */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD]">
+          <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD] auth-rise auth-d6">
             <LockSmall className="h-3 w-3" />
             <span>Conexão segura e criptografada</span>
           </div>
