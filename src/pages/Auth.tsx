@@ -131,9 +131,10 @@ const Auth = () => {
 
   // Field styling: gray border default, soft blue on focus, gray icons
   const fieldWrapper = "relative";
-  const iconLeft = "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9E9E9E] pointer-events-none";
-  const iconRight = "absolute right-3 top-1/2 -translate-y-1/2 text-[#9E9E9E] hover:text-[#424242] transition-colors";
-  const inputBase = "h-12 pl-10 border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
+  const iconLeft = "absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1D2D50]/65 pointer-events-none";
+  const iconRight = "absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1D2D50]/65 hover:text-[#1D2D50] transition-colors";
+  const inputBase = "h-12 pl-11 rounded-xl border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
+  const plainInput = "h-12 rounded-xl border-[#E0E0E0] bg-white shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
   const labelBase = "text-sm font-medium text-[#424242]";
 
   return (
@@ -178,29 +179,36 @@ const Auth = () => {
       </aside>
 
       {/* RIGHT — FORM */}
-      <main className="flex-1 lg:w-2/5 flex items-center justify-center p-6 sm:p-10">
-        <div key={mode} className="w-full max-w-md space-y-8">
+      <main className="relative flex-1 lg:w-2/5 flex items-start lg:items-center justify-center px-4 pt-8 pb-8 sm:px-8 lg:p-10 bg-[#F7F8FA] lg:bg-white">
+        {/* Mobile brand band */}
+        <div className="lg:hidden absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#1D2D50] to-[#16233F]" />
+
+        <div key={mode} className="relative z-10 w-full max-w-md space-y-5 lg:space-y-8">
           {/* Logo */}
           <div className="flex flex-col items-center gap-2 auth-rise auth-d1">
-            <div className="w-14 h-14 rounded-2xl bg-[#1D2D50]/10 flex items-center justify-center">
-              <LogoIcon className="h-7 w-7 text-[#1D2D50]" />
+            <div className="w-14 h-14 rounded-2xl bg-white/15 lg:bg-[#1D2D50]/10 flex items-center justify-center">
+              <LogoIcon className="h-7 w-7" />
             </div>
-            <span className="lg:hidden font-display font-bold text-lg text-[#1D2D50]">HomeLast Startup</span>
+            <span className="lg:hidden font-display font-bold text-lg text-white">HomeLast Startup</span>
           </div>
 
           {/* Heading */}
           <div className="text-center space-y-1">
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-[#212121] auth-rise auth-d2">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-white lg:text-[#212121] auth-rise auth-d2">
               {mode === "login" && "Bem-vindo de volta!"}
               {mode === "signup" && "Crie sua conta"}
               {mode === "forgot" && "Recupere sua senha"}
             </h2>
-            <p className="text-sm text-[#757575] auth-rise auth-d3">
+            <p className="text-sm text-white/75 lg:text-[#757575] auth-rise auth-d3">
               {mode === "login" && "Entre na sua conta para continuar comprando"}
               {mode === "signup" && "Cadastre-se e comece a comprar agora"}
               {mode === "forgot" && "Enviaremos um link para redefinir sua senha"}
             </p>
           </div>
+
+          {/* Form card */}
+          <div className="bg-white rounded-2xl shadow-[0_12px_40px_-12px_rgba(29,45,80,0.28)] p-5 sm:p-6 space-y-6 lg:bg-transparent lg:rounded-none lg:shadow-none lg:p-0">
+
 
           {/* LOGIN */}
           {mode === "login" && (
@@ -262,7 +270,7 @@ const Auth = () => {
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="fullName" className={labelBase}>Nome completo</Label>
-                <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
+                <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className={plainInput} />
                 <FieldError field="fullName" />
               </div>
               <div className="space-y-1.5 auth-rise auth-d4">
@@ -275,7 +283,7 @@ const Auth = () => {
               </div>
               <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="phone" className={labelBase}>Telefone</Label>
-                <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
+                <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className={plainInput} />
                 <FieldError field="phone" />
               </div>
               <div className="space-y-1.5 auth-rise auth-d5">
@@ -344,12 +352,14 @@ const Auth = () => {
             </form>
           )}
 
-          {/* Security footer */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD] auth-rise auth-d6">
-            <LockSmall className="h-3 w-3" />
-            <span>Conexão segura e criptografada</span>
+            {/* Security footer */}
+            <div className="flex items-center justify-center gap-1.5 text-xs text-[#BDBDBD] auth-rise auth-d6">
+              <LockSmall className="h-3 w-3" />
+              <span>Conexão segura e criptografada</span>
+            </div>
           </div>
         </div>
+
       </main>
     </div>
   );
