@@ -270,7 +270,7 @@ const Auth = () => {
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="fullName" className={labelBase}>Nome completo</Label>
-                <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
+                <Input id="fullName" placeholder="Seu nome" value={fullName} onChange={(e) => setFullName(e.target.value)} className={plainInput} />
                 <FieldError field="fullName" />
               </div>
               <div className="space-y-1.5 auth-rise auth-d4">
@@ -283,7 +283,7 @@ const Auth = () => {
               </div>
               <div className="space-y-1.5 auth-rise auth-d4">
                 <Label htmlFor="phone" className={labelBase}>Telefone</Label>
-                <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-12 border-[#E0E0E0] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50]" />
+                <Input id="phone" type="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} className={plainInput} />
                 <FieldError field="phone" />
               </div>
               <div className="space-y-1.5 auth-rise auth-d5">
