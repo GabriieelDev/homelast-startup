@@ -133,10 +133,11 @@ const Auth = () => {
   const fieldWrapper = "relative";
   const iconLeft = "absolute left-5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1D2D50]/65 pointer-events-none";
   const iconRight = "absolute right-5 top-1/2 -translate-y-1/2 text-[#1D2D50]/65 hover:text-[#1D2D50] transition-colors";
-  const inputBase = "h-12 pl-12 pr-5 rounded-full border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
-  const plainInput = "h-12 px-5 rounded-full border-[#E0E0E0] bg-white shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] focus-visible:ring-2 focus-visible:ring-[#1D2D50]/30 focus-visible:border-[#1D2D50] transition-colors";
+  const focusRing = "focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[#00B894] focus-visible:shadow-[inset_0_1px_3px_rgba(29,45,80,0.06),0_0_0_4px_rgba(0,184,148,0.15)] transition-all duration-200";
+  const inputBase = `h-12 pl-12 pr-5 rounded-full border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] ${focusRing}`;
+  const plainInput = `h-12 px-5 rounded-full border-[#E0E0E0] bg-white shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] ${focusRing}`;
   const labelBase = "text-sm font-medium text-[#424242] pl-1";
-  const primaryBtn = "w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-full shadow-md shadow-[#00B894]/20 active:scale-[0.98] transition-all auth-rise auth-d5";
+  const primaryBtn = "w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-full shadow-[0_8px_20px_rgba(0,184,148,0.35)] hover:shadow-[0_10px_24px_rgba(0,184,148,0.42)] active:scale-[0.98] transition-all duration-200 auth-rise auth-d5";
 
   return (
     <div className="min-h-screen flex bg-white">
