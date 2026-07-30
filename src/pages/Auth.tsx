@@ -251,10 +251,15 @@ const Auth = () => {
                 Esqueci minha senha
               </button>
 
-              <div className="relative auth-rise auth-d6">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-[#EEEEEE]" /></div>
-                <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-[#9E9E9E]">ou</span></div>
+              <div className="relative my-6 auth-rise auth-d6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-[#F0F0F0]" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-3 text-[#9E9E9E]">ou</span>
+                </div>
               </div>
+
 
               <p className="text-center text-sm text-[#616161] auth-rise auth-d6">
                 Não tem conta?{" "}
