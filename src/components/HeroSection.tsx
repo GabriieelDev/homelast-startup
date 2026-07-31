@@ -52,6 +52,10 @@ const HeroSection = ({ onStart }: HeroSectionProps) => {
               ref={imgRef}
               src={heroImage}
               alt="Compras frescas do HomeLast Startup"
+              width={1024}
+              height={768}
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-auto rounded-2xl animate-slide-up will-change-transform transition-transform duration-300 ease-out"
             />
           </div>
