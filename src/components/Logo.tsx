@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import logoFull from "@/assets/homelast-logo.png";
-import logoIcon from "@/assets/homelast-icon.png";
+import logoFull from "@/assets/homelast-logo.webp";
+import logoIcon from "@/assets/homelast-icon.webp";
 
 interface LogoIconProps {
   className?: string;
@@ -16,6 +16,10 @@ export const LogoIcon = ({ className }: LogoIconProps) => (
   <img
     src={logoIcon}
     alt="HomeLast Startup"
+    width={128}
+    height={128}
+    fetchPriority="high"
+    decoding="async"
     className={cn("h-6 w-6 object-contain select-none", className)}
     draggable={false}
   />
@@ -38,6 +42,10 @@ const Logo = ({ className, variant = "full" }: LogoProps) => {
     <img
       src={logoFull}
       alt="HomeLast Startup"
+      width={373}
+      height={320}
+      fetchPriority="high"
+      decoding="async"
       className={cn("h-20 w-auto object-contain select-none", className)}
       draggable={false}
     />

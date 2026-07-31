@@ -4,7 +4,7 @@ import {
   ChevronLeft, ChevronRight, Truck, ShieldCheck, Star, Flame, Gift, Copy, Check,
   Package, ArrowRight, Sparkles,
 } from "lucide-react";
-import heroImage from "@/assets/hero-groceries.png";
+import heroImage from "@/assets/hero-groceries.webp";
 import { useProducts } from "@/hooks/useProducts";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useCountdown, formatCountdown } from "@/hooks/useCountdown";
