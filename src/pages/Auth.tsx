@@ -215,8 +215,14 @@ const Auth = () => {
             </div>
           </div>
 
+          {/* Auréola de luz atrás do topo do card (mobile) */}
+          <div aria-hidden className="lg:hidden relative">
+            <div className="absolute -top-6 left-2 right-2 h-16 rounded-full bg-white/20 blur-[34px]" />
+            <div className="absolute -top-3 left-8 right-8 h-10 rounded-full bg-[#00B894]/25 blur-[30px]" />
+          </div>
+
           {/* Form card */}
-          <div className="relative flex-1 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.25)] px-5 pt-7 pb-8 sm:px-6 space-y-6 lg:bg-transparent lg:rounded-none lg:shadow-none lg:p-0">
+          <div className="relative flex-1 bg-white rounded-t-3xl border-t border-white/25 shadow-[0_-8px_30px_rgba(255,255,255,0.16)] px-5 pt-7 pb-8 sm:px-6 space-y-6 lg:bg-transparent lg:rounded-none lg:border-t-0 lg:shadow-none lg:p-0">
             {/* Friso decorativo no topo (mobile) */}
             <span aria-hidden className="lg:hidden absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-[64%] rounded-full bg-[#00B894]" />
 
