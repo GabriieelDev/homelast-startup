@@ -137,7 +137,7 @@ const Auth = () => {
   const inputBase = `h-12 pl-12 pr-5 rounded-full border-[#E0E0E0] bg-white text-[#212121] placeholder:text-[#BDBDBD] shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] ${focusRing}`;
   const plainInput = `h-12 px-5 rounded-full border-[#E0E0E0] bg-white shadow-[inset_0_1px_3px_rgba(29,45,80,0.06)] ${focusRing}`;
   const labelBase = "text-sm font-medium text-[#424242] pl-1";
-  const primaryBtn = "w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-full shadow-[0_8px_20px_rgba(0,184,148,0.35)] hover:shadow-[0_10px_24px_rgba(0,184,148,0.42)] active:scale-[0.98] transition-all duration-200 auth-rise auth-d5";
+  const primaryBtn = "w-full h-12 bg-[#00B894] hover:bg-[#E65100] text-white font-semibold rounded-full shadow-[0_8px_20px_rgba(0,184,148,0.35)] hover:shadow-[0_12px_32px_rgba(0,184,148,0.55)] focus-visible:shadow-[0_12px_32px_rgba(0,184,148,0.55)] focus-visible:outline-none active:scale-[0.98] transition-all duration-200 auth-rise auth-d5";
 
   return (
     <div className="min-h-screen flex bg-white">
@@ -216,7 +216,9 @@ const Auth = () => {
           </div>
 
           {/* Form card */}
-          <div className="flex-1 bg-white rounded-t-3xl shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.35)] px-5 pt-7 pb-8 sm:px-6 space-y-6 lg:bg-transparent lg:rounded-none lg:shadow-none lg:p-0">
+          <div className="relative flex-1 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.25)] px-5 pt-7 pb-8 sm:px-6 space-y-6 lg:bg-transparent lg:rounded-none lg:shadow-none lg:p-0">
+            {/* Friso decorativo no topo (mobile) */}
+            <span aria-hidden className="lg:hidden absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-[64%] rounded-full bg-[#00B894]" />
 
 
 
