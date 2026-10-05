@@ -9,6 +9,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import CartSyncProvider from "@/components/CartSyncProvider";
 import SessionTimeoutProvider from "@/components/SessionTimeoutProvider";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import PwaUpdatePrompt from "@/components/PwaUpdatePrompt";
+import OfflineNotice from "@/components/OfflineNotice";
 
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -40,6 +42,8 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <PwaUpdatePrompt />
+          <OfflineNotice />
           <BrowserRouter>
             <SessionTimeoutProvider>
               <Suspense fallback={null}>
