@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 17.5 256 256" fill="none">
+  <title>HomeLast</title>
+  <g stroke="#1D2D50" stroke-width="14">
+    <!-- telhado + paredes -->
+    <path d="M207.5 165.5V126.9Q207.5 124.4 205.6 122.7L128 54 50.4 122.7Q48.5 124.4 48.5 126.9V210" stroke-linejoin="miter" stroke-miterlimit="10"/>
+    <!-- parede esquerda -> base do laço esquerdo -> diagonal -> topo do laço direito -->
+    <path d="M48.5 208C48.5 228 62 239.5 82 239.5C100 239.5 112 226 128 208.5C144 191 156 177.5 176 177.5C189 177.5 198 181.5 202.5 187.5" stroke-linecap="round"/>
+    <!-- topo do laço esquerdo -->
+    <path d="M48.5 208C48.5 190 62 178 82 178C97 178 108 187 116 196"/>
+    <!-- base do laço direito -->
+    <path d="M140 220.5C152 232.5 163 239.5 177 239.5C189 239.5 197 236 201.5 229"/>
+  </g>
+  <g fill="#1D2D50">
+    <path d="M200.5 165H214.5V178Z"/>
+    <circle cx="201.5" cy="229" r="7"/>
+    <circle cx="208" cy="208" r="6.5"/>
+  </g>
+</svg>
