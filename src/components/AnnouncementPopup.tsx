@@ -1,8 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Copy, Check, Tag, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
@@ -30,9 +32,14 @@ const shouldShowToday = () => {
   }
 };
 
+const normalizeCode = (code: string | null | undefined) => (code ?? "").replace(/\s+/g, "").toUpperCase();
+
 const AnnouncementPopup = () => {
   const navigate = useNavigate();
-  const [banners, setBanners] = useState<Banner[]>([]);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [allBanners, setBanners] = useState<Banner[]>([]);
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -60,6 +67,23 @@ const AnnouncementPopup = () => {
     return () => { cancelled = true; };
   }, []);
 
+  // Cupons que o usuário já usou em algum pedido (visitante → []).
+  const { data: usedCodes, isPending: usedPending } = useQuery({
+    queryKey: ["used-coupon-codes", userId ?? null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("used_coupon_codes");
+      if (error) throw error;
+      return (data ?? []).map(normalizeCode);
+    },
+    retry: 1,
+  });
+
+  const banners = useMemo(() => {
+    if (!usedCodes?.length) return allBanners;
+    const used = new Set(usedCodes);
+    return allBanners.filter((b) => !(b.coupon_code && used.has(normalizeCode(b.coupon_code))));
+  }, [allBanners, usedCodes]);
+
   const handleClose = useCallback((value: boolean) => {
     setOpen(value);
     if (!value) {
@@ -67,7 +91,8 @@ const AnnouncementPopup = () => {
     }
   }, []);
 
-  const current = banners[index];
+  const safeIndex = index < banners.length ? index : 0;
+  const current = banners[safeIndex];
 
   const handleCopy = useCallback(async () => {
     if (!current?.coupon_code) return;
@@ -81,26 +106,14 @@ const AnnouncementPopup = () => {
       toast.error("Não foi possível copiar");
     }
     // Registra o resgate no banco (silencioso, só para usuários logados)
+    if (!userId) return;
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth?.user?.id;
-      if (!userId) return;
-      const { data: coupon } = await supabase
-        .from("coupons")
-        .select("id")
-        .ilike("code", code)
-        .maybeSingle();
-      if (!coupon?.id) return;
-      await supabase
-        .from("user_redeemed_coupons")
-        .upsert(
-          { user_id: userId, coupon_id: coupon.id },
-          { onConflict: "user_id,coupon_id", ignoreDuplicates: true }
-        );
+      await supabase.rpc("redeem_coupon", { p_code: code });
+      queryClient.invalidateQueries({ queryKey: ["my-coupons"] });
     } catch {
       // ignora silenciosamente
     }
-  }, [current]);
+  }, [current, userId, queryClient]);
 
   const handleAction = useCallback(() => {
     if (!current) return;
@@ -116,7 +129,8 @@ const AnnouncementPopup = () => {
     }
   }, [current, handleClose, navigate]);
 
-  if (!current) return null;
+  // Espera used_coupon_codes para não piscar um banner de cupom já usado.
+  if (!current || usedPending) return null;
 
   const isCoupon = current.type === "coupon";
 
@@ -178,7 +192,7 @@ const AnnouncementPopup = () => {
                       key={i}
                       onClick={() => setIndex(i)}
                       className={`h-1.5 rounded-full transition-all ${
-                        i === index ? "w-6 bg-primary" : "w-1.5 bg-background/70"
+                        i === safeIndex ? "w-6 bg-primary" : "w-1.5 bg-background/70"
                       }`}
                       aria-label={`Banner ${i + 1}`}
                     />

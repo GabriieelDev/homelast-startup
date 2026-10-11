@@ -1,6 +1,7 @@
 import { LogoIcon } from "@/components/Logo";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const Checkout = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { clearCart } = useCart();
+  const queryClient = useQueryClient();
   const [address, setAddress] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState("pix");
   const [loading, setLoading] = useState(false);
@@ -124,6 +126,9 @@ const Checkout = () => {
     setLoading(false);
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
     clearCart();
+    // O cupom usado some de "Meus cupons" e dos banners.
+    queryClient.invalidateQueries({ queryKey: ["my-coupons"] });
+    queryClient.invalidateQueries({ queryKey: ["used-coupon-codes"] });
     toast.success("Pedido confirmado! 🎉");
     navigate("/confirmacao", {
       state: { orderId: data.id, orderNumber: data.order_number, total, address: sanitizedAddress, estimatedTime },

@@ -710,6 +710,32 @@ export type Database = {
         Returns: boolean
       }
       increment_coupon_usage: { Args: { _code: string }; Returns: undefined }
+      my_coupons: {
+        Args: never
+        Returns: {
+          active: boolean
+          code: string
+          coupon_id: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          min_order: number | null
+          redeemed_at: string
+        }[]
+      }
+      redeem_coupon: { Args: { p_code: string }; Returns: boolean }
+      top_sellers: {
+        Args: { p_days: number; p_limit: number }
+        Returns: {
+          product_id: string
+        }[]
+      }
+      used_coupon_codes: { Args: never; Returns: string[] }
+      validate_coupon: {
+        Args: { p_code: string; p_subtotal: number }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "cliente" | "entregador"

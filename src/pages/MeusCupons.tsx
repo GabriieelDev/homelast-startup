@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,38 +25,20 @@ const brl = (v: number) =>
 const MeusCupons = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [coupons, setCoupons] = useState<RedeemedCoupon[]>([]);
-  const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from("user_redeemed_coupons")
-        .select(
-          "id, redeemed_at, coupons(code, description, discount_type, discount_value, min_order, expires_at, active)"
-        )
-        .eq("user_id", user.id)
-        .order("redeemed_at", { ascending: false });
-      if (cancelled) return;
-      if (!error && data) {
-        const rows = (data as any[])
-          .filter((r) => r.coupons)
-          .map((r) => ({
-            id: r.id,
-            redeemed_at: r.redeemed_at,
-            ...r.coupons,
-          })) as RedeemedCoupon[];
-        setCoupons(rows);
-      }
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
+  // Já exclui os cupons que o usuário usou em algum pedido (my_coupons).
+  const { data: coupons = [], isPending: loading } = useQuery({
+    queryKey: ["my-coupons", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_coupons");
+      if (error) throw error;
+      return (data ?? [])
+        .map((r) => ({ ...r, id: r.coupon_id }) as RedeemedCoupon)
+        .sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime());
+    },
+  });
 
   const handleCopy = async (c: RedeemedCoupon) => {
     try {
