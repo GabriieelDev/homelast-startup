@@ -141,7 +141,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
     const payload: any = {
       name: name.trim(),
       price: priceNum,
-      cost_price: costNum,
+      cost_price: 0,
       original_price: originalPrice ? parseFloat(originalPrice) : null,
       image: image.trim() || "/placeholder.svg",
       category,
@@ -158,15 +158,25 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
       variant_group: variantGroup.trim() ? variantGroup.trim() : null,
     };
 
+    const saveCost = (productId: string) =>
+      supabase.from("product_costs").upsert(
+        { product_id: productId, cost_price: costNum, updated_at: new Date().toISOString() },
+        { onConflict: "product_id" },
+      );
+
     if (product) {
       const { error } = await supabase.from("products").update(payload).eq("id", product.id);
+      if (error) { setSaving(false); return toast.error("Erro ao atualizar produto"); }
+      const { error: costError } = await saveCost(product.id);
       setSaving(false);
-      if (error) return toast.error("Erro ao atualizar produto");
+      if (costError) return toast.error("Produto atualizado, mas falhou ao salvar o custo");
       toast.success("Produto atualizado ✅");
     } else {
       const id = `p${Date.now()}`;
       const { error } = await supabase.from("products").insert({ ...payload, id });
       if (!error) {
+        const { error: costError } = await saveCost(id);
+        if (costError) toast.error("Falha ao salvar o custo do produto");
         const stockNum = parseInt(stock, 10);
         if (!isNaN(stockNum) && stockNum >= 0) {
           await supabase.from("product_stock").upsert({ product_id: id, stock: stockNum }, { onConflict: "product_id" });

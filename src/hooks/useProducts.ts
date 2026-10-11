@@ -85,7 +85,7 @@ export function useProducts({ includeAdminCosts = false }: UseProductsOptions = 
     if (includeAdminCosts) {
       const costs = await loadAdminProductCosts();
       if (costs !== null) {
-        lastCostsRef.current = new Map(costs.map((c: any) => [c.id, Number(c.cost_price)]));
+        lastCostsRef.current = new Map(costs.map((c: any) => [c.product_id ?? c.id, Number(c.cost_price)]));
       }
       const map = lastCostsRef.current;
       rows = rows.map((r) => ({ ...r, cost_price: map.get(r.id) ?? 0 }));

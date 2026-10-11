@@ -367,6 +367,24 @@ export type Database = {
         }
         Relationships: []
       }
+      product_costs: {
+        Row: {
+          cost_price: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          cost_price?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_stock: {
         Row: {
           product_id: string
@@ -658,7 +676,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_delete_old_orders: { Args: { _days: number }; Returns: number }
+      admin_delete_old_orders: { Args: { days_old: number }; Returns: undefined }
       expire_product_sales: { Args: never; Returns: undefined }
       get_admin_product_costs: {
         Args: never

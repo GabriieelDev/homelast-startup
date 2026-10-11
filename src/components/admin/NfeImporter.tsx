@@ -176,8 +176,12 @@ function NfePreview({
 
       if (existing) {
         await supabase.from("products").update({
-          cost_price: row.unitCost,
+          cost_price: 0,
         }).eq("id", existing.id);
+        await supabase.from("product_costs").upsert(
+          { product_id: existing.id, cost_price: row.unitCost, updated_at: new Date().toISOString() },
+          { onConflict: "product_id" },
+        );
         // increment stock
         const { data: stk } = await supabase.from("product_stock").select("stock").eq("product_id", existing.id).maybeSingle();
         const current = stk?.stock ?? 0;
@@ -192,7 +196,7 @@ function NfePreview({
           id,
           name: row.name,
           price: row.unitCost * 1.3, // sugestão: custo + 30%
-          cost_price: row.unitCost,
+          cost_price: 0,
           unit: row.unit.toLowerCase(),
           category: cat.slug,
           category_id: cat.id,
@@ -201,6 +205,10 @@ function NfePreview({
           active: true,
         });
         if (!error) {
+          await supabase.from("product_costs").upsert(
+            { product_id: id, cost_price: row.unitCost, updated_at: new Date().toISOString() },
+            { onConflict: "product_id" },
+          );
           await supabase.from("product_stock").upsert({ product_id: id, stock: Math.floor(row.qty) });
           newCount++;
         }

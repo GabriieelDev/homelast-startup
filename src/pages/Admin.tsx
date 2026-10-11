@@ -240,9 +240,9 @@ const Admin = () => {
   const bulkDeleteOldOrders = async () => {
     const days = parseInt(bulkDeleteDays, 10);
     if (isNaN(days) || days < 0) { toast.error("Informe um número válido de dias"); return; }
-    const { data, error } = await supabase.rpc("admin_delete_old_orders", { _days: days });
+    const { error } = await supabase.rpc("admin_delete_old_orders", { days_old: days });
     if (error) { toast.error("Erro ao excluir pedidos antigos"); return; }
-    toast.success(`${data ?? 0} pedido(s) excluído(s)`);
+    toast.success("Pedidos antigos excluídos");
     setBulkDeleteOpen(false);
   };
 
