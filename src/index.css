@@ -171,7 +171,21 @@
 .auth-d5 { animation-delay: 320ms; }
 .auth-d6 { animation-delay: 400ms; }
 
+/* Auth banner waves + floating dots (waves are 200% wide, period = 50%) */
+@keyframes auth-wave-left  { from { transform: translateX(0); }    to { transform: translateX(-50%); } }
+@keyframes auth-wave-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@keyframes auth-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+
+.auth-wave-16 { animation: auth-wave-left 16s linear infinite; }
+.auth-wave-11 { animation: auth-wave-right 11s linear infinite; }
+.auth-wave-22 { animation: auth-wave-left 22s linear infinite; }
+.auth-dot { animation: auth-float 7s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .auth-stagger > *,
-  .auth-rise { animation: none; opacity: 1; }
+  .auth-rise,
+  .auth-wave-16,
+  .auth-wave-11,
+  .auth-wave-22,
+  .auth-dot { animation: none; opacity: 1; }
 }
