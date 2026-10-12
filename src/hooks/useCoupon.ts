@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 export interface AppliedCoupon {
   code: string;
@@ -17,9 +16,22 @@ interface CalcParams {
   shipping: number;
 }
 
+interface ValidateCouponResult {
+  valid: boolean;
+  reason: "ok" | "login" | "invalid" | "expired" | "min_order" | "used" | "first_order";
+  min_order?: number;
+  coupon?: {
+    id: string;
+    code: string;
+    description: string | null;
+    discount_type: string;
+    discount_value: number;
+    min_order: number | null;
+    expires_at: string | null;
+  };
+}
+
 export function useCoupon() {
-  const { user } = useAuth();
-  const userId = user?.id;
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,42 +47,33 @@ export function useCoupon() {
         return false;
       }
 
-      const { data, error: dbError } = await supabase
-        .from("coupons")
-        .select("*")
-        .eq("code", normalized)
-        .eq("active", true)
-        .maybeSingle();
+      const { data: result, error: dbError } = await supabase.rpc("validate_coupon", {
+        p_code: normalized,
+        p_subtotal: subtotal,
+      });
 
       setLoading(false);
 
-      if (dbError || !data) {
-        setError("Cupom inválido ou expirado.");
-        setCoupon(null);
-        return false;
-      }
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        setError("Cupom inválido ou expirado.");
-        setCoupon(null);
-        return false;
-      }
-      if (subtotal < Number(data.min_order || 0)) {
-        setError(`Pedido mínimo de R$ ${Number(data.min_order).toFixed(2)} para usar este cupom.`);
-        setCoupon(null);
-        return false;
-      }
+      const res = result as unknown as ValidateCouponResult | null;
+      const data = res?.coupon;
 
-      // First-order check
-      if (data.discount_type === "first_order" && userId) {
-        const { count } = await supabase
-          .from("orders")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", userId);
-        if ((count ?? 0) > 0) {
-          setError("Cupom válido apenas na primeira compra.");
-          setCoupon(null);
-          return false;
+      if (dbError || !res || !res.valid || !data) {
+        switch (res?.reason) {
+          case "min_order":
+            setError(`Pedido mínimo de R$ ${Number(res.min_order ?? 0).toFixed(2)} para usar este cupom.`);
+            break;
+          case "first_order":
+            setError("Cupom válido apenas na primeira compra.");
+            break;
+          case "used":
+            setError("Você já usou este cupom");
+            break;
+          default:
+            // invalid, expired, login ou erro de rede
+            setError("Cupom inválido ou expirado.");
         }
+        setCoupon(null);
+        return false;
       }
 
       let discountAmount = 0;
@@ -101,7 +104,7 @@ export function useCoupon() {
       });
       return true;
     },
-    [userId]
+    []
   );
 
   const clear = useCallback(() => {

@@ -1,39 +1,21 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-/** Aggregates the most-sold product IDs from recent orders. */
+const REFETCH_MS = 5 * 60 * 1000;
+
+/** Most-sold product IDs (already ranked by the server). Works for visitors too. */
 export function useTopSellers(limit = 6) {
-  const [topIds, setTopIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useQuery({
+    queryKey: ["top-sellers", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("top_sellers", { p_limit: limit, p_days: 365 });
+      if (error) throw error;
+      return ((data ?? []) as { product_id: string }[]).map((r) => r.product_id).filter(Boolean);
+    },
+    staleTime: REFETCH_MS,
+    refetchInterval: REFETCH_MS,
+    refetchOnWindowFocus: "always",
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("items")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (cancelled) return;
-      const counts = new Map<string, number>();
-      for (const row of (data ?? []) as any[]) {
-        const items = Array.isArray(row.items) ? row.items : [];
-        for (const it of items) {
-          const id = it?.product?.id ?? it?.id;
-          const qty = Number(it?.quantity ?? 1);
-          if (!id) continue;
-          counts.set(id, (counts.get(id) ?? 0) + qty);
-        }
-      }
-      const ids = Array.from(counts.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, limit)
-        .map(([id]) => id);
-      setTopIds(ids);
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [limit]);
-
-  return { topIds, loading };
+  return { topIds: data ?? [], loading: isLoading };
 }
