@@ -25,6 +25,7 @@ import CategoryManager from "@/components/admin/CategoryManager";
 import NfeImporter from "@/components/admin/NfeImporter";
 import SalePromotionsPanel from "@/components/admin/SalePromotionsPanel";
 import CarouselManager from "@/components/admin/CarouselManager";
+import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import CouponManager from "@/components/admin/CouponManager";
 import ReviewsManager from "@/components/admin/ReviewsManager";
 import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
@@ -1427,6 +1428,9 @@ const Admin = () => {
           {tab === "configuracoes" && (
             <div className="mt-8 pt-8 border-t border-border">
               <CarouselManager />
+              <div className="mt-8 pt-8 border-t border-border">
+                <HomeSectionsManager />
+              </div>
             </div>
           )}
         </main>
