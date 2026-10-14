@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setKnownStock } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useStock() {
@@ -13,6 +14,7 @@ export function useStock() {
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: any) => { map[r.product_id] = r.stock; });
       setStock(map);
+      setKnownStock(map);
       setLoading(false);
     };
     load();
@@ -21,6 +23,7 @@ export function useStock() {
       .on("postgres_changes", { event: "*", schema: "public", table: "product_stock" }, (payload: any) => {
         const row = payload.new ?? payload.old;
         if (!row) return;
+        setKnownStock({ [row.product_id]: payload.new?.stock ?? 0 });
         setStock((prev) => ({ ...prev, [row.product_id]: payload.new?.stock ?? 0 }));
       })
       .subscribe();

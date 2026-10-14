@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogoIcon } from "@/components/Logo";
@@ -59,7 +60,7 @@ const MeusCupons = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-24">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/perfil")} className="text-foreground" aria-label="Voltar">
@@ -148,6 +149,7 @@ const MeusCupons = () => {
           })
         )}
       </div>
+      <BottomNav />
     </div>
   );
 };

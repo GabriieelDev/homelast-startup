@@ -181,7 +181,11 @@
 .auth-wave-22 { animation: auth-wave-left 22s linear infinite; }
 .auth-dot { animation: auth-float 7s ease-in-out infinite; }
 
+@keyframes cart-badge-bump { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+.cart-badge-bump { animation: cart-badge-bump 250ms ease-out; }
+
 @media (prefers-reduced-motion: reduce) {
+  .cart-badge-bump { animation: none; }
   .auth-stagger > *,
   .auth-rise,
   .auth-wave-16,

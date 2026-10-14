@@ -57,7 +57,7 @@ const Historico = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-24">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/")} className="text-foreground"><ArrowLeft className="h-5 w-5" /></button>

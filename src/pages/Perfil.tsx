@@ -1,6 +1,7 @@
 import { LogoIcon } from "@/components/Logo";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -97,7 +98,7 @@ const Perfil = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-24">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate("/")} className="text-foreground"><ArrowLeft className="h-5 w-5" /></button>
@@ -225,6 +226,7 @@ const Perfil = () => {
           <LogOut className="h-4 w-4" /> Sair da conta
         </Button>
       </div>
+      <BottomNav />
     </div>
   );
 };

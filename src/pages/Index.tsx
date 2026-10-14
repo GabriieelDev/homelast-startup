@@ -5,7 +5,6 @@ import HeroCarousel from "@/components/HeroCarousel";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductSection from "@/components/ProductSection";
-import FloatingCart from "@/components/FloatingCart";
 import Features from "@/components/Features";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
@@ -244,7 +243,7 @@ const Index = () => {
         </div>
       )}
 
-      <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-28">
+      <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-24">
         {isAdmin && (
           <div className="flex justify-end">
             <Button onClick={() => setShowProductForm(true)} className="gap-2">
@@ -307,7 +306,6 @@ const Index = () => {
 
       <Footer />
 
-      <FloatingCart items={items} totalItems={totalItems} totalPrice={totalPrice} onRemove={removeItem} onAdd={addItem} />
       <BottomNav cartCount={totalItems} />
 
       {isAdmin && (
