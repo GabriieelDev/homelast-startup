@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, MapPin, CreditCard, QrCode, Banknote, Truck, Tag, X, CheckCircle2, Loader2, Clock } from "lucide-react";
-import { CartItem, useCart } from "@/hooks/useCart";
+import { CartItem, useCart, applyStockLimits, fetchStock, reconcileCartWithStock } from "@/hooks/useCart";
 import { getEffectivePrice } from "@/lib/promotions";
 import { useCoupon } from "@/hooks/useCoupon";
 import { estimateDeliveryMinutes } from "@/lib/delivery";
@@ -36,9 +36,37 @@ const Checkout = () => {
   const { settings } = useStoreSettings();
 
   const rawState = location.state as { items: CartItem[]; totalPrice: number; frete?: number } | null;
+  // Items can be adjusted after we re-read stock; until then we show what the cart sent.
+  const [adjusted, setAdjusted] = useState<CartItem[] | null>(null);
+  const [stock, setStock] = useState<Record<string, number> | null>(null);
+  const liveItems = adjusted ?? rawState?.items ?? [];
+  const liveTotal = liveItems.reduce((s, i) => s + getEffectivePrice(i.product) * i.quantity, 0);
   const state = rawState
-    ? { ...rawState, frete: calcShipping(rawState.totalPrice, settings) }
+    ? { ...rawState, items: liveItems, totalPrice: liveTotal, frete: calcShipping(liveTotal, settings) }
     : null;
+  const overStock = stock
+    ? liveItems.filter((i) => i.quantity > (stock[i.product.id] ?? Infinity))
+    : [];
+  const checkingStock = !!rawState?.items?.length && stock === null;
+
+  // Re-read stock on entry; fix the cart and this order's items.
+  useEffect(() => {
+    const src = rawState?.items;
+    if (!src?.length) return;
+    let cancelled = false;
+    (async () => {
+      const [fresh] = await Promise.all([fetchStock(src.map((i) => i.product.id)), reconcileCartWithStock({ silent: true })]);
+      if (cancelled) return;
+      const { items: fixed, messages, changed } = applyStockLimits(src, fresh);
+      setStock(fresh);
+      if (changed) {
+        setAdjusted(fixed);
+        toast.warning("Ajustamos seu pedido", { description: messages.join("\n") });
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const hasItems = !!state?.items?.length;
   useEffect(() => {
@@ -68,6 +96,13 @@ const Checkout = () => {
     await applyCoupon(couponInput, { subtotal: totalPrice, shipping: frete });
   };
 
+  const resyncStock = async (current: CartItem[]) => {
+    const fresh = await fetchStock(current.map((i) => i.product.id));
+    setStock(fresh);
+    setAdjusted(applyStockLimits(current, fresh).items);
+    void reconcileCartWithStock({ silent: true });
+  };
+
   const handleConfirm = async () => {
     if (!user) { toast.error("Você precisa estar logado"); navigate("/auth"); return; }
     if (!items.length) { toast.error("Carrinho vazio"); navigate("/"); return; }
@@ -77,6 +112,16 @@ const Checkout = () => {
       return;
     }
     setLoading(true);
+    // Last check right before ordering: stock may have changed since we entered.
+    const fresh = await fetchStock(items.map((i) => i.product.id));
+    const recheck = applyStockLimits(items, fresh);
+    if (recheck.changed) {
+      setStock(fresh);
+      setAdjusted(recheck.items);
+      setLoading(false);
+      toast.error("Estoque mudou", { description: recheck.messages.join("\n") });
+      return;
+    }
     const { data: orderNumber, error: seqError } = await supabase.rpc('get_next_order_number');
     if (seqError || orderNumber == null) {
       setLoading(false);
@@ -124,6 +169,15 @@ const Checkout = () => {
       .select("id, order_number")
       .single();
     setLoading(false);
+    if (error && /estoque insuficiente/i.test(error.message ?? "")) {
+      // The database refused the order: show its reason and re-sync quantities with real stock.
+      void resyncStock(items);
+      toast.error("Estoque insuficiente para um dos itens do pedido", {
+        description: "Ajustamos as quantidades ao que está disponível. Revise e confirme novamente.",
+        duration: 8000,
+      });
+      return;
+    }
     if (error || !data) { toast.error("Erro ao criar pedido"); return; }
     clearCart();
     // O cupom usado some de "Meus cupons" e dos banners.
@@ -285,7 +339,14 @@ const Checkout = () => {
       {/* Fixed bottom button */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4">
         <div className="container mx-auto max-w-lg">
-          <Button onClick={handleConfirm} className="w-full h-12 text-base font-bold" disabled={loading || !address || !items.length}>
+          {(overStock.length > 0 || (stock && !items.length)) && (
+            <p className="text-sm text-destructive mb-2" role="alert">
+              {items.length
+                ? `Quantidade acima do estoque: ${overStock.map((i) => `${i.product.name} (máx. ${stock![i.product.id]})`).join(", ")}. Volte ao carrinho e ajuste.`
+                : "Os itens do carrinho acabaram. Volte e escolha outros produtos."}
+            </p>
+          )}
+          <Button onClick={handleConfirm} className="w-full h-12 text-base font-bold" disabled={loading || checkingStock || overStock.length > 0 || !address || !items.length}>
             {loading ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>) : `Confirmar pedido • R$ ${total.toFixed(2)}`}
           </Button>
         </div>

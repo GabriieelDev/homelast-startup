@@ -1,10 +1,10 @@
-import { ShoppingCart, Trash2, X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { ShoppingCart, Trash2, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartItem } from "@/hooks/useCart";
 import { getEffectivePrice } from "@/lib/promotions";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerOverlay, DrawerPortal } from "@/components/ui/drawer";
+import { cartDrawer } from "@/hooks/useCartDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { calcShipping } from "@/lib/shipping";
@@ -41,7 +41,7 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
 
   const TriggerButton = (
     <button
-      onClick={() => setOpen(!open)}
+      onClick={() => (isMobile ? cartDrawer.open() : setOpen(!open))}
       aria-label="Abrir carrinho"
       className="relative p-2 rounded-lg hover:bg-secondary transition-colors text-foreground"
     >
@@ -54,136 +54,8 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
     </button>
   );
 
-  // ----- MOBILE: bottom sheet -----
-  if (isMobile) {
-    return (
-      <>
-        {TriggerButton}
-        <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerPortal>
-            <DrawerOverlay className="bg-black/50" />
-            <DrawerContent className="max-h-[75vh] rounded-t-2xl border-0 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)] bg-white p-0 flex flex-col focus:outline-none">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 pt-1 pb-3 shrink-0">
-                <h3 className="font-bold text-base text-foreground">Meu carrinho</h3>
-                <button
-                  onClick={() => setOpen(false)}
-                  aria-label="Fechar"
-                  className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-secondary text-muted-foreground"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {items.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-4">
-                  <div className="h-20 w-20 rounded-full bg-secondary flex items-center justify-center">
-                    <ShoppingBag className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <p className="text-foreground font-medium">Seu carrinho está vazio</p>
-                  <Button
-                    variant="accent"
-                    className="w-full max-w-xs"
-                    onClick={() => { setOpen(false); navigate("/"); }}
-                  >
-                    Explorar produtos
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {/* Scrollable items */}
-                  <div
-                    className="flex-1 overflow-y-auto px-4 pb-4 space-y-3"
-                    style={{ WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}
-                  >
-                    {items.map((item) => (
-                      <div
-                        key={item.product.id}
-                        className="flex items-center gap-3 p-3 min-h-[80px] bg-white border border-border rounded-[10px] animate-fade-in"
-                      >
-                        {/* Image */}
-                        <div className="shrink-0 h-16 w-16 max-[360px]:h-12 max-[360px]:w-12 rounded-lg bg-[#F5F5F5] flex items-center justify-center overflow-hidden">
-                          <img
-                            src={item.product.image}
-                            alt={item.product.name}
-                            className="h-full w-full object-contain p-1"
-                          />
-                        </div>
-
-                        {/* Center */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground leading-snug break-words line-clamp-2">
-                            {item.product.name}
-                          </p>
-                          <p className="text-[13px] text-muted-foreground mt-0.5">
-                            R$ {getEffectivePrice(item.product).toFixed(2)} un.
-                          </p>
-                        </div>
-
-                        {/* Right */}
-                        <div className="flex flex-col items-end gap-1.5 shrink-0">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => onRemove(item.product.id)}
-                              aria-label="Diminuir"
-                              className="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-white text-foreground hover:bg-secondary active:scale-95 transition"
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="min-w-[20px] text-center text-sm font-semibold text-primary">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => onAdd(item.product)}
-                              aria-label="Aumentar"
-                              className="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-white text-foreground hover:bg-secondary active:scale-95 transition"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                          <span className="text-sm font-bold text-accent">
-                            R$ {(getEffectivePrice(item.product) * item.quantity).toFixed(2)}
-                          </span>
-                          <button
-                            onClick={() => {
-                              // remove all of this item
-                              for (let i = 0; i < item.quantity; i++) onRemove(item.product.id);
-                            }}
-                            aria-label="Remover"
-                            className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Footer (fixed inside panel) */}
-                  <div className="shrink-0 border-t border-border bg-white px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Subtotal</span>
-                      <span className="text-base font-bold text-foreground">R$ {totalPrice.toFixed(2)}</span>
-                    </div>
-                    <Button variant="accent" className="w-full h-12 text-sm font-semibold" onClick={handleCheckout}>
-                      Finalizar pedido
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full h-12 text-sm font-semibold border-primary text-primary hover:bg-primary/5"
-                      onClick={() => setOpen(false)}
-                    >
-                      Continuar comprando
-                    </Button>
-                  </div>
-                </>
-              )}
-            </DrawerContent>
-          </DrawerPortal>
-        </Drawer>
-      </>
-    );
-  }
+  // ----- MOBILE: opens the shared cart drawer (see CartDrawer) -----
+  if (isMobile) return TriggerButton;
 
   // ----- DESKTOP: dropdown (unchanged) -----
   return (

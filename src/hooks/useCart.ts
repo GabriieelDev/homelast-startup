@@ -167,6 +167,65 @@ export const cartSync = {
   getUserId() { return _userId; },
 };
 
+// ------- Stock limits -------
+// Last stock values we know about (from useStock realtime or a reconcile). Missing -> no cap (99),
+// same default useStock uses.
+const _stock: Record<string, number> = {};
+const NO_CAP = 99;
+
+/** Merge freshly-known stock values into the cache. */
+export function setKnownStock(map: Record<string, number>) {
+  let changed = false;
+  for (const [id, n] of Object.entries(map)) {
+    if (_stock[id] !== n) { _stock[id] = n; changed = true; }
+  }
+  if (changed) { _items = [..._items]; notify(); }
+}
+
+export function stockLimit(productId: string): number {
+  return _stock[productId] ?? NO_CAP;
+}
+
+/** Fetch current stock for the given products straight from Supabase. */
+export async function fetchStock(ids: string[]): Promise<Record<string, number>> {
+  if (!ids.length) return {};
+  const { data } = await supabase.from("product_stock").select("product_id, stock").in("product_id", ids);
+  const map: Record<string, number> = {};
+  (data ?? []).forEach((r: any) => { map[r.product_id] = r.stock; });
+  return map;
+}
+
+/** Pure: clamp quantities to stock (remove items with 0). Returns user-facing messages. */
+export function applyStockLimits(items: CartItem[], stock: Record<string, number>) {
+  const messages: string[] = [];
+  const next: CartItem[] = [];
+  for (const it of items) {
+    const s = stock[it.product.id] ?? NO_CAP;
+    if (s <= 0) {
+      messages.push(`${it.product.name} esgotou e foi removido do carrinho.`);
+    } else if (it.quantity > s) {
+      messages.push(`${it.product.name}: só há ${s} em estoque, ajustamos a quantidade.`);
+      next.push({ ...it, quantity: s });
+    } else {
+      next.push(it);
+    }
+  }
+  return { items: next, messages, changed: messages.length > 0 };
+}
+
+/** Re-read stock from Supabase and fix the cart. Shows one warning if anything changed. */
+export async function reconcileCartWithStock(opts: { silent?: boolean } = {}) {
+  const ids = _items.map((i) => i.product.id);
+  if (!ids.length) return { stock: {} as Record<string, number>, messages: [] as string[] };
+  const fresh = await fetchStock(ids);
+  Object.assign(_stock, fresh);
+  const { items, messages, changed } = applyStockLimits(_items, fresh);
+  if (changed) setItems(items, { push: true });
+  else { _items = [..._items]; notify(); }
+  if (changed && !opts.silent) toast.warning("Ajustamos seu carrinho", { description: messages.join("\n") });
+  return { stock: fresh, messages };
+}
+
 function mergeCarts(a: CartItem[], b: CartItem[]): CartItem[] {
   const byId = new Map<string, CartItem>();
   for (const it of a) byId.set(it.product.id, { ...it });
@@ -188,7 +247,8 @@ function getSnapshot() { return _items; }
 export function useCart() {
   const items = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  const addItem = useCallback((product: Product, maxStock: number = 99) => {
+  const addItem = useCallback((product: Product, maxStockArg?: number) => {
+    const maxStock = maxStockArg ?? stockLimit(product.id);
     const existing = _items.find((i) => i.product.id === product.id);
     if (existing) {
       if (existing.quantity >= maxStock) {
@@ -203,10 +263,6 @@ export function useCart() {
       if (maxStock <= 0) { toast.error("Produto indisponível"); return; }
       setItems([..._items, { product, quantity: 1 }], { push: true });
     }
-    toast.success("✅ Produto adicionado ao carrinho!", {
-      duration: 2000,
-      style: { background: "#00B894", color: "#FFFFFF", border: "none" },
-    });
   }, []);
 
   const removeItem = useCallback((productId: string) => {
@@ -236,7 +292,8 @@ export function useCart() {
     setItems(next, { push: true });
     if (next.length) toast.success("Itens adicionados ao carrinho 🛒");
     else toast.error("Os produtos deste pedido não estão mais disponíveis");
+    if (next.length) void reconcileCartWithStock();
   }, []);
 
-  return { items, addItem, removeItem, getQuantity, totalItems, totalPrice, clearCart, setCartFromProducts };
+  return { items, stockLimit, addItem, removeItem, getQuantity, totalItems, totalPrice, clearCart, setCartFromProducts };
 }
