@@ -91,6 +91,33 @@ export const DEFAULT_CAROUSEL: CarouselConfig = {
   auto_transition: true,
 };
 
+export type HomeSectionKey =
+  | "top_sellers"
+  | "recently_viewed"
+  | "promocoes"
+  | "recomendados"
+  | "frequentes"
+  | "mais-comprados";
+
+export interface HomeSection {
+  key: HomeSectionKey;
+  title: string;
+  emoji: string;
+  enabled: boolean;
+  /** null = no limit */
+  limit: number | null;
+}
+
+/** Default order. "mais-comprados" is the catch-all and must stay last. */
+export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
+  { key: "top_sellers", title: "Mais vendidos", emoji: "🔥", enabled: true, limit: 6 },
+  { key: "recently_viewed", title: "Vistos recentemente", emoji: "👁️", enabled: true, limit: 6 },
+  { key: "promocoes", title: "Promoções", emoji: "🏷️", enabled: true, limit: 8 },
+  { key: "recomendados", title: "Recomendados", emoji: "✨", enabled: true, limit: 8 },
+  { key: "frequentes", title: "Itens frequentes", emoji: "🔄", enabled: true, limit: 8 },
+  { key: "mais-comprados", title: "Mais comprados", emoji: "🔥", enabled: true, limit: null },
+];
+
 export interface StoreSettings {
   id: string;
   name: string;
@@ -108,6 +135,7 @@ export interface StoreSettings {
   sales_drop_pct: number;
   social_links: SocialLink[];
   carousel_config: CarouselConfig;
+  home_sections: HomeSection[];
 }
 
 const DEFAULTS: StoreSettings = {
@@ -127,9 +155,10 @@ const DEFAULTS: StoreSettings = {
   sales_drop_pct: 30,
   social_links: [],
   carousel_config: DEFAULT_CAROUSEL,
+  home_sections: DEFAULT_HOME_SECTIONS,
 };
 
-const STORE_SETTINGS_SELECT = "id,name,phone,address,hours,min_order,min_shipping,max_shipping,free_shipping_threshold,flat_shipping_fee,social_links,carousel_config,updated_at";
+const STORE_SETTINGS_SELECT = "id,name,phone,address,hours,min_order,min_shipping,max_shipping,free_shipping_threshold,flat_shipping_fee,social_links,carousel_config,home_sections,updated_at";
 
 let cachedSettings: StoreSettings = DEFAULTS;
 let hasLoadedSettings = false;
@@ -209,6 +238,41 @@ function parseCarousel(raw: unknown): CarouselConfig {
   };
 }
 
+/**
+ * Validates the stored list: keeps saved order, drops unknown/duplicate keys,
+ * fills in missing keys (from the defaults) at the end, accepts `limit: null`.
+ */
+export function parseHomeSections(raw: unknown): HomeSection[] {
+  let arr: unknown = raw;
+  if (typeof arr === "string") {
+    try { arr = JSON.parse(arr); } catch { arr = []; }
+  }
+  const defaults = new Map(DEFAULT_HOME_SECTIONS.map((d) => [d.key, d]));
+  const seen = new Set<HomeSectionKey>();
+  const out: HomeSection[] = [];
+
+  if (Array.isArray(arr)) {
+    for (const item of arr) {
+      if (!item || typeof item !== "object") continue;
+      const r = item as Record<string, unknown>;
+      const def = typeof r.key === "string" ? defaults.get(r.key as HomeSectionKey) : undefined;
+      if (!def || seen.has(def.key)) continue;
+      seen.add(def.key);
+      const title = typeof r.title === "string" && r.title.trim() ? r.title.trim().slice(0, 60) : def.title;
+      const emoji = typeof r.emoji === "string" ? r.emoji.trim().slice(0, 8) : def.emoji;
+      const enabled = typeof r.enabled === "boolean" ? r.enabled : def.enabled;
+      let limit: number | null = def.limit;
+      if (r.limit === null) limit = null;
+      else if (typeof r.limit === "number" && Number.isFinite(r.limit) && r.limit >= 1) limit = Math.floor(r.limit);
+      out.push({ key: def.key, title, emoji, enabled, limit });
+    }
+  }
+  for (const d of DEFAULT_HOME_SECTIONS) {
+    if (!seen.has(d.key)) out.push({ ...d });
+  }
+  return out;
+}
+
 function mapStoreSettingsRow(
   row: Record<string, unknown>,
   admin: Record<string, unknown> | null,
@@ -220,6 +284,10 @@ function mapStoreSettingsRow(
   const carouselConfig = hasField(row, "carousel_config")
     ? parseCarousel(row.carousel_config)
     : previous.carousel_config;
+
+  const homeSections = hasField(row, "home_sections")
+    ? parseHomeSections(row.home_sections)
+    : previous.home_sections;
 
   return {
     ...previous,
@@ -239,6 +307,7 @@ function mapStoreSettingsRow(
     sales_drop_pct: Number(admin?.sales_drop_pct ?? previous.sales_drop_pct),
     social_links: socialLinks,
     carousel_config: carouselConfig,
+    home_sections: homeSections,
   };
 }
 

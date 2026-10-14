@@ -5,6 +5,7 @@ import HeroCarousel from "@/components/HeroCarousel";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductSection from "@/components/ProductSection";
+import HorizontalProductRow from "@/components/HorizontalProductRow";
 import Features from "@/components/Features";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
@@ -22,10 +23,10 @@ import { useProducts, useInfiniteProducts } from "@/hooks/useProducts";
 import { Loader2 } from "lucide-react";
 import { useTopSellers } from "@/hooks/useTopSellers";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { useStoreSettings, type HomeSection } from "@/hooks/useStoreSettings";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import ProductDetailDialog from "@/components/ProductDetailDialog";
-import HorizontalProductRow from "@/components/HorizontalProductRow";
 import { isSaleActive } from "@/lib/promotions";
 import { useUserAvatar } from "@/hooks/useUserAvatar";
 import AnnouncementPopup from "@/components/AnnouncementPopup";
@@ -39,6 +40,7 @@ const Index = () => {
   const { getStock } = useStock();
   const { isDisabled, disableProduct } = useDisabledProducts();
   const { products } = useProducts();
+  const { settings } = useStoreSettings();
   const { url: avatarSrc } = useUserAvatar();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -157,6 +159,36 @@ const Index = () => {
       .filter(Boolean) as Product[];
   }, [recentIds, visibleProducts]);
 
+  // Home sections in the admin-defined order. A product (or variant group) that
+  // already showed up in an earlier section is skipped in the following ones;
+  // the limit is applied after that, and sections left empty are dropped.
+  const homeSections = useMemo(() => {
+    const sources: Record<HomeSection["key"], Product[]> = {
+      top_sellers: topSellersProducts,
+      recently_viewed: user ? recentlyViewedProducts : [],
+      promocoes,
+      recomendados,
+      frequentes,
+      "mais-comprados": maisComprados,
+    };
+    const used = new Set<string>();
+    const result: Array<{ section: HomeSection; products: Product[] }> = [];
+    for (const section of settings.home_sections) {
+      if (!section.enabled) continue;
+      const picked: Product[] = [];
+      for (const p of sources[section.key]) {
+        if (section.limit !== null && picked.length >= section.limit) break;
+        const group = (p.variantGroup ?? "").trim().toLowerCase();
+        const dedupeKey = group ? `g:${group}` : `p:${p.id}`;
+        if (used.has(dedupeKey)) continue;
+        used.add(dedupeKey);
+        picked.push(p);
+      }
+      if (picked.length > 0) result.push({ section, products: picked });
+    }
+    return result;
+  }, [settings.home_sections, user, topSellersProducts, recentlyViewedProducts, promocoes, recomendados, frequentes, maisComprados]);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
@@ -214,35 +246,6 @@ const Index = () => {
 
       {!isFiltering && <HeroCarousel onStart={scrollToProducts} onProductClick={openProductDetail} />}
 
-      {!isFiltering && (
-        <div className="container mx-auto px-4 pt-6 space-y-8">
-          {topSellersProducts.length > 0 && (
-            <HorizontalProductRow
-              title="Mais vendidos"
-              emoji="🔥"
-              products={topSellersProducts}
-              allProducts={visibleProducts}
-              getQuantity={getQuantity}
-              getStock={getStock}
-              onAdd={addItem}
-              onRemove={removeItem}
-            />
-          )}
-          {user && recentlyViewedProducts.length > 0 && (
-            <HorizontalProductRow
-              title="Vistos recentemente"
-              emoji="👁️"
-              products={recentlyViewedProducts}
-              allProducts={visibleProducts}
-              getQuantity={getQuantity}
-              getStock={getStock}
-              onAdd={addItem}
-              onRemove={removeItem}
-            />
-          )}
-        </div>
-      )}
-
       <div ref={productsRef} className="container mx-auto px-4 py-8 space-y-10 pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-24">
         {isAdmin && (
           <div className="flex justify-end">
@@ -289,10 +292,35 @@ const Index = () => {
           </>
         ) : (
           <>
-            <ProductSection title="Mais comprados" emoji="🔥" products={maisComprados} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
-            <ProductSection title="Promoções" emoji="🏷️" products={promocoes} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
-            <ProductSection title="Recomendados" emoji="✨" products={recomendados} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
-            <ProductSection title="Itens frequentes" emoji="🔄" products={frequentes} allProducts={visibleProducts} getQuantity={getQuantity} getStock={getStock} onAdd={addItem} onRemove={removeItem} isAdmin={isAdmin} onDisableProduct={disableProduct} />
+            {homeSections.map(({ section, products: list }) =>
+              section.key === "top_sellers" || section.key === "recently_viewed" ? (
+                <HorizontalProductRow
+                  key={section.key}
+                  title={section.title}
+                  emoji={section.emoji}
+                  products={list}
+                  allProducts={visibleProducts}
+                  getQuantity={getQuantity}
+                  getStock={getStock}
+                  onAdd={addItem}
+                  onRemove={removeItem}
+                />
+              ) : (
+                <ProductSection
+                  key={section.key}
+                  title={section.title}
+                  emoji={section.emoji}
+                  products={list}
+                  allProducts={visibleProducts}
+                  getQuantity={getQuantity}
+                  getStock={getStock}
+                  onAdd={addItem}
+                  onRemove={removeItem}
+                  isAdmin={isAdmin}
+                  onDisableProduct={disableProduct}
+                />
+              ),
+            )}
           </>
         )}
       </div>

@@ -37,7 +37,11 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const [index, setIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [cycleKey, setCycleKey] = useState(0);
+  // Becomes true after a manual swipe/click so autoplay keeps going from the current slide.
+  const [autoplayOn, setAutoplayOn] = useState(false);
+  const indexRef = useRef(0);
   const touchStartX = useRef<number | null>(null);
+  const touchLastX = useRef<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   // Iris (clip-path reveal) transition state — rAF-driven for mobile/Safari compatibility
@@ -49,6 +53,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const irisStep3Ref = useRef<number | null>(null);
   const irisRafRef = useRef<number | null>(null);
   const irisOverlayRef = useRef<HTMLDivElement | null>(null);
+  const irisBoxRef = useRef<HTMLDivElement | null>(null);
   const cancelAutoRef = useRef(false);
   const hasAutoFiredRef = useRef(false);
 
@@ -85,6 +90,62 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     return cy(u);
   }, []);
 
+  // Runs the iris (clip-path reveal) from slide 1 to slide 2. rAF-driven (no CSS transition)
+  // for iOS Safari compatibility.
+  const runIris = useCallback(() => {
+    cancelAutoRef.current = false;
+    setIrisActive(true);
+    setIrisProgress(0);
+
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      if (cancelAutoRef.current) return;
+      const elapsed = now - startTime;
+      const raw = Math.min(1, elapsed / IRIS_EXPAND_MS);
+      setIrisProgress(bezierEase(raw));
+      if (raw < 1) {
+        irisRafRef.current = requestAnimationFrame(tick);
+      } else {
+        irisRafRef.current = null;
+        // Force the final full-coverage clip-path (circle reaching the far corner) on the overlay
+        const el = irisOverlayRef.current;
+        if (el) {
+          const box = irisBoxRef.current;
+          const finalClip = `circle(${box ? Math.hypot(box.clientWidth, box.clientHeight) / 2 + 2 : 9999}px at 50% 50%)`;
+          el.style.clipPath = finalClip;
+          (el.style as any).webkitClipPath = finalClip;
+        }
+        // Wait two animation frames to ensure mobile browsers render the final frame before snapping
+        new Promise<void>((resolve) => {
+          irisStep2Ref.current = requestAnimationFrame(() => {
+            irisStep2Ref.current = null;
+            irisStep3Ref.current = requestAnimationFrame(() => {
+              irisStep3Ref.current = null;
+              resolve();
+            });
+          });
+        }).then(() => {
+          if (cancelAutoRef.current) return;
+          // Snap to slide 2 without lateral animation (iris already did the visual transition).
+          // Batch snapNext+index together so the render with index=1 has transitionDuration:0ms.
+          setSnapNext(true);
+          setIndex(1);
+          setIrisActive(false);
+          setIrisProgress(0);
+          // Re-enable transitions on a later frame so the snap is committed first.
+          irisStep2Ref.current = requestAnimationFrame(() => {
+            irisStep2Ref.current = null;
+            irisStep3Ref.current = requestAnimationFrame(() => {
+              irisStep3Ref.current = null;
+              if (!cancelAutoRef.current) setSnapNext(false);
+            });
+          });
+        });
+      }
+    };
+    irisRafRef.current = requestAnimationFrame(tick);
+  }, [bezierEase]);
+
   // Schedule the auto iris transition each cycle (mount + re-enter viewport)
   useEffect(() => {
     clearAutoTimers();
@@ -92,6 +153,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     setIrisActive(false);
     setIrisProgress(0);
     setSnapNext(false);
+    setAutoplayOn(false);
     hasAutoFiredRef.current = false;
     cancelAutoRef.current = false;
 
@@ -100,60 +162,33 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     autoTimerRef.current = window.setTimeout(() => {
       if (cancelAutoRef.current) return;
       hasAutoFiredRef.current = true;
-      setIrisActive(true);
-      setIrisProgress(0);
-
-      // rAF-driven animation (no CSS transition — ensures iOS Safari compatibility)
-      const startTime = performance.now();
-      const tick = (now: number) => {
-        if (cancelAutoRef.current) return;
-        const elapsed = now - startTime;
-        const raw = Math.min(1, elapsed / IRIS_EXPAND_MS);
-        setIrisProgress(bezierEase(raw));
-        if (raw < 1) {
-          irisRafRef.current = requestAnimationFrame(tick);
-        } else {
-          irisRafRef.current = null;
-          // Force final full-rectangle clip-path directly on the overlay element
-          const el = irisOverlayRef.current;
-          if (el) {
-            const finalClip = "inset(0% 0% 0% 0% round 0px)";
-            el.style.clipPath = finalClip;
-            (el.style as any).webkitClipPath = finalClip;
-          }
-          // Wait two animation frames to ensure mobile browsers render the final frame before snapping
-          new Promise<void>((resolve) => {
-            irisStep2Ref.current = requestAnimationFrame(() => {
-              irisStep2Ref.current = null;
-              irisStep3Ref.current = requestAnimationFrame(() => {
-                irisStep3Ref.current = null;
-                resolve();
-              });
-            });
-          }).then(() => {
-            if (cancelAutoRef.current) return;
-            // Snap to slide 2 without lateral animation (iris already did the visual transition).
-            // Batch snapNext+index together so the render with index=1 has transitionDuration:0ms.
-            setSnapNext(true);
-            setIndex(1);
-            setIrisActive(false);
-            setIrisProgress(0);
-            // Re-enable transitions on a later frame so the snap is committed first.
-            irisStep2Ref.current = requestAnimationFrame(() => {
-              irisStep2Ref.current = null;
-              irisStep3Ref.current = requestAnimationFrame(() => {
-                irisStep3Ref.current = null;
-                if (!cancelAutoRef.current) setSnapNext(false);
-              });
-            });
-          });
-        }
-      };
-      irisRafRef.current = requestAnimationFrame(tick);
+      // Reduced motion: swap instantly (the track has no duration under motion-reduce).
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setIndex(1);
+        return;
+      }
+      runIris();
     }, AUTO_DELAY_MS);
 
     return clearAutoTimers;
-  }, [cycleKey, autoEnabled, cfg.slide2.enabled, clearAutoTimers, bezierEase]);
+  }, [cycleKey, autoEnabled, cfg.slide2.enabled, clearAutoTimers, runIris]);
+
+  useEffect(() => { indexRef.current = index; }, [index]);
+
+  // Autoplay after a manual swipe/click: keep advancing from the current slide.
+  // Slide 1 -> 2 uses the iris; other steps slide the track.
+  useEffect(() => {
+    if (!autoplayOn || !autoEnabled || SLIDE_COUNT < 2 || irisActive) return;
+    const t = window.setTimeout(() => {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (indexRef.current === 0 && cfg.slide2.enabled && !reduce) {
+        runIris();
+      } else {
+        setIndex((i) => (i + 1) % SLIDE_COUNT);
+      }
+    }, AUTO_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, [autoplayOn, autoEnabled, SLIDE_COUNT, irisActive, index, cfg.slide2.enabled, runIris]);
 
   // IntersectionObserver: reset cycle when carousel leaves & re-enters viewport
   useEffect(() => {
@@ -181,15 +216,31 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     if (!hasAutoFiredRef.current) clearAutoTimers();
   }, [clearAutoTimers]);
 
+  // Any manual navigation stops the pending first auto-transition and resumes autoplay afterwards.
+  const manual = useCallback((fn: () => void) => {
+    cancelIfPending();
+    cancelAutoRef.current = false;
+    setAutoplayOn(true);
+    fn();
+  }, [cancelIfPending]);
+
   const onTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchLastX.current = e.touches[0].clientX;
   };
-  const onTouchEnd = (e: TouchEvent) => {
-    if (touchStartX.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) { cancelIfPending(); (dx < 0 ? next : prev)(); }
+  const onTouchMove = (e: TouchEvent) => {
+    touchLastX.current = e.touches[0].clientX;
+  };
+  const finishTouch = (endX: number | null) => {
+    const start = touchStartX.current;
     touchStartX.current = null;
+    touchLastX.current = null;
+    if (start == null || endX == null) return;
+    const dx = endX - start;
+    if (Math.abs(dx) > 40) manual(dx < 0 ? next : prev);
   };
+  const onTouchEnd = (e: TouchEvent) => finishTouch(e.changedTouches[0]?.clientX ?? touchLastX.current);
+  const onTouchCancel = () => finishTouch(touchLastX.current);
 
   const { products } = useProducts();
   const featured = useMemo(() => {
@@ -231,35 +282,44 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
       ref={sectionRef}
       className="relative overflow-hidden"
       onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+      style={{ touchAction: "pan-y" }}
       aria-roledescription="carousel"
     >
-      <div className="relative md:h-[460px] overflow-hidden">
+      <div ref={irisBoxRef} className="relative md:h-[460px] overflow-hidden">
         <div
-          className="flex md:h-full items-stretch transition-transform ease-[cubic-bezier(0.65,0,0.35,1)]"
+          className="flex md:h-full items-stretch transition-transform ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:!duration-0"
           style={{
-            transform: `translateX(-${index * 100}%)`,
+            transform: `translate3d(-${index * 100}%, 0, 0)`,
             transitionDuration: snapNext ? "0ms" : "850ms",
+            willChange: "transform",
           }}
         >
-          {slides.map((key) => {
-            if (key === "s1") return <Slide1 key={`s1-${cycleKey}`} cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
-            if (key === "s2") return <Slide2 key="s2" cfg={cfg.slide2} featured={featured} onStart={onStart} renderHighlighted={renderHighlighted} onProductClick={onProductClick} />;
-            return <Slide3 key="s3" cfg={cfg.slide3} copied={copied} onCopy={copyCoupon} onStart={onStart} />;
+          {slides.map((key, i) => {
+            // Off-screen slides pause their animations and drop blur (see .hero-slide-inactive).
+            const inactive = i !== index;
+            if (key === "s1") return <Slide1 key={`s1-${cycleKey}`} inactive={inactive} cfg={cfg.slide1} onStart={onStart} renderHighlighted={renderHighlighted} />;
+            if (key === "s2") return <Slide2 key="s2" inactive={inactive} cfg={cfg.slide2} featured={featured} onStart={onStart} renderHighlighted={renderHighlighted} onProductClick={onProductClick} />;
+            return <Slide3 key="s3" inactive={inactive} cfg={cfg.slide3} copied={copied} onCopy={copyCoupon} onStart={onStart} />;
           })}
         </div>
 
-        {/* Slide 2 revealed via an expanding inset clip-path over Slide 1. */}
+        {/* Slide 2 revealed via an expanding circular clip-path over Slide 1. */}
         {irisActive && cfg.slide2.enabled && (() => {
-          const inset = (50 * (1 - irisProgress)).toFixed(3);
-          const round = (999 * (1 - irisProgress)).toFixed(3);
-          const clip = `inset(${inset}% ${inset}% ${inset}% ${inset}% round ${round}px)`;
+          // Circle centered on the slide whose final radius reaches the farthest corner (diagonal).
+          const box = irisBoxRef.current;
+          const maxR = box ? Math.hypot(box.clientWidth, box.clientHeight) / 2 + 2 : 2000;
+          const clip = `circle(${(maxR * irisProgress).toFixed(2)}px at 50% 50%)`;
           return (
             <div
               ref={irisOverlayRef}
-              className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+              className="absolute inset-0 z-20 pointer-events-none overflow-hidden flex items-stretch"
               aria-hidden
               style={{
+                // Same base as Slide 2 so Slide 1's navy can never show through.
+                background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)",
                 clipPath: clip,
                 WebkitClipPath: clip,
                 willChange: "clip-path",
@@ -280,25 +340,25 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
         {SLIDE_COUNT > 1 && (
           <>
             <button
-              onClick={() => { cancelIfPending(); prev(); }}
+              onClick={() => manual(prev)}
               aria-label="Slide anterior"
               className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-30"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" />
             </button>
             <button
-              onClick={() => { cancelIfPending(); next(); }}
+              onClick={() => manual(next)}
               aria-label="Próximo slide"
               className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white/70 backdrop-blur-md shadow-xl border border-white/50 items-center justify-center hover:scale-110 active:scale-95 transition-all z-30"
             >
               <ChevronRight className="h-5 w-5 text-foreground" />
             </button>
 
-            <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-30">
+            <div className="absolute bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-black/25 backdrop-blur-sm z-30">
               {slides.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => { cancelIfPending(); goTo(i); }}
+                  onClick={() => manual(() => goTo(i))}
                   aria-label={`Ir para slide ${i + 1}`}
                   aria-current={index === i}
                   className={`h-2.5 rounded-full transition-all duration-500 ring-1 ring-white/30 ${
@@ -426,23 +486,27 @@ const fadeUpStyle = (delay: number): React.CSSProperties => ({
   animationDelay: `${delay}s`,
 });
 
+const slideBase = "hero-slide min-w-full md:h-full relative overflow-hidden max-md:min-h-[26rem] max-md:flex max-md:flex-col max-md:justify-center";
+const slideStyle: React.CSSProperties = { contain: "layout paint", backfaceVisibility: "hidden" };
+
 const Slide1 = ({
-  cfg, onStart,
+  cfg, onStart, inactive = false,
 }: {
+  inactive?: boolean;
   cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide1"];
   onStart: () => void;
   renderHighlighted: (t: string, h: string, c: string) => React.ReactNode;
 }) => {
   return (
     <div
-      className="min-w-full md:h-full relative px-4 md:px-8 py-12 md:py-0 overflow-hidden"
-      style={{ backgroundColor: "#1D2D50" }}
+      className={`${slideBase} px-4 md:px-8 max-md:pt-12 max-md:pb-16 md:py-0 ${inactive ? "hero-slide-inactive" : ""}`}
+      style={{ ...slideStyle, backgroundColor: "#1D2D50" }}
       aria-roledescription="slide"
     >
       <style>{`@keyframes heroFadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {cfg.image && (
         <>
-          <img src={cfg.image} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+          <img src={cfg.image} alt="" aria-hidden loading="eager" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
           <div aria-hidden className="absolute inset-0 bg-black/50" />
         </>
       )}
@@ -515,8 +579,9 @@ const Slide1 = ({
 
 /* ============================ SLIDE 2 ============================ */
 const Slide2 = ({
-  cfg, featured, onStart, renderHighlighted, onProductClick,
+  cfg, featured, onStart, renderHighlighted, onProductClick, inactive = false,
 }: {
+  inactive?: boolean;
   cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide2"];
   featured: any[];
   onStart: () => void;
@@ -526,13 +591,13 @@ const Slide2 = ({
   const countdown = useCountdown(cfg.countdownEnd);
   return (
     <div
-      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0 overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
+      className={`${slideBase} px-4 md:px-8 max-md:pt-10 max-md:pb-16 md:py-0 ${inactive ? "hero-slide-inactive" : ""}`}
+      style={{ ...slideStyle, background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
       aria-roledescription="slide"
     >
       {cfg.image && (
         <>
-          <img src={cfg.image} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+          <img src={cfg.image} alt="" aria-hidden loading="eager" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
           <div aria-hidden className="absolute inset-0 bg-white/40" />
         </>
       )}
@@ -603,8 +668,9 @@ const Slide2 = ({
 
 /* ============================ SLIDE 3 ============================ */
 const Slide3 = ({
-  cfg, copied, onCopy, onStart,
+  cfg, copied, onCopy, onStart, inactive = false,
 }: {
+  inactive?: boolean;
   cfg: ReturnType<typeof useStoreSettings>["settings"]["carousel_config"]["slide3"];
   copied: boolean;
   onCopy: () => void;
@@ -612,13 +678,13 @@ const Slide3 = ({
 }) => {
   return (
     <div
-      className="min-w-full md:h-full relative px-4 md:px-8 py-10 md:py-0 overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
+      className={`${slideBase} px-4 md:px-8 max-md:pt-10 max-md:pb-16 md:py-0 ${inactive ? "hero-slide-inactive" : ""}`}
+      style={{ ...slideStyle, background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
       aria-roledescription="slide"
     >
       {cfg.image && (
         <>
-          <img src={cfg.image} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+          <img src={cfg.image} alt="" aria-hidden loading="eager" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
           <div aria-hidden className="absolute inset-0 bg-black/40" />
         </>
       )}
@@ -715,7 +781,8 @@ const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string
             alt={product.name}
             onError={() => setImgError(true)}
             className="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-110"
-            loading="lazy"
+            loading="eager"
+            decoding="async"
           />
         ) : (
           <Package className="h-8 w-8 text-muted-foreground/50" />
