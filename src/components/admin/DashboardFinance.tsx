@@ -281,7 +281,7 @@ const DashboardFinance = ({ orders, products, footer }: Props) => {
         <Card icon={DollarSign} color="#00B894" label="Faturamento bruto" value={brl(t.revenue)}>
           <Variation cur={t.revenue} prev={p.revenue} />
         </Card>
-        <Card icon={ShoppingBag} color="#1D2D50" label="Pedidos" value={String(t.count)}>
+        <Card icon={ShoppingBag} color="var(--brand-ink)" label="Pedidos" value={String(t.count)}>
           <Variation cur={t.count} prev={p.count} />
         </Card>
         <Card icon={TrendingUp} color="#6C63FF" label="Ticket médio" value={brl(t.ticket)}>
@@ -293,7 +293,7 @@ const DashboardFinance = ({ orders, products, footer }: Props) => {
         <Card icon={Tag} color="#F39C12" label="Descontos (cupons)" value={brl(t.discounts)}>
           <Variation cur={t.discounts} prev={p.discounts} invert />
         </Card>
-        <Card icon={Truck} color="#1D2D50" label="Frete cobrado" value={brl(t.shipping)}>
+        <Card icon={Truck} color="var(--brand-ink)" label="Frete cobrado" value={brl(t.shipping)}>
           <Variation cur={t.shipping} prev={p.shipping} />
         </Card>
         <Card icon={XCircle} color="#E74C3C" label="Pedidos cancelados" value={String(t.cancelled)}>
@@ -332,7 +332,7 @@ const DashboardFinance = ({ orders, products, footer }: Props) => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" tick={tick} minTickGap={16} />
               <YAxis tick={tick} tickFormatter={(v) => `R$ ${v}`} width={64} />
-              <RTooltip formatter={(v: number) => [brl(Number(v)), "Faturamento"]} labelStyle={{ color: "#1D2D50" }} />
+              <RTooltip formatter={(v: number) => [brl(Number(v)), "Faturamento"]} labelStyle={{ color: "var(--brand-ink)" }} />
               <Bar dataKey="value" fill="#00B894" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

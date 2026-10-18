@@ -6,7 +6,7 @@ import Logo from "@/components/Logo";
 const Footer = () => {
   const { settings } = useStoreSettings();
   return (
-    <footer className="bg-foreground text-background py-12">
+    <footer className="bg-foreground text-background dark:bg-[#121B31] dark:text-foreground dark:border-t dark:border-border py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-3">

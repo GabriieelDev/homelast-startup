@@ -135,7 +135,7 @@ const MeusCupons = () => {
 
                 <button
                   onClick={() => handleCopy(c)}
-                  className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.97]"
+                  className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold text-white dark:!bg-primary dark:!text-primary-foreground transition-transform hover:scale-[1.02] active:scale-[0.97]"
                   style={{ backgroundColor: "#1D2D50" }}
                 >
                   {copiedId === c.id ? (

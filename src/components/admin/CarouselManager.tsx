@@ -314,7 +314,7 @@ function toLocalInput(iso: string) {
 const PreviewBridge = ({ draft }: { draft: CarouselConfig }) => {
   return (
     <div>
-      <div className="px-3 py-2 text-xs bg-amber-50 text-amber-900 border-b border-amber-200">
+      <div className="px-3 py-2 text-xs bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 border-b border-amber-200 dark:border-amber-500/30">
         Pré-visualização do carrossel atual (publicado). Salve para ver suas alterações refletidas aqui e no site.
       </div>
       <HeroCarousel onStart={() => {}} />

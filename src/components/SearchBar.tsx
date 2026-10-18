@@ -30,7 +30,7 @@ const SearchBar = ({ value, onChange }: SearchBarProps) => {
   return (
     <div className="relative w-full max-w-xl mx-auto">
       <div
-        className={`flex items-center gap-2 rounded-full border-2 bg-background px-4 py-3 transition-all ${
+        className={`flex items-center gap-2 rounded-full border-2 bg-background dark:bg-card px-4 py-3 transition-all ${
           focused ? "border-primary shadow-lg shadow-primary/10" : "border-border"
         }`}
       >
@@ -60,7 +60,7 @@ const SearchBar = ({ value, onChange }: SearchBarProps) => {
             >
               <img src={product.image} alt={product.name} className="w-8 h-8 rounded-lg object-cover" />
               <span className="text-sm font-medium text-foreground">{product.name}</span>
-              <span className="text-sm text-primary ml-auto font-semibold">
+              <span className="text-sm text-primary dark:text-accent ml-auto font-semibold">
                 R$ {product.price.toFixed(2)}
               </span>
             </button>

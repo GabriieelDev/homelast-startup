@@ -622,7 +622,7 @@ const Admin = () => {
                 <span
                   className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
                     badgeColor
-                      ? "text-white"
+                      ? "text-white dark:text-[#06251E]"
                       : tab === key
                       ? "bg-primary-foreground text-primary"
                       : "bg-destructive text-destructive-foreground"
@@ -681,7 +681,7 @@ const Admin = () => {
               <div className="divide-y divide-border">
                 {products.map((p) => (
                   <div key={p.id} className="flex items-center gap-3 py-2.5">
-                    <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
+                    <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
                         {p.name} {!p.active && <span className="text-xs text-muted-foreground">(inativo)</span>}
@@ -734,7 +734,7 @@ const Admin = () => {
                           <img
                             src={p.image}
                             alt={p.name}
-                            className="w-10 h-10 rounded-lg object-cover bg-white grayscale"
+                            className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame grayscale"
                             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }}
                           />
                           <div className="flex-1 min-w-0">
@@ -952,7 +952,7 @@ const Admin = () => {
                   const status = current === 0 ? "esgotado" : current <= 5 ? "baixo" : "ok";
                   return (
                     <div key={p.id} className="flex items-center gap-2 py-2.5">
-                      <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
+                      <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
                         <p className="text-xs">

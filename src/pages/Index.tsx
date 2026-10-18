@@ -194,7 +194,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2 shrink-0">
-            <LogoIcon className="h-6 w-6 text-primary" />
+            <LogoIcon className="h-6 w-6 text-primary dark:rounded-md" />
             <span className="font-display font-bold text-lg text-foreground hidden sm:inline">
               HomeLast Startup
             </span>

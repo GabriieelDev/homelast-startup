@@ -21,8 +21,8 @@ const NavItem = ({ to, label, icon: Icon }: (typeof left)[number]) => (
     end
     className={({ isActive }) =>
       cn(
-        "flex flex-col items-center justify-start gap-1 pt-3 min-h-[44px] text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#087A62]",
-        isActive ? "text-[#087A62] font-bold" : "text-[#4A5670] font-medium"
+        "flex flex-col items-center justify-start gap-1 pt-3 min-h-[44px] text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#087A62] dark:focus-visible:outline-accent",
+        isActive ? "text-[#087A62] dark:text-accent font-bold" : "text-[#4A5670] dark:text-muted-foreground font-medium"
       )
     }
   >
@@ -47,7 +47,7 @@ const BottomNav = (_props: { cartCount?: number }) => {
     <>
       <nav
         aria-label="Navegação principal"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-[#E3E7EE] pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[#121B31] border-t border-[#E3E7EE] dark:border-border pb-[env(safe-area-inset-bottom)]"
       >
         <div className="grid grid-cols-5 h-[84px]">
           {left.map((i) => <NavItem key={i.to} {...i} />)}
@@ -58,16 +58,16 @@ const BottomNav = (_props: { cartCount?: number }) => {
               onClick={cartDrawer.open}
               aria-label={label}
               aria-haspopup="dialog"
-              className="absolute -top-[34px] left-1/2 -translate-x-1/2 h-[60px] w-[60px] rounded-full bg-[#1D2D50] text-white border-4 border-white shadow-[0_4px_12px_rgba(29,45,80,0.25)] flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087A62]"
+              className="absolute -top-[34px] left-1/2 -translate-x-1/2 h-[60px] w-[60px] rounded-full bg-[#1D2D50] text-white border-4 border-white shadow-[0_4px_12px_rgba(29,45,80,0.25)] dark:bg-[#00B894] dark:text-[#06251E] dark:border-[#121B31] dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087A62] dark:focus-visible:outline-accent"
             >
               <ShoppingCart className="h-[26px] w-[26px]" strokeWidth={1.8} aria-hidden />
               {totalItems > 0 && (
-                <span key={bump} className={cn("absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-[#00B894] text-[#06251E] text-xs font-bold border-2 border-white flex items-center justify-center", bump > 0 && "cart-badge-bump")}>
+                <span key={bump} className={cn("absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-[#00B894] text-[#06251E] text-xs font-bold border-2 border-white dark:bg-white dark:text-[#0E1526] dark:border-[#121B31] flex items-center justify-center", bump > 0 && "cart-badge-bump")}>
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
             </button>
-            <span className="text-[11px] font-semibold text-[#1D2D50]">{totalItems > 0 ? totalLabel : "Carrinho"}</span>
+            <span className="text-[11px] font-semibold text-[#1D2D50] dark:text-foreground">{totalItems > 0 ? totalLabel : "Carrinho"}</span>
           </div>
 
           {right.map((i) => <NavItem key={i.to} {...i} />)}

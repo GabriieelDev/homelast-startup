@@ -167,14 +167,14 @@ const Auth = () => {
   const { title, subtitle } = titles[mode];
 
   const fieldWrapper = "relative";
-  const iconLeft = "absolute left-5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#4A5670] pointer-events-none";
-  const iconRight = "absolute right-1 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center rounded-full text-[#4A5670] hover:text-[#1D2D50] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#00B894]/30 transition-colors";
-  const inputCore = "h-[52px] rounded-full border border-[#D5DAE3] bg-[#F6F8FB] text-[#1D2D50] placeholder:text-[#5F6B82] text-base ring-offset-0 shadow-none transition-[border-color,box-shadow] duration-150 focus-visible:ring-[3px] focus-visible:ring-[#00B894]/15 focus-visible:ring-offset-0 focus-visible:border-[#00B894]";
+  const iconLeft = "absolute left-5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#4A5670] dark:text-muted-foreground pointer-events-none";
+  const iconRight = "absolute right-1 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center rounded-full text-[#4A5670] dark:text-muted-foreground hover:text-[#1D2D50] dark:hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#00B894]/30 dark:focus-visible:ring-accent/60 transition-colors";
+  const inputCore = "h-[52px] rounded-full border border-[#D5DAE3] dark:border-border bg-[#F6F8FB] dark:bg-card text-[#1D2D50] dark:text-foreground placeholder:text-[#5F6B82] dark:placeholder:text-muted-foreground text-base ring-offset-0 shadow-none transition-[border-color,box-shadow] duration-150 focus-visible:ring-[3px] focus-visible:ring-[#00B894]/15 dark:focus-visible:ring-accent/50 focus-visible:ring-offset-0 focus-visible:border-[#00B894]";
   const inputBase = `${inputCore} pl-12 pr-5`;
   const inputPassword = `${inputCore} pl-12 pr-14`;
   const plainInput = `${inputCore} px-5`;
-  const primaryBtn = "w-full h-[52px] rounded-full bg-[#00B894] hover:bg-[#00A383] text-[#06251E] text-base font-bold shadow-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#00B894]/30 focus-visible:ring-offset-2 active:scale-[0.99] transition-colors";
-  const linkGreen = "text-[#087A62] font-bold hover:underline focus-visible:outline-none focus-visible:underline";
+  const primaryBtn = "w-full h-[52px] rounded-full bg-[#00B894] hover:bg-[#00A383] text-[#06251E] text-base font-bold shadow-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#00B894]/30 dark:focus-visible:ring-accent dark:focus-visible:ring-offset-background focus-visible:ring-offset-2 active:scale-[0.99] transition-colors";
+  const linkGreen = "text-[#087A62] dark:text-accent font-bold hover:underline focus-visible:outline-none focus-visible:underline";
 
   const PasswordToggle = () => (
     <button
@@ -188,12 +188,12 @@ const Auth = () => {
     </button>
   );
 
-  const socialBtn = "h-[52px] w-[84px] lg:w-auto lg:flex-1 rounded-2xl border border-[#D5DAE3] bg-white text-[#1D2D50] font-semibold text-sm flex items-center justify-center gap-2.5 hover:bg-[#F6F8FB] focus-visible:outline-none focus-visible:border-[#00B894] focus-visible:ring-[3px] focus-visible:ring-[#00B894]/15 transition-colors";
+  const socialBtn = "h-[52px] w-[84px] lg:w-auto lg:flex-1 rounded-2xl border border-[#D5DAE3] dark:border-border bg-white dark:bg-card text-[#1D2D50] dark:text-foreground font-semibold text-sm flex items-center justify-center gap-2.5 hover:bg-[#F6F8FB] dark:hover:bg-secondary focus-visible:outline-none focus-visible:border-[#00B894] focus-visible:ring-[3px] focus-visible:ring-[#00B894]/15 dark:focus-visible:ring-accent/50 transition-colors";
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white dark:bg-background">
       {/* BRAND PANEL — banner on mobile, left half on desktop */}
-      <aside className="relative overflow-hidden text-white h-[310px] lg:h-auto lg:min-h-screen lg:w-1/2 shrink-0 bg-[linear-gradient(170deg,#1D2D50,#27407A)]">
+      <aside className="relative overflow-hidden text-white h-[310px] lg:h-auto lg:min-h-screen lg:w-1/2 shrink-0 bg-[linear-gradient(170deg,#1D2D50,#27407A)] hl-hero-bg">
         <span aria-hidden className="auth-dot absolute top-[34px] left-[22px] h-4 w-4 rounded-full bg-white/[0.14]" />
         <span aria-hidden className="auth-dot absolute top-[70px] right-[34px] h-2.5 w-2.5 rounded-full bg-[#00B894]" style={{ animationDelay: "-2s" }} />
         <span aria-hidden className="auth-dot absolute top-[150px] right-[18%] h-1.5 w-1.5 rounded-full bg-white/[0.22]" style={{ animationDelay: "-4s" }} />
@@ -231,19 +231,19 @@ const Auth = () => {
             <path d="M0 58 Q150 22 300 58 T600 58 T900 58 T1200 58 V100 H0Z" fill="#00B894" fillOpacity="0.22" />
           </svg>
           <svg className="auth-wave-22 absolute bottom-0 left-0 h-full w-[200%]" viewBox="0 0 1200 100" preserveAspectRatio="none">
-            <path d="M0 76 Q150 46 300 76 T600 76 T900 76 T1200 76 V100 H0Z" fill="#fff" />
+            <path d="M0 76 Q150 46 300 76 T600 76 T900 76 T1200 76 V100 H0Z" fill="#fff" className="dark:fill-background" />
           </svg>
         </div>
       </aside>
 
       {/* FORM */}
-      <main className="flex-1 lg:w-1/2 flex lg:items-center justify-center bg-white px-6 pt-2 pb-10 lg:p-10">
+      <main className="flex-1 lg:w-1/2 flex lg:items-center justify-center bg-white dark:bg-background px-6 pt-2 pb-10 lg:p-10">
         <div className="w-full max-w-[400px]">
           <div className="hidden lg:block mb-8">
-            <h2 className="font-display font-bold text-3xl text-[#1D2D50]">
+            <h2 className="font-display font-bold text-3xl text-[#1D2D50] dark:text-foreground">
               {mode === "login" ? "Entrar" : title}
             </h2>
-            <p className="mt-1.5 text-[#4A5670]">
+            <p className="mt-1.5 text-[#4A5670] dark:text-muted-foreground">
               {mode === "login" ? "Use seu e-mail e sua senha." : subtitle}
             </p>
           </div>
@@ -273,9 +273,9 @@ const Auth = () => {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(!!v)} />
-                  <Label htmlFor="remember" className="text-[13px] text-[#4A5670] cursor-pointer">Lembrar de mim</Label>
+                  <Label htmlFor="remember" className="text-[13px] text-[#4A5670] dark:text-muted-foreground cursor-pointer">Lembrar de mim</Label>
                 </div>
-                <button type="button" onClick={() => switchMode("forgot")} className="min-h-11 -my-2 text-[13px] font-semibold text-[#087A62] hover:underline focus-visible:outline-none focus-visible:underline">
+                <button type="button" onClick={() => switchMode("forgot")} className="min-h-11 -my-2 text-[13px] font-semibold text-[#087A62] dark:text-accent hover:underline focus-visible:outline-none focus-visible:underline">
                   Esqueci minha senha
                 </button>
               </div>
@@ -288,7 +288,7 @@ const Auth = () => {
                 <>
                   <div className="flex items-center gap-3 pt-2" role="separator">
                     <span className="h-px flex-1 bg-[#D5DAE3]" />
-                    <span className="text-[13px] text-[#4A5670]">ou continue com</span>
+                    <span className="text-[13px] text-[#4A5670] dark:text-muted-foreground">ou continue com</span>
                     <span className="h-px flex-1 bg-[#D5DAE3]" />
                   </div>
                   <div className="flex justify-center gap-3">
@@ -308,7 +308,7 @@ const Auth = () => {
                 </>
               )}
 
-              <p className="text-center text-sm text-[#4A5670] pt-2">
+              <p className="text-center text-sm text-[#4A5670] dark:text-muted-foreground pt-2">
                 Ainda não tem conta?{" "}
                 <button type="button" onClick={() => switchMode("signup")} className={linkGreen}>
                   Cadastre-se
@@ -349,10 +349,10 @@ const Auth = () => {
                   <div className="space-y-1 pt-2 px-4">
                     <div className="flex gap-1">
                       {[0, 1, 2, 3].map(i => (
-                        <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < strength ? strengthColors[strength] : "bg-[#E4E8EF]"}`} />
+                        <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i < strength ? strengthColors[strength] : "bg-[#E4E8EF] dark:bg-border"}`} />
                       ))}
                     </div>
-                    <p className="text-xs text-[#4A5670]">Força: {strengthLabels[strength]}</p>
+                    <p className="text-xs text-[#4A5670] dark:text-muted-foreground">Força: {strengthLabels[strength]}</p>
                   </div>
                 )}
                 <FieldError field="password" />
@@ -370,7 +370,7 @@ const Auth = () => {
                 {loading ? "Criando conta..." : "Criar conta"}
               </Button>
 
-              <p className="text-center text-sm text-[#4A5670] pt-2">
+              <p className="text-center text-sm text-[#4A5670] dark:text-muted-foreground pt-2">
                 Já tem conta?{" "}
                 <button type="button" onClick={() => switchMode("login")} className={linkGreen}>
                   Entrar
@@ -393,7 +393,7 @@ const Auth = () => {
               <Button type="submit" disabled={loading} className={primaryBtn}>
                 {loading ? "Enviando..." : "Enviar link de recuperação"}
               </Button>
-              <p className="text-center text-sm text-[#4A5670] pt-2">
+              <p className="text-center text-sm text-[#4A5670] dark:text-muted-foreground pt-2">
                 Lembrou a senha?{" "}
                 <button type="button" onClick={() => switchMode("login")} className={linkGreen}>
                   Voltar ao login

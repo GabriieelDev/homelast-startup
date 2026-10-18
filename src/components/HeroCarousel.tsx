@@ -280,7 +280,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden"
+      className="relative overflow-hidden dark:border-y dark:border-border"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -315,7 +315,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
           return (
             <div
               ref={irisOverlayRef}
-              className="absolute inset-0 z-20 pointer-events-none overflow-hidden flex items-stretch"
+              className="absolute inset-0 z-20 pointer-events-none overflow-hidden flex items-stretch hl-hero-bg"
               aria-hidden
               style={{
                 // Same base as Slide 2 so Slide 1's navy can never show through.
@@ -499,7 +499,7 @@ const Slide1 = ({
 }) => {
   return (
     <div
-      className={`${slideBase} px-4 md:px-8 max-md:pt-12 max-md:pb-16 md:py-0 ${inactive ? "hero-slide-inactive" : ""}`}
+      className={`${slideBase} px-4 md:px-8 max-md:pt-12 max-md:pb-16 md:py-0 hl-hero-bg ${inactive ? "hero-slide-inactive" : ""}`}
       style={{ ...slideStyle, backgroundColor: "#1D2D50" }}
       aria-roledescription="slide"
     >
@@ -591,14 +591,14 @@ const Slide2 = ({
   const countdown = useCountdown(cfg.countdownEnd);
   return (
     <div
-      className={`${slideBase} px-4 md:px-8 max-md:pt-10 max-md:pb-16 md:py-0 ${inactive ? "hero-slide-inactive" : ""}`}
+      className={`${slideBase} px-4 md:px-8 max-md:pt-10 max-md:pb-16 md:py-0 hl-hero-bg ${inactive ? "hero-slide-inactive" : ""}`}
       style={{ ...slideStyle, background: "linear-gradient(135deg, #FFFFFF 0%, #FFF3E0 100%)" }}
       aria-roledescription="slide"
     >
       {cfg.image && (
         <>
           <img src={cfg.image} alt="" aria-hidden loading="eager" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
-          <div aria-hidden className="absolute inset-0 bg-white/40" />
+          <div aria-hidden className="absolute inset-0 bg-white/40 dark:bg-[#0E1526]/60" />
         </>
       )}
       {/* Decorative confetti / shapes */}
@@ -630,7 +630,7 @@ const Slide2 = ({
           >
             <Flame className="h-3.5 w-3.5 animate-bounce" /> {cfg.badge}
           </span>
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight" style={{ color: "#1D2D50" }}>
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight hl-hero-title" style={{ color: "#1D2D50" }}>
             {renderHighlighted(cfg.title, cfg.highlight, "#E53E3E")}
           </h2>
           {countdown.enabled && !countdown.expired && (
@@ -678,7 +678,7 @@ const Slide3 = ({
 }) => {
   return (
     <div
-      className={`${slideBase} px-4 md:px-8 max-md:pt-10 max-md:pb-16 md:py-0 ${inactive ? "hero-slide-inactive" : ""}`}
+      className={`${slideBase} px-4 md:px-8 max-md:pt-10 max-md:pb-16 md:py-0 hl-hero-bg ${inactive ? "hero-slide-inactive" : ""}`}
       style={{ ...slideStyle, background: "linear-gradient(135deg, #00B894 0%, #00A381 100%)" }}
       aria-roledescription="slide"
     >
@@ -761,7 +761,7 @@ const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string
     <button
       type="button"
       onClick={clickable ? () => onClick!(product.id) : undefined}
-      className={`group bg-white rounded-xl shadow-md hover:shadow-2xl p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[200px] border-2 border-transparent hover:border-orange-300 hover:-translate-y-1 active:scale-95 transition-all duration-300 text-left w-full ${clickable ? "cursor-pointer" : "cursor-default"}`}
+      className={`group bg-white hl-hero-card rounded-xl shadow-md hover:shadow-2xl p-2 md:p-3 flex md:flex-col items-center gap-2 md:gap-2 relative h-20 md:h-[200px] border-2 border-transparent hover:border-orange-300 hover:-translate-y-1 active:scale-95 transition-all duration-300 text-left w-full ${clickable ? "cursor-pointer" : "cursor-default"}`}
     >
       {(onSale && pct > 0) && (
         <span
@@ -772,7 +772,7 @@ const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string
         </span>
       )}
       <div
-        className="shrink-0 w-16 h-16 md:w-full md:h-[100px] rounded-lg flex items-center justify-center overflow-hidden"
+        className="shrink-0 w-16 h-16 md:w-full md:h-[100px] rounded-lg flex items-center justify-center overflow-hidden hl-photo-frame"
         style={{ backgroundColor: "#F5F5F5" }}
       >
         {hasImage ? (
@@ -789,14 +789,14 @@ const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string
         )}
       </div>
       <div className="flex-1 md:flex-none md:text-center min-w-0 w-full">
-        <p className="text-xs md:text-sm font-medium truncate" style={{ color: "#1D2D50" }}>{product.name}</p>
+        <p className="text-xs md:text-sm font-medium truncate hl-hero-title" style={{ color: "#1D2D50" }}>{product.name}</p>
         <div className="flex md:justify-center items-baseline gap-1.5 mt-0.5">
           {onSale && (
             <span className="text-[10px] md:text-xs line-through text-muted-foreground">
               R$ {product.price.toFixed(2)}
             </span>
           )}
-          <span className="text-sm md:text-base font-extrabold" style={{ color: "#00B894" }}>
+          <span className="text-sm md:text-base font-extrabold hl-price" style={{ color: "#00B894" }}>
             R$ {price.toFixed(2)}
           </span>
         </div>
