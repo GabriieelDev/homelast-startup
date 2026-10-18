@@ -36,7 +36,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange, stock = 99, quantity
           <DialogDescription className="sr-only">Detalhes do produto {product.name}, preço e opções para adicionar ao carrinho.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="aspect-square w-full rounded-xl flex items-center justify-center overflow-hidden bg-[#F5F5F5] dark:bg-muted">
+          <div className="aspect-square w-full rounded-xl flex items-center justify-center overflow-hidden bg-[#F5F5F5] hl-photo-frame">
             {hasImage ? (
               <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain" onError={() => setImgError(true)} />
             ) : (
@@ -52,7 +52,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange, stock = 99, quantity
                 <span className="text-xs font-bold bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">{getSaleBadgeLabel(product)}</span>
               </>
             ) : (
-              <span className="text-2xl font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-primary dark:text-accent">R$ {product.price.toFixed(2)}</span>
             )}
             <span className="text-xs text-muted-foreground">/ {product.unit}</span>
           </div>
@@ -64,7 +64,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange, stock = 99, quantity
           {unavailable ? (
             <Button disabled className="w-full">Indisponível</Button>
           ) : quantity === 0 ? (
-            <Button onClick={onAdd} className="w-full gap-2" style={{ backgroundColor: "#00B894", color: "white" }}>
+            <Button onClick={onAdd} className="w-full gap-2 dark:!text-[#06251E]" style={{ backgroundColor: "#00B894", color: "white" }}>
               <ShoppingCart className="h-4 w-4" /> Adicionar ao carrinho
             </Button>
           ) : (

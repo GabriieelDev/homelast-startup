@@ -245,7 +245,7 @@ const AnnouncementPopup = () => {
             ) : (
               <Button
                 onClick={handleAction}
-                className="w-full gap-2 h-11 font-semibold transition-all duration-200 hover:brightness-110 active:scale-[0.97]"
+                className="w-full gap-2 h-11 font-semibold transition-all duration-200 hover:brightness-110 active:scale-[0.97] dark:!bg-primary dark:!text-primary-foreground"
                 style={{
                   backgroundColor: "#1D2D50",
                   color: "#fff",

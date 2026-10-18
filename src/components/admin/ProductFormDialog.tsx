@@ -207,7 +207,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
               <Label>Preço de custo (R$)</Label>
               <Input type="number" step="0.01" min="0" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="0,00" />
             </div>
-            <div className={`px-3 py-2 rounded-lg text-sm font-bold ${margin === null ? "bg-muted text-muted-foreground" : margin >= 30 ? "bg-primary/10 text-primary" : margin >= 0 ? "bg-orange-500/10 text-orange-600" : "bg-destructive/10 text-destructive"}`}>
+            <div className={`px-3 py-2 rounded-lg text-sm font-bold ${margin === null ? "bg-muted text-muted-foreground" : margin >= 30 ? "bg-primary/10 text-primary" : margin >= 0 ? "bg-orange-500/10 text-orange-600 dark:text-orange-400" : "bg-destructive/10 text-destructive"}`}>
               Margem: {margin === null ? "—" : `${margin.toFixed(1)}%`}
             </div>
           </div>
@@ -312,7 +312,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
                   </div>
                 )}
                 {negativeMargin && (
-                  <div className="p-2 rounded-md text-xs bg-orange-500/10 text-orange-600 flex items-start gap-1.5">
+                  <div className="p-2 rounded-md text-xs bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-start gap-1.5">
                     <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     Atenção: o preço promocional ficou abaixo do custo (R$ {costNum.toFixed(2)}). Margem negativa.
                   </div>

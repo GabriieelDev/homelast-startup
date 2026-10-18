@@ -11,9 +11,9 @@ import { useProducts } from "@/hooks/useProducts";
 import { toast } from "sonner";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: any }> = {
-  recebido: { label: "Pedido recebido", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30", icon: Package },
-  preparo: { label: "Em preparo", color: "bg-orange-500/10 text-orange-600 border-orange-500/30", icon: ChefHat },
-  caminho: { label: "A caminho", color: "bg-blue-500/10 text-blue-600 border-blue-500/30", icon: Truck },
+  recebido: { label: "Pedido recebido", color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30", icon: Package },
+  preparo: { label: "Em preparo", color: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30", icon: ChefHat },
+  caminho: { label: "A caminho", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30", icon: Truck },
   entregue: { label: "Entregue", color: "bg-primary/10 text-primary border-primary/30", icon: CheckCircle },
 };
 

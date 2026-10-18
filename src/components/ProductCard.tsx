@@ -93,7 +93,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
           </AlertDialogContent>
         </AlertDialog>
       )}
-      <div className={`aspect-square overflow-hidden bg-white p-2 ${unavailable ? "opacity-50 grayscale" : ""}`}>
+      <div className={`aspect-square overflow-hidden bg-white p-2 dark:m-2 dark:flex dark:items-center dark:justify-center hl-photo-frame ${unavailable ? "opacity-50 grayscale" : ""}`}>
         <img
           src={product.image}
           alt={product.name}
@@ -141,7 +141,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
           {fromPrice !== undefined ? (
             <>
               <span className="text-[11px] text-muted-foreground leading-none">a partir de</span>
-              <span className="text-lg font-bold text-primary whitespace-nowrap">R$ {fromPrice.toFixed(2)}</span>
+              <span className="text-lg font-bold text-primary dark:text-accent whitespace-nowrap">R$ {fromPrice.toFixed(2)}</span>
             </>
           ) : onSale ? (
             <>
@@ -150,7 +150,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
             </>
           ) : (
             <>
-              <span className="text-lg font-bold text-primary whitespace-nowrap">R$ {product.price.toFixed(2)}</span>
+              <span className="text-lg font-bold text-primary dark:text-accent whitespace-nowrap">R$ {product.price.toFixed(2)}</span>
               {product.originalPrice && (
                 <span className="text-xs text-muted-foreground line-through whitespace-nowrap">R$ {product.originalPrice.toFixed(2)}</span>
               )}
