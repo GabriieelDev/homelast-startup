@@ -95,6 +95,7 @@ const compute = (orders: any[], costs: Record<string, number>): Totals => {
   let revenue = 0, count = 0, items = 0, discounts = 0, shipping = 0, cancelled = 0, cogs = 0;
   orders.forEach((o) => {
     if (o.status === "cancelado") { cancelled++; return; }
+    if (o.status !== "entregue") return;
     count++;
     revenue += Number(o.total) || 0;
     discounts += Number(o.discount) || 0;
@@ -171,7 +172,7 @@ const DashboardFinance = ({ orders, products, footer }: Props) => {
     const inRange = (o: any, a: Date, b: Date) => { const t = new Date(o.created_at).getTime(); return t >= a.getTime() && t < b.getTime(); };
     const cur = orders.filter((o) => inRange(o, start, end));
     const prev = orders.filter((o) => inRange(o, prevStart, start));
-    const valid = cur.filter((o) => o.status !== "cancelado");
+    const valid = cur.filter((o) => o.status === "entregue");
 
     // Faturamento por dia (dias civis de Cuiabá)
     const startYmd = ymdOf(new Date(start.getTime() + 1));
@@ -233,7 +234,7 @@ const DashboardFinance = ({ orders, products, footer }: Props) => {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-          <p className="text-xs text-muted-foreground">{data.label} · fuso de Cuiabá · exclui cancelados</p>
+          <p className="text-xs text-muted-foreground">{data.label} · fuso de Cuiabá · considera apenas pedidos entregues</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {(Object.keys(PRESET_LABEL) as Preset[]).filter((k) => k !== "custom").map((k) => (
@@ -321,7 +322,7 @@ const DashboardFinance = ({ orders, products, footer }: Props) => {
         </p>
       )}
       <p className="text-[11px] text-muted-foreground -mt-3">
-        Faturamento = total dos pedidos não cancelados (inclui frete, já com desconto). Lucro bruto = faturamento − frete − CMV.
+        Faturamento = total dos pedidos entregues (inclui frete, já com desconto); pedidos pendentes e cancelados não entram. Lucro bruto = faturamento − frete − CMV.
       </p>
 
       <div className="p-4 rounded-lg border border-border">

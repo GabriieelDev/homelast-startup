@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useDeferredValue, useTransition, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -225,10 +225,10 @@ const Auth = () => {
         {/* Waves */}
         <div aria-hidden className="absolute inset-x-0 -bottom-px h-[57px] lg:h-[111px] overflow-hidden pointer-events-none">
           <svg className="auth-wave-16 absolute bottom-0 left-0 h-full w-[200%]" viewBox="0 0 1200 100" preserveAspectRatio="none">
-            <path d="M0 42 Q150 4 300 42 T600 42 T900 42 T1200 42 V100 H0Z" fill="#fff" fillOpacity="0.1" />
+            <path d="M0 42 Q150 4 300 42 T600 42 T900 42 T1200 42 V100 H0Z" fill="#fff" fillOpacity="0.03" />
           </svg>
           <svg className="auth-wave-11 absolute bottom-0 left-0 h-full w-[200%]" viewBox="0 0 1200 100" preserveAspectRatio="none">
-            <path d="M0 58 Q150 22 300 58 T600 58 T900 58 T1200 58 V100 H0Z" fill="#00B894" fillOpacity="0.22" />
+            <path d="M0 58 Q150 22 300 58 T600 58 T900 58 T1200 58 V100 H0Z" fill="#00B894" fillOpacity="0.07" />
           </svg>
           <svg className="auth-wave-22 absolute bottom-0 left-0 h-full w-[200%]" viewBox="0 0 1200 100" preserveAspectRatio="none">
             <path d="M0 76 Q150 46 300 76 T600 76 T900 76 T1200 76 V100 H0Z" fill="#fff" className="dark:fill-background" />
@@ -401,6 +401,12 @@ const Auth = () => {
               </p>
             </form>
           )}
+
+          <p className="text-center text-xs text-[#4A5670] dark:text-muted-foreground pt-6">
+            <Link to="/privacidade" className="hover:underline focus-visible:outline-none focus-visible:underline">
+              Política de Privacidade
+            </Link>
+          </p>
         </div>
       </main>
     </div>
