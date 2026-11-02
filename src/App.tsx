@@ -28,7 +28,7 @@ import Perfil from "./pages/Perfil.tsx";
 import Historico from "./pages/Historico.tsx";
 import MeusCupons from "./pages/MeusCupons.tsx";
 import SobreNos from "./pages/SobreNos.tsx";
-import TermosDeUso from "./pages/TermosDeUso.tsx";
+import TermosDeServico from "./pages/TermosDeServico.tsx";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -63,7 +63,7 @@ const App = () => (
               <Route path="/entregador/login" element={<CourierLogin />} />
               <Route path="/entregador" element={<ProtectedRoute><Courier /></ProtectedRoute>} />
               <Route path="/sobre" element={<SobreNos />} />
-              <Route path="/termos" element={<TermosDeUso />} />
+              <Route path="/termos" element={<TermosDeServico />} />
               <Route path="/privacidade" element={<PoliticaPrivacidade />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

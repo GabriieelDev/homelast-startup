@@ -402,7 +402,11 @@ const Auth = () => {
             </form>
           )}
 
-          <p className="text-center text-xs text-[#4A5670] dark:text-muted-foreground pt-6">
+          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs text-[#4A5670] dark:text-muted-foreground pt-6">
+            <Link to="/termos" className="hover:underline focus-visible:outline-none focus-visible:underline">
+              Termos de Serviço
+            </Link>
+            <span aria-hidden>·</span>
             <Link to="/privacidade" className="hover:underline focus-visible:outline-none focus-visible:underline">
               Política de Privacidade
             </Link>
