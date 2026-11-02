@@ -25,7 +25,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm opacity-60">
               <li><Link to="/sobre" className="hover:opacity-100 transition-opacity">Sobre nós</Link></li>
               <li><Link to="/termos" className="hover:opacity-100 transition-opacity">Termos de uso</Link></li>
-              <li><Link to="/privacidade" className="hover:opacity-100 transition-opacity">Política de privacidade</Link></li>
+              <li><Link to="/privacidade" className="hover:opacity-100 transition-opacity">Política de Privacidade</Link></li>
             </ul>
           </div>
           <div className="space-y-3">

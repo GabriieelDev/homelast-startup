@@ -37,9 +37,9 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const [index, setIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [cycleKey, setCycleKey] = useState(0);
-  // Becomes true after a manual swipe/click so autoplay keeps going from the current slide.
-  const [autoplayOn, setAutoplayOn] = useState(false);
-  const indexRef = useRef(0);
+  // Autoplay only pauses while the finger is down or the tab is hidden.
+  const [touching, setTouching] = useState(false);
+  const [tabHidden, setTabHidden] = useState(() => typeof document !== "undefined" && document.hidden);
   const touchStartX = useRef<number | null>(null);
   const touchLastX = useRef<number | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -48,18 +48,16 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
   const [irisActive, setIrisActive] = useState(false);
   const [irisProgress, setIrisProgress] = useState(0); // 0 → 1 (eased)
   const [snapNext, setSnapNext] = useState(false);
-  const autoTimerRef = useRef<number | null>(null);
   const irisStep2Ref = useRef<number | null>(null);
   const irisStep3Ref = useRef<number | null>(null);
   const irisRafRef = useRef<number | null>(null);
   const irisOverlayRef = useRef<HTMLDivElement | null>(null);
   const irisBoxRef = useRef<HTMLDivElement | null>(null);
   const cancelAutoRef = useRef(false);
-  const hasAutoFiredRef = useRef(false);
 
+  // Cancels any iris animation in flight (the autoplay timer itself lives in its own effect).
   const clearAutoTimers = useCallback(() => {
     cancelAutoRef.current = true;
-    if (autoTimerRef.current) { window.clearTimeout(autoTimerRef.current); autoTimerRef.current = null; }
     if (irisStep2Ref.current) { cancelAnimationFrame(irisStep2Ref.current); irisStep2Ref.current = null; }
     if (irisStep3Ref.current) { cancelAnimationFrame(irisStep3Ref.current); irisStep3Ref.current = null; }
     if (irisRafRef.current) { cancelAnimationFrame(irisRafRef.current); irisRafRef.current = null; }
@@ -146,49 +144,39 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     irisRafRef.current = requestAnimationFrame(tick);
   }, [bezierEase]);
 
-  // Schedule the auto iris transition each cycle (mount + re-enter viewport)
+  // Restart from slide 1 on mount and whenever the carousel re-enters the viewport.
   useEffect(() => {
     clearAutoTimers();
     setIndex(0);
     setIrisActive(false);
     setIrisProgress(0);
     setSnapNext(false);
-    setAutoplayOn(false);
-    hasAutoFiredRef.current = false;
-    cancelAutoRef.current = false;
-
-    if (!autoEnabled || !cfg.slide2.enabled) return;
-
-    autoTimerRef.current = window.setTimeout(() => {
-      if (cancelAutoRef.current) return;
-      hasAutoFiredRef.current = true;
-      // Reduced motion: swap instantly (the track has no duration under motion-reduce).
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        setIndex(1);
-        return;
-      }
-      runIris();
-    }, AUTO_DELAY_MS);
-
     return clearAutoTimers;
-  }, [cycleKey, autoEnabled, cfg.slide2.enabled, clearAutoTimers, runIris]);
+  }, [cycleKey, clearAutoTimers]);
 
-  useEffect(() => { indexRef.current = index; }, [index]);
-
-  // Autoplay after a manual swipe/click: keep advancing from the current slide.
+  // Single autoplay timer. It is torn down and recreated whenever the slide, pause state or
+  // iris state changes, so exactly one timer is ever pending and it never stops after a swipe,
+  // a tab switch or an interrupted transition.
   // Slide 1 -> 2 uses the iris; other steps slide the track.
   useEffect(() => {
-    if (!autoplayOn || !autoEnabled || SLIDE_COUNT < 2 || irisActive) return;
+    if (!autoEnabled || SLIDE_COUNT < 2 || irisActive || touching || tabHidden) return;
     const t = window.setTimeout(() => {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (indexRef.current === 0 && cfg.slide2.enabled && !reduce) {
+      if (index === 0 && cfg.slide2.enabled && !reduce) {
         runIris();
       } else {
         setIndex((i) => (i + 1) % SLIDE_COUNT);
       }
     }, AUTO_DELAY_MS);
     return () => window.clearTimeout(t);
-  }, [autoplayOn, autoEnabled, SLIDE_COUNT, irisActive, index, cfg.slide2.enabled, runIris]);
+  }, [autoEnabled, SLIDE_COUNT, irisActive, touching, tabHidden, index, cycleKey, cfg.slide2.enabled, runIris]);
+
+  // Pause while the tab is in the background; a fresh timer starts when it comes back.
+  useEffect(() => {
+    const onVisibility = () => setTabHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   // IntersectionObserver: reset cycle when carousel leaves & re-enters viewport
   useEffect(() => {
@@ -212,21 +200,20 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     return () => io.disconnect();
   }, []);
 
-  const cancelIfPending = useCallback(() => {
-    if (!hasAutoFiredRef.current) clearAutoTimers();
-  }, [clearAutoTimers]);
-
-  // Any manual navigation stops the pending first auto-transition and resumes autoplay afterwards.
+  // Manual navigation aborts an iris in flight (so it can't override the user's choice);
+  // the autoplay effect then re-arms the timer from the new slide.
   const manual = useCallback((fn: () => void) => {
-    cancelIfPending();
-    cancelAutoRef.current = false;
-    setAutoplayOn(true);
+    clearAutoTimers();
+    setIrisActive(false);
+    setIrisProgress(0);
+    setSnapNext(false);
     fn();
-  }, [cancelIfPending]);
+  }, [clearAutoTimers]);
 
   const onTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchLastX.current = e.touches[0].clientX;
+    setTouching(true);
   };
   const onTouchMove = (e: TouchEvent) => {
     touchLastX.current = e.touches[0].clientX;
@@ -235,6 +222,7 @@ const HeroCarousel = ({ onStart, onProductClick }: HeroCarouselProps) => {
     const start = touchStartX.current;
     touchStartX.current = null;
     touchLastX.current = null;
+    setTouching(false);
     if (start == null || endX == null) return;
     const dx = endX - start;
     if (Math.abs(dx) > 40) manual(dx < 0 ? next : prev);
