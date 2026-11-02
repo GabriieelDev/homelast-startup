@@ -9,7 +9,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "1. Quais dados coletamos",
     body: (
       <>
-        <p>Para que você possa comprar no [NOME DA LOJA], coletamos os seguintes dados:</p>
+        <p>Para que você possa comprar no HomeLast, coletamos os seguintes dados:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li>Nome completo, e-mail e telefone, informados no cadastro;</li>
           <li>Endereço de entrega;</li>
@@ -69,8 +69,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "6. Contato do responsável",
     body: (
       <p>
-        Para exercer seus direitos ou tirar dúvidas, fale com [NOME DA LOJA] pelo e-mail{" "}
-        [E-MAIL DE CONTATO DA LOJA].
+        Para exercer seus direitos ou tirar dúvidas, fale com HomeLast pelo e-mail{" "}
+        gabrielfreefire4650@gmail.com.
       </p>
     ),
   },
@@ -88,7 +88,7 @@ const PoliticaPrivacidade = () => (
         </Link>
         <div className="flex items-center gap-2">
           <LogoIcon className="h-6 w-6 text-primary" />
-          <span className="font-display font-bold text-lg text-foreground">Mercado Flash</span>
+          <span className="font-display font-bold text-lg text-foreground">HomeLast</span>
         </div>
       </div>
     </header>
@@ -97,7 +97,7 @@ const PoliticaPrivacidade = () => (
       <div className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold text-foreground">Política de privacidade</h1>
         <p className="text-sm text-muted-foreground">
-          Explicamos de forma simples como o [NOME DA LOJA] cuida dos seus dados pessoais.
+          Explicamos de forma simples como o HomeLast cuida dos seus dados pessoais.
         </p>
       </div>
       {sections.map((s) => (
