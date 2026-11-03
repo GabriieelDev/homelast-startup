@@ -1,1 +1,4 @@
 project_id = "xnoygmiliuiwkijlhset"
+[functions.send-push]
+# Called by a Database Webhook; auth is the x-webhook-secret header.
+verify_jwt = false
