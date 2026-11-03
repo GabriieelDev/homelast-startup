@@ -28,6 +28,7 @@ import CarouselManager from "@/components/admin/CarouselManager";
 import HomeSectionsManager from "@/components/admin/HomeSectionsManager";
 import CouponManager from "@/components/admin/CouponManager";
 import ReviewsManager from "@/components/admin/ReviewsManager";
+import { PushNotificationsButton } from "@/components/PushNotificationsToggle";
 import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
 import DashboardFinance from "@/components/admin/DashboardFinance";
 
@@ -602,6 +603,9 @@ const Admin = () => {
           <div className="flex items-center gap-2">
             <LogoIcon className="h-6 w-6 text-primary" />
             <span className="font-display font-bold text-lg text-foreground">HomeLast · Admin</span>
+          </div>
+          <div className="ml-auto">
+            <PushNotificationsButton />
           </div>
         </div>
       </header>

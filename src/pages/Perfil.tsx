@@ -13,6 +13,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { useUserAvatar } from "@/hooks/useUserAvatar";
 import { resizeImageToSquare } from "@/lib/avatar";
+import { PushNotificationsCard } from "@/components/PushNotificationsToggle";
 
 const Perfil = () => {
   const navigate = useNavigate();
@@ -202,7 +203,7 @@ const Perfil = () => {
           </div>
         </div>
 
-
+        <PushNotificationsCard />
 
         <form onSubmit={changePassword} className="bg-card border border-border rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
