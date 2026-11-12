@@ -52,7 +52,7 @@ const BottomNav = (_props: { cartCount?: number }) => {
         <div className="grid grid-cols-5 h-[84px]">
           {left.map((i) => <NavItem key={i.to} {...i} />)}
 
-          <div className="relative flex flex-col items-center justify-end pb-2.5">
+          <div className="relative flex flex-col items-center justify-start gap-1 pt-3">
             <button
               type="button"
               onClick={cartDrawer.open}
@@ -67,7 +67,9 @@ const BottomNav = (_props: { cartCount?: number }) => {
                 </span>
               )}
             </button>
-            <span className="text-[11px] font-semibold text-[#1D2D50] dark:text-foreground">{totalItems > 0 ? totalLabel : "Carrinho"}</span>
+            {/* Reserva a altura do ícone (22px) para alinhar o rótulo com os demais itens */}
+            <span aria-hidden className="h-[22px] shrink-0" />
+            <span className="text-[11px] font-medium whitespace-nowrap text-[#1D2D50] dark:text-foreground">{totalItems > 0 ? totalLabel : "Carrinho"}</span>
           </div>
 
           {right.map((i) => <NavItem key={i.to} {...i} />)}
