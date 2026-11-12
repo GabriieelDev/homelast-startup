@@ -15,7 +15,7 @@ const blockedReason = (p: ReturnType<typeof usePushNotifications>) => {
   return null;
 };
 
-const useToggle = (enabledMsg: string) => {
+export const usePushToggle = (enabledMsg: string) => {
   const push = usePushNotifications();
   const reason = blockedReason(push);
   const toggle = async () => {
@@ -36,7 +36,7 @@ const useToggle = (enabledMsg: string) => {
 
 /** Card for the customer profile page. */
 export const PushNotificationsCard = () => {
-  const { push, reason, toggle } = useToggle("Notificações ativadas 🔔");
+  const { push, reason, toggle } = usePushToggle("Notificações ativadas 🔔");
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-3">
       <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export const PushNotificationsCard = () => {
 
 /** Compact button for the admin header. */
 export const PushNotificationsButton = () => {
-  const { push, reason, toggle } = useToggle("Notificações de pedidos ativadas 🔔");
+  const { push, reason, toggle } = usePushToggle("Notificações de pedidos ativadas 🔔");
   const onClick = () => (reason ? toast.info(reason) : toggle());
   return (
     <Button
