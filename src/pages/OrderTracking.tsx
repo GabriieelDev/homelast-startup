@@ -1,5 +1,5 @@
 import { LogoIcon } from "@/components/Logo";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, ChefHat, Truck, CheckCircle, MapPin, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,9 @@ const OrderTracking = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const lastStatus = useState<string | null>(null);
+  const statusRef = useRef<string | null>(null);
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
 
   // From in-app navigation (state) or from a push notification (?pedido=<id>).
   const orderId = state?.orderId ?? new URLSearchParams(location.search).get("pedido") ?? undefined;
@@ -45,33 +47,61 @@ const OrderTracking = () => {
       return;
     }
 
-    const loadOrder = async () => {
-      const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
-      if (!data) { navigate("/pedidos", { replace: true }); return; }
-      setOrder(data);
-      setLoading(false);
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
+    statusRef.current = null;
 
-      const { data: rev } = await supabase.from("order_reviews").select("*").eq("order_id", orderId).maybeSingle();
-      setReview(rev);
+    const stop = () => {
+      if (pollId) { clearInterval(pollId); pollId = null; }
+      if (channel) { supabase.removeChannel(channel); channel = null; }
     };
-    loadOrder();
 
-    // Realtime updates
-    const channel = supabase
-      .channel(`order-${orderId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, (payload) => {
-        const newOrder = payload.new as any;
-        setOrder((prev: any) => {
-          if (prev && prev.status !== newOrder.status) {
-            toast.success(STATUS_MESSAGES[newOrder.status] ?? "Status atualizado");
-          }
-          return newOrder;
-        });
-      })
-      .subscribe();
+    const applyOrder = (row: any) => {
+      if (cancelled || !row) return;
+      const prevStatus = statusRef.current;
+      if (prevStatus !== row.status) {
+        statusRef.current = row.status;
+        setOrder(row);
+        if (prevStatus !== null) {
+          toast.success(STATUS_MESSAGES[row.status] ?? "Status atualizado");
+        }
+      }
+      if (row.status === "entregue" || row.status === "cancelado") stop();
+    };
 
-    return () => { supabase.removeChannel(channel); };
-  }, [orderId, user?.id, navigate]);
+    const fetchOrder = async (initial = false) => {
+      const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+      if (cancelled) return;
+      if (!data) {
+        if (initial) navigateRef.current("/pedidos", { replace: true });
+        return;
+      }
+      applyOrder(data);
+      if (initial) {
+        setLoading(false);
+        const { data: rev } = await supabase.from("order_reviews").select("*").eq("order_id", orderId).maybeSingle();
+        if (!cancelled) setReview(rev);
+      }
+    };
+
+    fetchOrder(true).then(() => {
+      if (cancelled || !statusRef.current) return;
+      if (statusRef.current === "entregue" || statusRef.current === "cancelado") return;
+
+      channel = supabase
+        .channel(`order-tracking-${orderId}`)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, (payload) => {
+          applyOrder(payload.new);
+        })
+        .subscribe();
+
+      // Polling de segurança caso o Realtime falhe
+      pollId = setInterval(() => { fetchOrder(); }, 6000);
+    });
+
+    return () => { cancelled = true; stop(); };
+  }, [orderId, user?.id]);
 
   const handleSubmitReview = async () => {
     if (!rating || !user || !order) return;
