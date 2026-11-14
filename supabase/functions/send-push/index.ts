@@ -14,6 +14,7 @@ type Order = {
   status: string;
   total: number | string;
   customer_name: string | null;
+  items?: unknown;
 };
 
 type WebhookPayload = {
@@ -23,7 +24,7 @@ type WebhookPayload = {
   old_record: Order | null;
 };
 
-type PushMessage = { title: string; body: string; url: string; tag?: string };
+type PushMessage = { title: string; body: string; url: string; tag?: string; renotify?: boolean };
 
 const env = (name: string) => {
   const value = Deno.env.get(name);
@@ -37,16 +38,47 @@ const supabase = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KE
 
 webpush.setVapidDetails(env("VAPID_SUBJECT"), env("VAPID_PUBLIC_KEY"), env("VAPID_PRIVATE_KEY"));
 
-const STATUS_MESSAGES: Record<string, string> = {
-  recebido: "Recebemos seu pedido e já vamos começar a prepará-lo.",
-  preparo: "Seu pedido está em preparo. 👨‍🍳",
-  caminho: "Seu pedido saiu para entrega! 🛵",
-  entregue: "Seu pedido foi entregue. Bom apetite! 😋",
-  cancelado: "Seu pedido foi cancelado. Em caso de dúvida, fale com a loja.",
+const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
+  recebido: { title: "Pedido recebido ✅", body: "Já estamos cuidando do seu pedido." },
+  preparo: { title: "Estamos preparando seu pedido 👨‍🍳", body: "Falta pouco!" },
+  caminho: { title: "Seu pedido saiu para entrega 🛵", body: "O entregador está a caminho." },
+  entregue: { title: "Pedido entregue 🎉", body: "Bom apetite! Conta pra gente o que achou." },
+  cancelado: { title: "Pedido cancelado", body: "Se precisar, é só fazer um novo pedido." },
 };
+
+const FALLBACK_STATUS = { title: "Pedido atualizado", body: "Toque para ver os detalhes." };
 
 const brl = (value: number | string) =>
   Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const LOWERCASE_WORDS = new Set(["da", "de", "do", "das", "dos", "e"]);
+
+/** "gabriela rosa" → "Gabriela Rosa"; keeps connectors like "da" lowercase. */
+const formatName = (name: string | null) => {
+  const words = (name ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "Cliente";
+  return words
+    .map((w, i) => (i > 0 && LOWERCASE_WORDS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+};
+
+/** Sum of item quantities from orders.items (jsonb); null when it can't be read. */
+const itemCount = (items: unknown): number | null => {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  let total = 0;
+  for (const item of items) {
+    const qty = Number((item as { quantity?: unknown })?.quantity ?? 1);
+    if (!Number.isFinite(qty) || qty <= 0) return null;
+    total += qty;
+  }
+  return total;
+};
+
+const itemsLabel = (items: unknown) => {
+  const n = itemCount(items);
+  if (n === null) return null;
+  return n === 1 ? "1 item" : `${n} itens`;
+};
 
 const adminIds = async (): Promise<string[]> => {
   const { data, error } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
@@ -111,28 +143,31 @@ Deno.serve(async (req) => {
     let sent = 0;
 
     if (type === "INSERT") {
-      const customer = record.customer_name?.trim() || "Cliente";
+      const parts = [formatName(record.customer_name), itemsLabel(record.items), brl(record.total)];
       sent += await sendToUsers(await adminIds(), {
-        title: `Novo pedido #${record.order_number}`,
-        body: `${customer} · ${brl(record.total)}`,
+        title: "Novo pedido recebido 🛒",
+        body: parts.filter(Boolean).join(" · "),
         url: "/admin",
         tag: `order-${record.id}-admin`,
+        renotify: false,
       });
     } else if (type === "UPDATE" && old_record && old_record.status !== record.status) {
+      const msg = STATUS_MESSAGES[record.status] ?? FALLBACK_STATUS;
       sent += await sendToUsers([record.user_id], {
-        title: `Pedido #${record.order_number}`,
-        body: STATUS_MESSAGES[record.status] ?? `Status atualizado: ${record.status}`,
-        url: "/pedidos",
+        title: msg.title,
+        body: msg.body,
+        url: `/rastreamento?pedido=${encodeURIComponent(record.id)}`,
         tag: `order-${record.id}`,
+        renotify: true,
       });
 
       if (record.status === "cancelado") {
-        const customer = record.customer_name?.trim() || "Cliente";
         sent += await sendToUsers(await adminIds(), {
-          title: `Pedido #${record.order_number} cancelado`,
-          body: `${customer} · ${brl(record.total)}`,
+          title: "Pedido cancelado ❌",
+          body: `${formatName(record.customer_name)} cancelou o pedido · ${brl(record.total)}`,
           url: "/admin",
           tag: `order-${record.id}-admin`,
+          renotify: true,
         });
       }
     }

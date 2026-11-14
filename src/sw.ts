@@ -63,9 +63,11 @@ registerRoute(
 
 // ---- Push notifications ----
 
-type PushPayload = { title?: string; body?: string; url?: string; tag?: string };
+type PushPayload = { title?: string; body?: string; url?: string; tag?: string; renotify?: boolean };
 
 const ICON = "/pwa-192x192.png";
+// No monochrome badge in /public yet; Android shows the badge as a white silhouette.
+const BADGE = "/pwa-192x192.png";
 
 self.addEventListener("push", (event) => {
   let data: PushPayload = {};
@@ -75,15 +77,16 @@ self.addEventListener("push", (event) => {
     data = { body: event.data?.text() };
   }
   const title = data.title || "HomeLast";
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body ?? "",
-      icon: ICON,
-      badge: ICON,
-      tag: data.tag,
-      data: { url: data.url || "/" },
-    }),
-  );
+  // renotify is only valid together with a tag.
+  const options: NotificationOptions & { renotify?: boolean } = {
+    body: data.body ?? "",
+    icon: ICON,
+    badge: BADGE,
+    tag: data.tag,
+    renotify: Boolean(data.tag && data.renotify),
+    data: { url: data.url || "/" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", (event) => {
