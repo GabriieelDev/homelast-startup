@@ -1,8 +1,15 @@
 import { LogoIcon } from "@/components/Logo";
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, ChefHat, Truck, CheckCircle, MapPin, Clock, Star } from "lucide-react";
+import { ArrowLeft, Package, ChefHat, Truck, CheckCircle, MapPin, Clock, Star, XCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { normalizeSocialUrl } from "@/components/SocialLinks";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +27,10 @@ const STATUS_MESSAGES: Record<string, string> = {
   preparo: "Estamos preparando seu pedido 👨‍🍳",
   caminho: "Seu pedido saiu para entrega 🚚",
   entregue: "Pedido entregue! Bom apetite 🥳",
+  cancelado: "Pedido cancelado",
 };
+
+const CANCEL_REASONS = ["Errei o pedido", "Demorou demais", "Mudei de ideia", "Outro"];
 
 const OrderTracking = () => {
   const navigate = useNavigate();
@@ -35,6 +45,13 @@ const OrderTracking = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const { settings } = useStoreSettings();
+  const whatsappUrl = (() => {
+    const link = settings.social_links.find((l) => l.platform === "whatsapp" && l.enabled);
+    return link ? normalizeSocialUrl(link) : "";
+  })();
   const statusRef = useRef<string | null>(null);
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
@@ -118,10 +135,27 @@ const OrderTracking = () => {
     setReview({ rating, comment });
   };
 
+  const handleCancel = async () => {
+    if (!order) return;
+    setCancelling(true);
+    const { error } = await supabase.rpc("cancel_order", {
+      p_order_id: order.id,
+      p_reason: cancelReason || undefined,
+    });
+    setCancelling(false);
+    if (error) { toast.error(error.message || "Não foi possível cancelar o pedido"); return; }
+    toast.success("Pedido cancelado");
+    setCancelReason("");
+    // Atualiza já, sem esperar o realtime
+    const { data } = await supabase.from("orders").select("*").eq("id", order.id).maybeSingle();
+    if (data) { statusRef.current = data.status; setOrder(data); }
+  };
+
   if (loading || !order) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando...</div>;
   }
 
+  const isCancelled = order.status === "cancelado";
   const currentStep = STEPS.findIndex((s) => s.id === order.status);
   const progressPct = ((currentStep + 1) / STEPS.length) * 100;
   const items = Array.isArray(order.items) ? order.items : [];
@@ -142,14 +176,26 @@ const OrderTracking = () => {
           <p className="text-lg font-bold text-foreground animate-fade-in" key={order.status}>
             {STATUS_MESSAGES[order.status]}
           </p>
-          {order.status !== "entregue" && order.estimated_time && (
+          {order.status !== "entregue" && !isCancelled && order.estimated_time && (
             <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
               <Clock className="h-4 w-4" /> Chega em {order.estimated_time}
             </p>
           )}
+          {isCancelled && order.cancel_reason && (
+            <p className="text-sm text-muted-foreground">Motivo: {order.cancel_reason}</p>
+          )}
         </div>
 
+        {isCancelled && (
+          <div className="flex justify-center">
+            <div className="h-14 w-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+              <XCircle className="h-8 w-8" />
+            </div>
+          </div>
+        )}
+
         {/* Progress bar */}
+        {!isCancelled && (<>
         <div className="space-y-2">
           <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
@@ -186,6 +232,52 @@ const OrderTracking = () => {
             );
           })}
         </div>
+        </>)}
+
+        {(order.status === "recebido" || order.status === "preparo") && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive">
+                Cancelar pedido
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancelar este pedido?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Os itens voltam ao estoque e, se você usou cupom, ele fica disponível de novo.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Select value={cancelReason} onValueChange={setCancelReason}>
+                <SelectTrigger><SelectValue placeholder="Motivo (opcional)" /></SelectTrigger>
+                <SelectContent>
+                  {CANCEL_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={cancelling}>Voltar</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={cancelling}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={(e) => { e.preventDefault(); handleCancel(); }}
+                >
+                  {cancelling ? "Cancelando..." : "Cancelar pedido"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        {order.status === "caminho" && (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-2 text-sm text-muted-foreground">
+            <p>Seu pedido já saiu para entrega. Para cancelar, fale com o mercado.</p>
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-primary">
+                <MessageCircle className="h-4 w-4" /> Falar no WhatsApp
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Address */}
         {order.address && (

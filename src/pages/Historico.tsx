@@ -24,6 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
   preparo: "Em preparo",
   caminho: "A caminho",
   entregue: "Entregue",
+  cancelado: "Cancelado",
 };
 
 const Historico = () => {
@@ -90,7 +91,9 @@ const Historico = () => {
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-secondary text-foreground">
+                  <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    o.status === "cancelado" ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-secondary text-foreground"
+                  }`}>
                     {STATUS_LABEL[o.status] ?? o.status}
                   </span>
                   <p className="font-bold text-foreground mt-1">R$ {Number(o.total).toFixed(2)}</p>

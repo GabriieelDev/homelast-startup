@@ -307,6 +307,9 @@ export type Database = {
       orders: {
         Row: {
           address: Json | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           coupon_code: string | null
           courier_id: string | null
           created_at: string
@@ -327,6 +330,9 @@ export type Database = {
         }
         Insert: {
           address?: Json | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           coupon_code?: string | null
           courier_id?: string | null
           created_at?: string
@@ -347,6 +353,9 @@ export type Database = {
         }
         Update: {
           address?: Json | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           coupon_code?: string | null
           courier_id?: string | null
           created_at?: string
@@ -677,6 +686,10 @@ export type Database = {
     }
     Functions: {
       admin_delete_old_orders: { Args: { days_old: number }; Returns: undefined }
+      cancel_order: {
+        Args: { p_order_id: string; p_reason?: string }
+        Returns: undefined
+      }
       expire_product_sales: { Args: never; Returns: undefined }
       get_admin_product_costs: {
         Args: never
@@ -739,7 +752,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "cliente" | "entregador"
-      order_status: "recebido" | "preparo" | "caminho" | "entregue"
+      order_status: "recebido" | "preparo" | "caminho" | "entregue" | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -868,7 +881,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cliente", "entregador"],
-      order_status: ["recebido", "preparo", "caminho", "entregue"],
+      order_status: ["recebido", "preparo", "caminho", "entregue", "cancelado"],
     },
   },
 } as const

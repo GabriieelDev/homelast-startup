@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, ChefHat, RefreshCw } from "lucide-react";
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, ChefHat, RefreshCw, XCircle } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/hooks/useCart";
 import { useProducts } from "@/hooks/useProducts";
@@ -15,6 +15,7 @@ const STATUS_META: Record<string, { label: string; color: string; icon: any }> =
   preparo: { label: "Em preparo", color: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30", icon: ChefHat },
   caminho: { label: "A caminho", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30", icon: Truck },
   entregue: { label: "Entregue", color: "bg-primary/10 text-primary border-primary/30", icon: CheckCircle },
+  cancelado: { label: "Cancelado", color: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30", icon: XCircle },
 };
 
 interface Order {

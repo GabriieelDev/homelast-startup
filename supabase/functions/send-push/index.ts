@@ -15,6 +15,8 @@ type Order = {
   total: number | string;
   customer_name: string | null;
   items?: unknown;
+  cancel_reason?: string | null;
+  cancelled_by?: string | null;
 };
 
 type WebhookPayload = {
@@ -153,18 +155,29 @@ Deno.serve(async (req) => {
       });
     } else if (type === "UPDATE" && old_record && old_record.status !== record.status) {
       const msg = STATUS_MESSAGES[record.status] ?? FALLBACK_STATUS;
-      sent += await sendToUsers([record.user_id], {
-        title: msg.title,
-        body: msg.body,
-        url: `/rastreamento?pedido=${encodeURIComponent(record.id)}`,
-        tag: `order-${record.id}`,
-        renotify: true,
-      });
+      const reason = record.status === "cancelado" && record.cancel_reason?.trim()
+        ? `Motivo: ${record.cancel_reason.trim()}`
+        : "";
+      const cancelledByClient = record.status === "cancelado" && record.cancelled_by === "cliente";
+      const cancelledByAdmin = record.status === "cancelado" && record.cancelled_by === "admin";
 
-      if (record.status === "cancelado") {
+      // Quem cancelou não recebe push do próprio cancelamento.
+      if (record.status !== "cancelado" || cancelledByAdmin) {
+        sent += await sendToUsers([record.user_id], {
+          title: msg.title,
+          body: cancelledByAdmin
+            ? ["A loja cancelou seu pedido", reason].filter(Boolean).join(" · ")
+            : msg.body,
+          url: `/rastreamento?pedido=${encodeURIComponent(record.id)}`,
+          tag: `order-${record.id}`,
+          renotify: true,
+        });
+      }
+
+      if (cancelledByClient) {
         sent += await sendToUsers(await adminIds(), {
           title: "Pedido cancelado ❌",
-          body: `${formatName(record.customer_name)} cancelou o pedido · ${brl(record.total)}`,
+          body: `${formatName(record.customer_name)} cancelou o pedido · ${brl(record.total)}${reason ? ` · ${reason}` : ""}`,
           url: "/admin",
           tag: `order-${record.id}-admin`,
           renotify: true,

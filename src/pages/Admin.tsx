@@ -31,6 +31,7 @@ import ReviewsManager from "@/components/admin/ReviewsManager";
 import { PushNotificationsButton } from "@/components/PushNotificationsToggle";
 import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
 import DashboardFinance from "@/components/admin/DashboardFinance";
+import CancelOrderDialog from "@/components/admin/CancelOrderDialog";
 
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -374,6 +375,11 @@ const Admin = () => {
     const { error } = await supabase.from("orders").update(update).eq("id", order.id);
     if (error) { toast.error("Erro ao atualizar status"); return; }
     toast.success(`Status atualizado para "${STATUS_LABELS[next]}"`);
+  };
+
+  const refreshOrder = async (id: string) => {
+    const { data } = await supabase.from("orders").select("*").eq("id", id).maybeSingle();
+    if (data) setOrders((prev) => prev.map((o) => (o.id === id ? data : o)));
   };
 
   const toggleProductActive = async (p: Product) => {
@@ -827,6 +833,8 @@ const Admin = () => {
                     const next = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
                     const items = Array.isArray(o.items) ? o.items : [];
                     const canDelete = o.status === "entregue" || o.status === "cancelado";
+                    const isCancelled = o.status === "cancelado";
+                    const canCancel = !isCancelled && o.status !== "entregue";
                     return (
                       <div key={o.id} className="border border-border rounded-xl p-4 space-y-3 bg-card hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between flex-wrap gap-2">
@@ -838,7 +846,7 @@ const Admin = () => {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-secondary font-semibold">{STATUS_LABELS[o.status] ?? o.status}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full font-semibold ${isCancelled ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-secondary"}`}>{STATUS_LABELS[o.status] ?? o.status}</span>
                             <span className="font-bold text-foreground">R$ {Number(o.total).toFixed(2)}</span>
                             {canDelete && (
                               <AlertDialog>
@@ -884,7 +892,14 @@ const Admin = () => {
                             </p>
                           )}
                           <p><span className="font-semibold text-foreground">Pagamento:</span> {o.payment_method}</p>
+                          {isCancelled && (
+                            <p className="text-red-600 dark:text-red-400">
+                              <span className="font-semibold">Cancelado por {o.cancelled_by === "admin" ? "admin" : "cliente"}</span>
+                              {o.cancel_reason ? ` · Motivo: ${o.cancel_reason}` : ""}
+                            </p>
+                          )}
                         </div>
+                        {!isCancelled && (
                         <div className="relative pt-2 pb-5">
                           {/* Connecting line background */}
                           <div className="absolute top-[1.125rem] left-0 right-0 h-0.5 bg-muted rounded-full" />
@@ -930,11 +945,15 @@ const Admin = () => {
                             })}
                           </div>
                         </div>
+                        )}
                         {next ? (
-                          <Button size="sm" onClick={() => advanceStatus(o)} className="btn-press">
-                            Avançar para "{STATUS_LABELS[next]}"
-                          </Button>
-                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" onClick={() => advanceStatus(o)} className="btn-press">
+                              Avançar para "{STATUS_LABELS[next]}"
+                            </Button>
+                            {canCancel && <CancelOrderDialog orderId={o.id} orderNumber={o.order_number} onCancelled={() => refreshOrder(o.id)} />}
+                          </div>
+                        ) : isCancelled ? null : (
                           <p className="text-xs text-primary font-semibold">✓ Pedido finalizado</p>
                         )}
                       </div>
