@@ -37,7 +37,8 @@ const OrderTracking = () => {
   const [submitting, setSubmitting] = useState(false);
   const lastStatus = useState<string | null>(null);
 
-  const orderId = state?.orderId;
+  // From in-app navigation (state) or from a push notification (?pedido=<id>).
+  const orderId = state?.orderId ?? new URLSearchParams(location.search).get("pedido") ?? undefined;
   useEffect(() => {
     if (!orderId || !user?.id) {
       navigate("/pedidos", { replace: true });
