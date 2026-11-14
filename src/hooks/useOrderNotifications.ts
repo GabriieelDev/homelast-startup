@@ -9,6 +9,7 @@ const STATUS_MSG: Record<string, string> = {
   preparo: "Seu pedido está em preparo 🍳",
   caminho: "Seu pedido saiu para entrega 🚚",
   entregue: "Seu pedido foi entregue ✅ — Avalie sua experiência ⭐",
+  cancelado: "Pedido cancelado",
 };
 
 /**
