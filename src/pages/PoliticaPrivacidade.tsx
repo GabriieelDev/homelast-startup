@@ -14,7 +14,16 @@ const sections: { title: string; body: React.ReactNode }[] = [
           <li>Nome completo, e-mail e telefone, informados no cadastro;</li>
           <li>Endereço de entrega;</li>
           <li>Histórico de pedidos;</li>
-          <li>Dados básicos do seu perfil (nome e e-mail) quando você entra com a conta Google.</li>
+          <li>Dados básicos do seu perfil (nome e e-mail) quando você entra com a conta Google;</li>
+          <li>
+            <strong className="text-foreground">Localização (opcional):</strong> ao tocar em "Usar minha localização"
+            no cadastro de endereço, o aplicativo pede a sua permissão para acessar a localização do seu aparelho.
+            Usamos essa informação apenas para preencher automaticamente os campos de endereço (rua, bairro, cidade e
+            CEP). Não guardamos as suas coordenadas em nossos servidores. Para converter a posição em endereço, as
+            coordenadas são enviadas, nesse momento, ao serviço de mapas OpenStreetMap (Nominatim). O uso é totalmente
+            opcional: você pode negar a permissão e digitar o endereço manualmente, e pode revogar a permissão a
+            qualquer momento nas configurações do seu navegador ou aparelho.
+          </li>
         </ul>
       </>
     ),
