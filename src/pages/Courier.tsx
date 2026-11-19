@@ -5,7 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
-import { Bike, MapPin, Package, LogOut, CheckCircle2, Navigation, ShieldAlert, Loader2 } from "lucide-react";
+import { Bike, MapPin, Package, LogOut, CheckCircle2, Navigation, ShieldAlert, Loader2, XCircle, Wallet } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 type CourierStatus = "disponivel" | "em_entrega" | "offline";
@@ -22,7 +32,31 @@ interface Order {
   courier_id: string | null;
   estimated_time: string | null;
   created_at: string;
+  payment_method?: string | null;
+  cancel_reason?: string | null;
 }
+
+interface CancelNotice {
+  id: string;
+  order_number: number;
+  reason: string | null;
+}
+
+const PAYMENT_LABEL: Record<string, string> = {
+  credit: "Cartão de crédito",
+  debit: "Cartão de débito",
+  pix: "PIX",
+  vale: "Vale",
+};
+
+const formatBRL = (v: number) => `R$ ${Number(v).toFixed(2).replace(".", ",")}`;
+
+const buildAddressString = (address: any) =>
+  address
+    ? [`${address.street ?? ""} ${address.number ?? ""}`.trim(), address.neighborhood, address.city]
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
 const STATUS_LABEL: Record<CourierStatus, string> = {
   disponivel: "Disponível",
@@ -46,6 +80,9 @@ const Courier = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ type: "accept" | "deliver"; order: Order } | null>(null);
+  const [cancelNotices, setCancelNotices] = useState<CancelNotice[]>([]);
+  const myActiveIdsRef = useRef<Map<string, number>>(new Map());
 
   const loadCourier = useCallback(async () => {
     if (!userId) return;
@@ -76,8 +113,32 @@ const Courier = () => {
       .or(`courier_id.is.null,courier_id.eq.${userId}`)
       .in("status", ["preparo", "caminho"])
       .order("created_at", { ascending: false });
-    setOrders((data as Order[]) ?? []);
+    const list = (data as Order[]) ?? [];
+    setOrders(list);
     setLoadingOrders(false);
+
+    // Detecta pedidos em andamento que sumiram da lista por cancelamento.
+    const prev = myActiveIdsRef.current;
+    const nowMine = new Map<string, number>();
+    list.filter((o) => o.courier_id === userId).forEach((o) => nowMine.set(o.id, o.order_number));
+    const missing = [...prev.keys()].filter((id) => !nowMine.has(id));
+    myActiveIdsRef.current = nowMine;
+    if (missing.length > 0) {
+      const { data: gone } = await supabase
+        .from("orders")
+        .select("id, order_number, status, cancel_reason")
+        .in("id", missing)
+        .eq("status", "cancelado");
+      if (gone && gone.length > 0) {
+        setCancelNotices((cur) => [
+          ...cur,
+          ...gone
+            .filter((g: any) => !cur.some((c) => c.id === g.id))
+            .map((g: any) => ({ id: g.id, order_number: g.order_number, reason: g.cancel_reason ?? null })),
+        ]);
+        playDing();
+      }
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -132,13 +193,16 @@ const Courier = () => {
   const acceptOrder = async (order: Order) => {
     if (!userId) return;
     setActionLoading(order.id);
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("orders")
       .update({ courier_id: userId, status: "caminho" })
-      .eq("id", order.id);
+      .eq("id", order.id)
+      .is("courier_id", null)
+      .select("id");
     setActionLoading(null);
-    if (error) {
-      toast.error("Não foi possível aceitar a entrega.");
+    if (error || !updated || updated.length === 0) {
+      toast.error("Esse pedido já foi aceito por outro entregador");
+      loadOrders();
       return;
     }
     toast.success("Entrega aceita! Boa rota 🚴");
@@ -165,10 +229,8 @@ const Courier = () => {
 
   const openMaps = (address: any) => {
     if (!address) return;
-    const q = encodeURIComponent(
-      `${address.street ?? ""} ${address.number ?? ""}, ${address.neighborhood ?? ""}, ${address.city ?? ""}`
-    );
-    window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, "_blank");
+    const q = encodeURIComponent(buildAddressString(address));
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${q}`, "_blank", "noopener,noreferrer");
   };
 
   if (authLoading || roleLoading) {
@@ -211,6 +273,27 @@ const Courier = () => {
       </header>
 
       <div className="container mx-auto max-w-3xl px-4 py-6 space-y-6">
+        {cancelNotices.map((n) => (
+          <div
+            key={n.id}
+            role="alert"
+            className="bg-destructive/10 border border-destructive/40 rounded-2xl p-4 flex items-start gap-3"
+          >
+            <XCircle className="h-6 w-6 text-destructive shrink-0" />
+            <div className="flex-1 text-sm">
+              <p className="font-bold text-destructive">Pedido #{n.order_number} foi cancelado</p>
+              {n.reason && <p className="text-foreground mt-0.5">Motivo: {n.reason}</p>}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCancelNotices((cur) => cur.filter((c) => c.id !== n.id))}
+            >
+              Ok
+            </Button>
+          </div>
+        ))}
+
         {/* Status selector */}
         <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
           <p className="text-sm text-muted-foreground mb-3">Seu status atual</p>
@@ -245,10 +328,9 @@ const Courier = () => {
                 order={order}
                 primaryAction="Pedido entregue"
                 primaryColor="bg-primary"
-                onPrimary={() => markDelivered(order)}
+                onPrimary={() => setConfirm({ type: "deliver", order })}
                 onOpenMaps={openMaps}
                 loading={actionLoading === order.id}
-                showRoute
               />
             ))
           )}
@@ -274,7 +356,7 @@ const Courier = () => {
                 order={order}
                 primaryAction="Aceitar entrega"
                 primaryColor="bg-accent"
-                onPrimary={() => acceptOrder(order)}
+                onPrimary={() => setConfirm({ type: "accept", order })}
                 onOpenMaps={openMaps}
                 loading={actionLoading === order.id}
               />
@@ -282,6 +364,36 @@ const Courier = () => {
           )}
         </section>
       </div>
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent className="max-w-[92vw] sm:max-w-md rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.type === "accept" ? "Aceitar esta entrega?" : "Confirmar entrega?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.type === "accept"
+                ? `Pedido #${confirm?.order.order_number} — você ficará responsável por ele.`
+                : `Confirme que o pedido #${confirm?.order.order_number} foi entregue ao cliente.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="h-12 sm:h-10">Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-12 sm:h-10"
+              onClick={() => {
+                const c = confirm;
+                setConfirm(null);
+                if (!c) return;
+                if (c.type === "accept") acceptOrder(c.order);
+                else markDelivered(c.order);
+              }}
+            >
+              {confirm?.type === "accept" ? "Aceitar" : "Entregue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -293,10 +405,10 @@ interface OrderCardProps {
   onPrimary: () => void;
   onOpenMaps: (address: any) => void;
   loading: boolean;
-  showRoute?: boolean;
 }
 
-const OrderCard = ({ order, primaryAction, primaryColor, onPrimary, onOpenMaps, loading, showRoute }: OrderCardProps) => {
+const OrderCard = ({ order, primaryAction, primaryColor, onPrimary, onOpenMaps, loading }: OrderCardProps) => {
+  const paymentLabel = PAYMENT_LABEL[order.payment_method ?? ""] ?? order.payment_method ?? "—";
   const itemsCount = Array.isArray(order.items) ? order.items.reduce((s: number, i: any) => s + (i.quantity ?? 1), 0) : 0;
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-3">
@@ -308,6 +420,14 @@ const OrderCard = ({ order, primaryAction, primaryColor, onPrimary, onOpenMaps, 
         <div className="text-right">
           <p className="text-xs text-muted-foreground">Total</p>
           <p className="font-bold text-primary">R$ {Number(order.total).toFixed(2)}</p>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-primary/10 border border-primary/30 p-3 flex items-center gap-3">
+        <Wallet className="h-6 w-6 text-primary shrink-0" />
+        <div className="flex-1">
+          <p className="text-xs text-muted-foreground">Pagamento: {paymentLabel}</p>
+          <p className="text-lg font-extrabold text-primary leading-tight">Receber {formatBRL(order.total)}</p>
         </div>
       </div>
 
@@ -341,20 +461,16 @@ const OrderCard = ({ order, primaryAction, primaryColor, onPrimary, onOpenMaps, 
         </div>
       </div>
 
-      <div className="flex gap-2 pt-2">
-        {showRoute && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={() => onOpenMaps(order.address)}
-          >
-            <Navigation className="h-4 w-4 mr-1" /> Iniciar rota
-          </Button>
-        )}
+      <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Button
-          size="sm"
-          className={`flex-1 text-white ${primaryColor} hover:opacity-90`}
+          variant="outline"
+          className="flex-1 h-12 text-base sm:h-10 sm:text-sm"
+          onClick={() => onOpenMaps(order.address)}
+        >
+          <Navigation className="h-4 w-4 mr-1" /> Abrir rota no Maps
+        </Button>
+        <Button
+          className={`flex-1 h-12 text-base sm:h-10 sm:text-sm text-white ${primaryColor} hover:opacity-90`}
           onClick={onPrimary}
           disabled={loading}
         >
