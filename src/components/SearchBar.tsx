@@ -1,6 +1,7 @@
 import { useState, useMemo, useDeferredValue, useCallback } from "react";
 import { Search, X } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { ProductImage } from "@/components/ProductImage";
 
 interface SearchBarProps {
   value: string;
@@ -58,7 +59,7 @@ const SearchBar = ({ value, onChange }: SearchBarProps) => {
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors text-left"
               onMouseDown={() => onChange(product.name)}
             >
-              <img src={product.image} alt={product.name} className="w-8 h-8 rounded-lg object-cover" />
+              <ProductImage src={product.image} alt={product.name} className="w-8 h-8 rounded-lg object-cover" />
               <span className="text-sm font-medium text-foreground">{product.name}</span>
               <span className="text-sm text-primary dark:text-accent ml-auto font-semibold">
                 R$ {product.price.toFixed(2)}

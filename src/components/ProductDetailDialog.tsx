@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Product } from "@/data/products";
 import { isSaleActive, getEffectivePrice, getSaleBadgeLabel } from "@/lib/promotions";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { isUsableImageUrl } from "@/lib/imageUrl";
 
 interface Props {
   product: Product | null;
@@ -26,7 +27,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange, stock = 99, quantity
   const onSale = isSaleActive(product);
   const price = getEffectivePrice(product);
   const unavailable = stock <= 0;
-  const hasImage = Boolean(product.image) && !imgError;
+  const hasImage = isUsableImageUrl(product.image) && !imgError;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

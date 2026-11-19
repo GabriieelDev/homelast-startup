@@ -7,6 +7,7 @@ import { cartDrawer, useCartDrawerOpen } from "@/hooks/useCartDrawer";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { calcShipping } from "@/lib/shipping";
 import { getEffectivePrice } from "@/lib/promotions";
+import { ProductImage } from "@/components/ProductImage";
 
 const brl = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -77,7 +78,7 @@ const CartDrawer = () => {
               {items.map((item) => (
                 <li key={item.product.id} className="flex items-center gap-3 py-3">
                   <div className="h-14 w-14 shrink-0 rounded-xl bg-[#F2F4F8] hl-photo-frame overflow-hidden">
-                    <img src={item.product.image} alt="" className="h-full w-full object-contain p-1" />
+                    <ProductImage src={item.product.image} alt="" className="h-full w-full object-contain p-1" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1D2D50] dark:text-foreground line-clamp-2">{item.product.name}</p>

@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ProductImage } from "@/components/ProductImage";
 
 interface ProductCardProps {
   product: Product;
@@ -94,14 +95,11 @@ const ProductCard = ({ product, quantity, onAdd, onRemove, stock = 99, isAdmin, 
         </AlertDialog>
       )}
       <div className={`aspect-square overflow-hidden bg-white p-2 dark:m-2 dark:flex dark:items-center dark:justify-center hl-photo-frame ${unavailable ? "opacity-50 grayscale" : ""}`}>
-        <img
+        <ProductImage
           src={product.image}
           alt={product.name}
           className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/placeholder.svg";
-          }}
         />
       </div>
       <div className="p-3 space-y-2">

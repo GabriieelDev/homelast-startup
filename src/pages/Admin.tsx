@@ -44,6 +44,7 @@ import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RTooltip, PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { ProductImage } from "@/components/ProductImage";
 
 const STATUS_COLORS: Record<string, string> = {
   recebido: "#3498DB",
@@ -740,7 +741,7 @@ const Admin = () => {
               <div className="divide-y divide-border">
                 {products.map((p) => (
                   <div key={p.id} className="flex items-center gap-3 py-2.5">
-                    <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
+                    <ProductImage src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
                         {p.name} {!p.active && <span className="text-xs text-muted-foreground">(inativo)</span>}
@@ -790,11 +791,10 @@ const Admin = () => {
                     <div className="divide-y divide-border border border-dashed border-border rounded-lg">
                       {disabledList.map((p) => (
                         <div key={p.id} className="flex items-center gap-3 py-2.5 px-3 opacity-60 hover:opacity-100 transition-opacity">
-                          <img
+                          <ProductImage
                             src={p.image}
                             alt={p.name}
                             className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame grayscale"
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }}
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
@@ -1041,7 +1041,7 @@ const Admin = () => {
                   const status = current === 0 ? "esgotado" : current <= 5 ? "baixo" : "ok";
                   return (
                     <div key={p.id} className="flex items-center gap-2 py-2.5">
-                      <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder.svg"; }} />
+                      <ProductImage src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
                         <p className="text-xs">

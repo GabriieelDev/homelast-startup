@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { ProductImage } from "@/components/ProductImage";
 
 const STEPS = [
   { id: "recebido", label: "Pedido recebido", icon: Package, color: "bg-yellow-500" },
@@ -294,7 +295,7 @@ const OrderTracking = () => {
           <h3 className="font-semibold text-foreground">Itens do pedido</h3>
           {items.map((item: any, i: number) => (
             <div key={i} className="flex items-center gap-3">
-              {item.image && <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover" />}
+              <ProductImage src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground truncate">{item.name}</p>
                 <p className="text-xs text-muted-foreground">{item.quantity}x R$ {Number(item.price).toFixed(2)}</p>

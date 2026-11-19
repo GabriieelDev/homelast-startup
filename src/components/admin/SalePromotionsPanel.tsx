@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tag, History, TrendingUp, CheckCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadCSV } from "@/lib/reports";
+import { ProductImage } from "@/components/ProductImage";
 
 interface ExpirationRow {
   id: string;
@@ -156,7 +157,7 @@ const SalePromotionsPanel = () => {
           <div className="divide-y divide-border">
             {activeSales.map((p) => (
               <div key={p.id} className="py-2.5 flex items-center gap-3">
-                <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" />
+                <ProductImage src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover bg-white hl-photo-frame" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
                   <p className="text-xs text-muted-foreground">
