@@ -75,7 +75,10 @@ const Admin = () => {
   const [emailsMap, setEmailsMap] = useState<Record<string, string>>({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkDeleteDays, setBulkDeleteDays] = useState<string>("30");
+  const [bulkDeleteCount, setBulkDeleteCount] = useState<number>(0);
+  const [bulkConfirmText, setBulkConfirmText] = useState("");
+  const [bulkChecking, setBulkChecking] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [editingStock, setEditingStock] = useState<Record<string, string>>({});
   const [period, setPeriod] = useState<Period>("month");
   const [chartType, setChartType] = useState<"bar" | "line">("bar");
@@ -235,19 +238,65 @@ const Admin = () => {
   }, [profilesMap, emailsMap]);
 
   const deleteOrder = async (orderId: string) => {
-    const { error } = await supabase.from("orders").delete().eq("id", orderId);
-    if (error) { toast.error("Erro ao excluir pedido"); return; }
-    toast.success("Pedido excluído");
+    const target = orders.find((o) => o.id === orderId);
+    if (target && target.status !== "entregue" && target.status !== "cancelado") {
+      toast.error("Só é possível excluir pedidos entregues ou cancelados");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId)
+      .in("status", ["entregue", "cancelado"])
+      .select("id");
+    if (error) { toast.error("Não foi possível excluir o pedido. Tente novamente."); return; }
+    if (!data || data.length === 0) { toast.error("Pedido não pôde ser excluído (status não permite)."); return; }
+    toast.success(target ? `Pedido #${target.order_number} excluído` : "Pedido excluído");
     setOrders((prev) => prev.filter((o) => o.id !== orderId));
   };
 
+  const OLD_ORDERS_DAYS = 30;
+
+  const openBulkDelete = async () => {
+    setBulkChecking(true);
+    try {
+      // Mesma regra da RPC admin_delete_old_orders: status entregue/cancelado e created_at < now() - 30 dias
+      const cutoff = new Date(Date.now() - OLD_ORDERS_DAYS * 24 * 60 * 60 * 1000).toISOString();
+      const { count, error } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["entregue", "cancelado"])
+        .lt("created_at", cutoff);
+      if (error) { toast.error("Não foi possível verificar os pedidos antigos. Tente novamente."); return; }
+      setBulkDeleteCount(count ?? 0);
+      setBulkConfirmText("");
+      setBulkDeleteOpen(true);
+    } finally {
+      setBulkChecking(false);
+    }
+  };
+
   const bulkDeleteOldOrders = async () => {
-    const days = parseInt(bulkDeleteDays, 10);
-    if (isNaN(days) || days < 0) { toast.error("Informe um número válido de dias"); return; }
-    const { error } = await supabase.rpc("admin_delete_old_orders", { days_old: days });
-    if (error) { toast.error("Erro ao excluir pedidos antigos"); return; }
-    toast.success("Pedidos antigos excluídos");
-    setBulkDeleteOpen(false);
+    if (bulkConfirmText !== "EXCLUIR" || bulkDeleting) return;
+    setBulkDeleting(true);
+    try {
+      // types.ts gerado está desatualizado (declara days_old); a função no banco usa _days
+      const { data, error } = await supabase.rpc(
+        "admin_delete_old_orders",
+        { _days: OLD_ORDERS_DAYS } as unknown as { days_old: number }
+      );
+      if (error) { toast.error("Não foi possível excluir os pedidos antigos. Tente novamente."); return; }
+      const deleted = typeof data === "number" ? data : bulkDeleteCount;
+      toast.success(`${deleted} ${deleted === 1 ? "pedido excluído" : "pedidos excluídos"}`);
+      setBulkDeleteOpen(false);
+      setBulkConfirmText("");
+      const cutoff = Date.now() - OLD_ORDERS_DAYS * 24 * 60 * 60 * 1000;
+      setOrders((prev) => prev.filter((o) =>
+        !((o.status === "entregue" || o.status === "cancelado") && new Date(o.created_at).getTime() < cutoff)
+      ));
+    } finally {
+      setBulkDeleting(false);
+    }
   };
 
   const updateStock = async (productId: string, newStock: number) => {
@@ -787,40 +836,57 @@ const Admin = () => {
                     size="sm"
                     variant="outline"
                     className="gap-1.5 text-destructive hover:text-destructive"
-                    onClick={() => setBulkDeleteOpen(true)}
+                    disabled={bulkChecking}
+                    onClick={openBulkDelete}
                   >
-                    <Trash2 className="h-3.5 w-3.5" /> Excluir pedidos antigos
+                    <Trash2 className="h-3.5 w-3.5" /> {bulkChecking ? "Verificando..." : "Excluir pedidos antigos"}
                   </Button>
                 </div>
               </div>
 
               <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
                 <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir pedidos antigos</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Serão excluídos permanentemente os pedidos com status <b>entregue</b> ou <b>cancelado</b> criados há mais que o número de dias informado.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <div className="space-y-2">
-                    <Label htmlFor="bulk-days">Dias</Label>
-                    <Input
-                      id="bulk-days"
-                      type="number"
-                      min={0}
-                      value={bulkDeleteDays}
-                      onChange={(e) => setBulkDeleteDays(e.target.value)}
-                    />
-                  </div>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={bulkDeleteOldOrders}
-                    >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
+                  {bulkDeleteCount === 0 ? (
+                    <>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir pedidos antigos</AlertDialogTitle>
+                        <AlertDialogDescription>Nenhum pedido com mais de 30 dias</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Fechar</AlertDialogCancel>
+                      </AlertDialogFooter>
+                    </>
+                  ) : (
+                    <>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Excluir {bulkDeleteCount} {bulkDeleteCount === 1 ? "pedido antigo" : "pedidos antigos"}?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Essa ação não pode ser desfeita. Apenas pedidos entregues ou cancelados há mais de 30 dias serão excluídos.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="space-y-2">
+                        <Label htmlFor="bulk-confirm">Digite <b>EXCLUIR</b> para confirmar</Label>
+                        <Input
+                          id="bulk-confirm"
+                          value={bulkConfirmText}
+                          onChange={(e) => setBulkConfirmText(e.target.value)}
+                          autoComplete="off"
+                        />
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={bulkConfirmText !== "EXCLUIR" || bulkDeleting}
+                          onClick={(e) => { e.preventDefault(); bulkDeleteOldOrders(); }}
+                        >
+                          {bulkDeleting ? "Excluindo..." : "Excluir"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </>
+                  )}
                 </AlertDialogContent>
               </AlertDialog>
 
