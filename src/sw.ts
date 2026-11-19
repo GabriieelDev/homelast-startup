@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
-import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
@@ -22,6 +22,9 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html")));
 // Only these runtime rules exist. Anything not matched here (Supabase
 // /rest/v1, /auth/v1, /realtime/v1, /functions/v1, avatars) goes straight
 // to the network and is never stored by the service worker.
+
+// Reverse geocoding (user location): always network, never stored.
+registerRoute(/^https:\/\/nominatim\.openstreetmap\.org\/.*/i, new NetworkOnly());
 
 // Google Fonts CSS: small and can change, so serve cached and refresh in background.
 registerRoute(

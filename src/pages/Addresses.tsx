@@ -1,5 +1,5 @@
 import { LogoIcon } from "@/components/Logo";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Star, Trash2, Edit2 } from "lucide-react";
+import { ArrowLeft, Plus, Star, Trash2, Edit2, LocateFixed, Loader2, Info } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { GeoError, GEO_MESSAGES, getCurrentPosition, isGeolocationSupported, reverseGeocode } from "@/lib/geolocation";
 
 interface Address {
   id: string;
@@ -32,6 +33,37 @@ const Addresses = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [geoNotice, setGeoNotice] = useState<string | null>(null);
+  const numberRef = useRef<HTMLInputElement>(null);
+  const geoSupported = isGeolocationSupported();
+
+  const handleUseLocation = async () => {
+    setGeoError(null);
+    setGeoNotice(null);
+    setLocating(true);
+    try {
+      const { lat, lon } = await getCurrentPosition();
+      const found = await reverseGeocode(lat, lon);
+      const keys = ["street", "number", "neighborhood", "city", "zip_code"] as const;
+      const skipped = keys.some((k) => found[k] && form[k].trim() && form[k] !== found[k]);
+      setForm((prev) => {
+        const next = { ...prev };
+        keys.forEach((k) => { if (found[k] && !prev[k].trim()) next[k] = found[k]; });
+        return next;
+      });
+      setGeoNotice(
+        "Confira os dados e complete o número e o complemento." +
+          (skipped ? " Campos já preenchidos foram mantidos." : ""),
+      );
+      setTimeout(() => numberRef.current?.focus(), 0);
+    } catch (e) {
+      setGeoError(e instanceof GeoError ? e.message : GEO_MESSAGES.unavailable);
+    } finally {
+      setLocating(false);
+    }
+  };
 
   const fetchAddresses = async () => {
     if (!user?.id) return;
@@ -76,7 +108,10 @@ const Addresses = () => {
     fetchAddresses();
   };
 
+  const resetGeo = () => { setGeoError(null); setGeoNotice(null); };
+
   const startEdit = (addr: Address) => {
+    resetGeo();
     setForm({ street: addr.street, number: addr.number, neighborhood: addr.neighborhood, city: addr.city, complement: addr.complement || "", zip_code: addr.zip_code });
     setEditingId(addr.id);
     setShowForm(true);
@@ -94,7 +129,7 @@ const Addresses = () => {
 
       <div className="container mx-auto px-4 py-6 max-w-lg space-y-4">
         {!showForm && (
-          <Button onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(true); }} className="w-full gap-2">
+          <Button onClick={() => { resetGeo(); setForm(emptyForm); setEditingId(null); setShowForm(true); }} className="w-full gap-2">
             <Plus className="h-4 w-4" /> Adicionar endereço
           </Button>
         )}
@@ -102,6 +137,20 @@ const Addresses = () => {
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-card border border-border rounded-xl p-5 space-y-4">
             <h3 className="font-semibold text-foreground">{editingId ? "Editar" : "Novo"} endereço</h3>
+            {geoSupported && (
+              <div className="space-y-2">
+                <Button type="button" variant="outline" className="w-full gap-2 whitespace-normal h-auto min-h-10" onClick={handleUseLocation} disabled={locating}>
+                  {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+                  {locating ? "Buscando localização…" : "Usar minha localização"}
+                </Button>
+                {geoError && <p role="alert" className="text-xs text-destructive">{geoError}</p>}
+                {geoNotice && !geoError && (
+                  <p role="status" className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" /> {geoNotice}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2 space-y-1">
                 <Label>Rua</Label>
@@ -109,7 +158,7 @@ const Addresses = () => {
               </div>
               <div className="space-y-1">
                 <Label>Número</Label>
-                <Input value={form.number} onChange={(e) => setForm({ ...form, number: e.target.value })} required />
+                <Input ref={numberRef} value={form.number}onChange={(e) => setForm({ ...form, number: e.target.value })} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -134,7 +183,7 @@ const Addresses = () => {
             </div>
             <div className="flex gap-2">
               <Button type="submit" className="flex-1" disabled={loading}>{loading ? "Salvando..." : "Salvar"}</Button>
-              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancelar</Button>
+              <Button type="button" variant="outline" onClick={() => { resetGeo(); setShowForm(false); setEditingId(null); }}>Cancelar</Button>
             </div>
           </form>
         )}
