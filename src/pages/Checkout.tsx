@@ -14,6 +14,7 @@ import { estimateDeliveryMinutes } from "@/lib/delivery";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { toast } from "sonner";
 import { calcShipping } from "@/lib/shipping";
+import { ProductImage } from "@/components/ProductImage";
 
 const PAYMENT_METHODS = [
   { id: "credit", label: "Cartão de crédito", icon: CreditCard },
@@ -227,7 +228,7 @@ const Checkout = () => {
           <h3 className="font-semibold text-foreground">Resumo do pedido</h3>
           {items.map((item) => (
             <div key={item.product.id} className="flex items-center gap-3">
-              <img src={item.product.image} alt={item.product.name} className="w-10 h-10 rounded-lg object-cover" />
+              <ProductImage src={item.product.image} alt={item.product.name} className="w-10 h-10 rounded-lg object-cover" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground truncate">{item.product.name}</p>
                 <p className="text-xs text-muted-foreground">{item.quantity}x R$ {getEffectivePrice(item.product).toFixed(2)}</p>

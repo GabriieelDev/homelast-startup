@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { categories, type Product } from "@/data/products";
 import { toast } from "sonner";
 import { Upload, Loader2, Tag, AlertTriangle } from "lucide-react";
+import { ProductImage } from "@/components/ProductImage";
+import { isUsableImageUrl } from "@/lib/imageUrl";
 
 interface Props {
   open: boolean;
@@ -229,7 +231,7 @@ const ProductFormDialog = ({ open, onOpenChange, product }: Props) => {
             <Label>Imagem do produto</Label>
             <div className="flex items-center gap-3">
               <div className="h-16 w-16 rounded-lg bg-muted overflow-hidden flex-shrink-0 flex items-center justify-center">
-                {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-muted-foreground">sem foto</span>}
+                {isUsableImageUrl(image) ? <ProductImage src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-muted-foreground">sem foto</span>}
               </div>
               <label className="flex-1">
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />

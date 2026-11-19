@@ -10,6 +10,7 @@ import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useCountdown, formatCountdown } from "@/hooks/useCountdown";
 import { isSaleActive, getEffectivePrice, getDiscountPct } from "@/lib/promotions";
 import { toast } from "sonner";
+import { isUsableImageUrl } from "@/lib/imageUrl";
 
 interface HeroCarouselProps {
   onStart: () => void;
@@ -743,7 +744,7 @@ const ProductMini = ({ product, onClick }: { product: any; onClick?: (id: string
   const price = getEffectivePrice(product);
   const pct = getDiscountPct(product);
   const [imgError, setImgError] = useState(false);
-  const hasImage = Boolean(product.image) && !imgError;
+  const hasImage = isUsableImageUrl(product.image) && !imgError;
   const clickable = Boolean(onClick);
   return (
     <button

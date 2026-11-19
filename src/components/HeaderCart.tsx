@@ -8,6 +8,7 @@ import { cartDrawer } from "@/hooks/useCartDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { calcShipping } from "@/lib/shipping";
+import { ProductImage } from "@/components/ProductImage";
 
 interface HeaderCartProps {
   items: CartItem[];
@@ -80,7 +81,7 @@ const HeaderCart = ({ items, totalItems, totalPrice, onRemove, onAdd }: HeaderCa
               <div className="max-h-64 overflow-y-auto p-3 space-y-3">
                 {items.map((item) => (
                   <div key={item.product.id} className="flex items-center gap-2">
-                    <img src={item.product.image} alt={item.product.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                    <ProductImage src={item.product.image} alt={item.product.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground truncate">{item.product.name}</p>
                       <p className="text-xs text-muted-foreground">
